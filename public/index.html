@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students Opportunities Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Students Opportunities Hub</div>
+        <div>
+            <a href="#home">Home</a>
+            <a href="#opportunities">Opportunities</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav>
+    <section class="hero">
+        <h1>Discover Your Passion</h1>
+        <p>Connect with clubs, internships, volunteer opportunities, and jobs tailored for high school students in your area.</p>
+        <a href="#signup" class="cta-button">Get Started</a>
+    </section>
+    <section class="internships">
+        <h2>Featured Internships</h2>
+        <div class="internship-grid">
+            <div class="internship-card">
+                <h3>Software Development Intern</h3>
+                <div class="company">TechTrend Innovations</div>
+                <p>Work on cutting-edge AI projects over 3 months. Gain hands-on experience in coding and testing.</p>
+                <p class="target">Looking for: Students passionate about coding and AI.</p>
+                <a href="#signup" class="apply-button">Apply Now</a>
+            </div>
+            <div class="internship-card">
+                <h3>Graphic Design Intern</h3>
+                <div class="company">CreativeSpark Studio</div>
+                <p>Create stunning visuals for marketing campaigns in a 10-week program. Learn industry-standard tools.</p>
+                <p class="target">Looking for: Creative designers with an eye for aesthetics.</p>
+                <a href="#signup" class="apply-button">Apply Now</a>
+            </div>
+            <div class="internship-card">
+                <h3>Business Analytics Intern</h3>
+                <div class="company">GrowEasy Analytics</div>
+                <p>Analyze market trends and support strategy in a 12-week internship. Develop data-driven insights.</p>
+                <p class="target">Looking for: Students interested in business and data analysis.</p>
+                <a href="#signup" class="apply-button">Apply Now</a>
+            </div>
+        </div>
+    </section>
+    <section class="features">
+        <div class="feature-card">
+            <h3>Explore Clubs</h3>
+            <p>Join extracurriculars that match your interests, from robotics to debate.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Find Internships</h3>
+            <p>Gain real-world experience with internships designed for teens.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Volunteer Locally</h3>
+            <p>Make a difference in your community with nearby volunteer opportunities.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Part-Time Jobs</h3>
+            <p>Earn money and build skills with jobs that fit your schedule.</p>
+        </div>
+    </section>
+    <section class="register-section" id="signup">
+        <h2>Join the Hub</h2>
+        <form class="register-form" action="/submit" method="POST">
+            <div class="form-group">
+                <label for="userType">I am a:</label>
+                <select id="userType" name="userType" required>
+                    <option value="" disabled selected>Select an option</option>
+                    <option value="student">Student looking for internships</option>
+                    <option value="company">Company offering internships</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" placeholder="Your full name" required>
+            </div>
+            <div class="form-group" id="companyNameGroup" style="display: none;">
+                <label for="companyName">Company Name</label>
+                <input type="text" id="companyName" name="companyName" placeholder="Your company name">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Your email" required>
+            </div>
+            <div class="form-group" id="interestsGroup">
+                <label>Interests (Students)</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="interests" value="technology"> Technology</label>
+                    <label><input type="checkbox" name="interests" value="business"> Business</label>
+                    <label><input type="checkbox" name="interests" value="arts"> Arts</label>
+                    <label><input type="checkbox" name="interests" value="science"> Science</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="message">Message/Internship Description</label>
+                <textarea id="message" name="message" placeholder="Tell us about yourself or your internship" required></textarea>
+            </div>
+            <button type="submit" class="submit-button">Register Now</button>
+        </form>
+    </section>
+    <footer>
+        <p>© 2025 Students Opportunities Hub. All rights reserved.</p>
+    </footer>
+    <script>
+        // Basic form handling to show/hide fields based on user type
+        document.getElementById('userType').addEventListener('change', function() {
+            const companyNameGroup = document.getElementById('companyNameGroup');
+            const interestsGroup = document.getElementById('interestsGroup');
+            if (this.value === 'company') {
+                companyNameGroup.style.display = 'block';
+                interestsGroup.style.display = 'none';
+            } else {
+                companyNameGroup.style.display = 'none';
+                interestsGroup.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
