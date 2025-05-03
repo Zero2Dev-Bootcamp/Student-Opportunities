@@ -46,7 +46,9 @@ const initDb = () => {
       FOREIGN KEY (company_id) REFERENCES Company(id) ON DELETE SET NULL -- If company is deleted, set company_id to NULL
     );
   `);
-  console.log("Opportunity table created or already exists.");
+  // Add indexes for faster lookups on Opportunity table
+  db.run(`CREATE INDEX IF NOT EXISTS idx_opportunity_company_id ON Opportunity(company_id);`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_opportunity_type ON Opportunity(type);`);
 
 
   // Create Application table
@@ -62,8 +64,12 @@ const initDb = () => {
       FOREIGN KEY (opportunity_id) REFERENCES Opportunity(id) ON DELETE CASCADE -- If opportunity is deleted, delete related applications
     );
   `);
+  // Add indexes for faster lookups on Application table
+  db.run(`CREATE INDEX IF NOT EXISTS idx_application_student_id ON Application(student_id);`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_application_opportunity_id ON Application(opportunity_id);`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_application_status ON Application(status);`);
 
-  console.log("Database tables created or already exist.");
+  console.log("Database schema initialized and indexes created.");
 };
 
 // Initialize the database schema immediately when the module is loaded
