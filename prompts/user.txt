@@ -1,0 +1,10 @@
+Student Table:
+This table stores information about students.
+
+Schema:
+id INTEGER PRIMARY KEY AUTOINCREMENT
+name TEXT NOT NULL
+email TEXT UNIQUE NOT NULL
+password_hash TEXT NOT NULL
+major TEXT
+graduation_year INTEGER

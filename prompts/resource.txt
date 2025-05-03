@@ -1,0 +1,26 @@
+Opportunity Table:
+This table stores information about various opportunities such as internships, jobs, scholarships, and volunteer positions.
+
+Schema:
+id INTEGER PRIMARY KEY AUTOINCREMENT
+title TEXT NOT NULL
+description TEXT NOT NULL
+type TEXT NOT NULL CHECK(type IN ('Internship', 'Job', 'Scholarship', 'Volunteer', 'Other'))
+company_id INTEGER
+location TEXT
+deadline DATE
+link TEXT
+posted_date DATETIME DEFAULT CURRENT_TIMESTAMP
+required_skills TEXT
+stipend REAL
+duration TEXT
+
+Company Table:
+This table stores information about companies offering opportunities.
+
+Schema:
+id INTEGER PRIMARY KEY AUTOINCREMENT
+name TEXT UNIQUE NOT NULL
+industry TEXT
+location TEXT
+description TEXT
