@@ -1,0 +1,35 @@
+# Flexible Guide for Implementing Resource Methods
+
+This guide offers a flexible approach to implementing methods within your resources, encouraging adaptability and context-specific solutions.
+
+To help structure your method implementation, consider the following:
+
+## Method Configuration
+
+Use the following to guide your method design:
+
+- **METHOD_NAME**: A descriptive name reflecting the method's function.
+- **METHOD_PURPOSE**: A clear definition of the method's objective.
+- **METHOD_PARAMETERS**: A list of necessary input parameters.
+- **EXPECTED_RESPONSE**: A description of the expected output or result.
+
+## Implementation Recommendations
+
+- **Adapt to Your Needs**: Modify the template to fit your specific requirements.
+- **Prioritize Readability**: Write code that is easy to understand and maintain.
+- **Consider Performance**: Optimize for efficiency when necessary.
+
+## Flexible Implementation Template
+
+```javascript
+/**
+ * [METHOD_PURPOSE]
+ * @param {Object} params - [METHOD_PARAMETERS]
+ * @returns {Promise<Object>} [EXPECTED_RESPONSE]
+ */
+async function METHOD_NAME(params) {
+  try {
+    // 1. Input Validation (Optional)
+    if (params) {
+      // Validate input parameters as needed
+    }
