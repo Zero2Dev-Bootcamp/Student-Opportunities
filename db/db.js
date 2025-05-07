@@ -91,7 +91,6 @@ const initDb = () => {
   db.run(`CREATE INDEX IF NOT EXISTS idx_application_opportunity_id ON Application(opportunity_id);`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_application_status ON Application(status);`);
 
-  console.log("Database schema initialized and indexes created.");
 };
 
 // Initialize the database schema immediately when the module is loaded

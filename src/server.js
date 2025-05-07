@@ -25,5 +25,3 @@ Bun.serve({
     return new Response("File not found", { status: 404 });
   },
 });
-
-console.log(`Server listening at http://localhost:${port}`);

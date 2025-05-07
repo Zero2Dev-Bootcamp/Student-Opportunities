@@ -19,8 +19,7 @@ const migrateStudentTable = () => {
     // Optionally, add indexes if they weren't included in the initial setup
     // Example: db.run(`CREATE INDEX IF NOT EXISTS idx_student_email ON Student(email);`);
 
-    console.log("Migration for Student table completed successfully.");
-  } catch (error) {
+    } catch (error) {
     console.error("Error migrating Student table:", error);
   }
 };
