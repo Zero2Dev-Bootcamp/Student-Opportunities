@@ -91,6 +91,25 @@ const initDb = () => {
   db.run(`CREATE INDEX IF NOT EXISTS idx_application_opportunity_id ON Application(opportunity_id);`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_application_status ON Application(status);`);
 
+  // Create Notification table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS Notification (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL, -- Link to a User who receives the notification
+      message TEXT NOT NULL,
+      type TEXT, -- e.g., 'application_update', 'new_opportunity', 'message'
+      is_read BOOLEAN DEFAULT 0, -- 0 for false, 1 for true
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      related_entity_type TEXT, -- Optional: e.g., 'Opportunity', 'Application'
+      related_entity_id INTEGER, -- Optional: ID of the related entity
+      FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE -- If user is deleted, delete their notifications
+    );
+  `);
+  // Add indexes for faster lookups on Notification table
+  db.run(`CREATE INDEX IF NOT EXISTS idx_notification_user_id ON Notification(user_id);`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_notification_is_read ON Notification(is_read);`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_notification_type ON Notification(type);`);
+
 };
 
 // Initialize the database schema immediately when the module is loaded

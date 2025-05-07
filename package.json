@@ -2,6 +2,7 @@
   "name": "launch-lab",
   "type": "module",
   "scripts": {
-    "dev": "bun src/server.js"
+    "dev": "bun src/server.js",
+    "seed": "bun run db/seed.js"
   }
 }
