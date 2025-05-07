@@ -1,10 +1,149 @@
-Student Table:
-This table stores information about students.
+# Guide for Creating a User
 
-Schema:
-id INTEGER PRIMARY KEY AUTOINCREMENT
-name TEXT NOT NULL
-email TEXT UNIQUE NOT NULL
-password_hash TEXT NOT NULL
-major TEXT
-graduation_year INTEGER
+This guide helps you define and implement a User for your application. A User typically manages user-specific data and authentication.
+
+## User Definition
+
+A User should encapsulate all properties and actions related to users in the system.
+
+### Core User Attributes:
+Consider including the following attributes for a user:
+- **id**: Unique identifier (e.g., UUID, auto-incrementing integer).
+- **username**: Unique username for login.
+- **email**: Unique email address, can also be used for login or notifications.
+- **passwordHash**: Hashed version of the user's password (NEVER store plain text passwords).
+- **firstName**: User's first name.
+- **lastName**: User's last name.
+- **role**: User's role (e.g., 'admin', 'student', 'employer').
+- **createdAt**: Timestamp of when the user was created.
+- **updatedAt**: Timestamp of when the user was last updated.
+
+### Optional User Attributes:
+- **profilePictureUrl**: URL to the user's profile picture.
+- **bio**: A short biography of the user.
+- **isActive**: Boolean indicating if the user account is active.
+- **lastLoginAt**: Timestamp of the user's last login.
+
+## User Resource Methods
+
+Implement methods to manage user data and authentication. Refer to `resource-method.txt` for a general method implementation template.
+
+### Essential Methods:
+
+1.  **`createUser(userData)`**
+    *   **Purpose**: To register a new user.
+    *   **Parameters**: `userData` (object containing username, email, password, firstName, lastName, role).
+    *   **Logic**:
+        *   Validate input (e.g., check for required fields, email format).
+        *   Check if username or email already exists.
+        *   Hash the password.
+        *   Store the new user in the database.
+    *   **Response**: The created user object (excluding sensitive data like passwordHash).
+
+2.  **`getUserById(userId)`**
+    *   **Purpose**: To retrieve a user's details by their ID.
+    *   **Parameters**: `userId`.
+    *   **Response**: The user object (excluding sensitive data like passwordHash) or null/error if not found.
+
+3.  **`getUserByUsername(username)`**
+    *   **Purpose**: To retrieve a user's details by their username.
+    *   **Parameters**: `username`.
+    *   **Response**: The user object (can include passwordHash for authentication purposes internally) or null/error if not found.
+
+4.  **`updateUser(userId, updateData)`**
+    *   **Purpose**: To update an existing user's information.
+    *   **Parameters**: `userId`, `updateData` (object with fields to update, e.g., email, firstName, lastName, role, bio).
+    *   **Logic**:
+        *   Ensure the user performing the update has the necessary permissions.
+        *   If password is being updated, hash the new password.
+    *   **Response**: The updated user object (excluding sensitive data).
+
+5.  **`deleteUser(userId)`**
+    *   **Purpose**: To delete a user account.
+    *   **Parameters**: `userId`.
+    *   **Logic**:
+        *   Ensure the user performing the deletion has the necessary permissions.
+        *   Consider soft delete vs. hard delete.
+    *   **Response**: Confirmation message or the deleted user object.
+
+### Authentication Methods:
+
+6.  **`loginUser(credentials)`**
+    *   **Purpose**: To authenticate a user.
+    *   **Parameters**: `credentials` (object, typically `{ usernameOrEmail, password }`).
+    *   **Logic**:
+        *   Find user by username or email.
+        *   Compare the provided password with the stored passwordHash.
+        *   If successful, generate and return a session token (e.g., JWT).
+    *   **Response**: Session token and user details (excluding sensitive data) or authentication error.
+
+7.  **`logoutUser(sessionToken)`** (If using session tokens)
+    *   **Purpose**: To invalidate a user's session.
+    *   **Parameters**: `sessionToken`.
+    *   **Logic**: Invalidate the token (e.g., add to a blacklist, remove from session store).
+    *   **Response**: Confirmation message.
+
+### Optional Methods:
+
+8.  **`changePassword(userId, oldPassword, newPassword)`**
+    *   **Purpose**: To allow a user to change their password.
+    *   **Parameters**: `userId`, `oldPassword`, `newPassword`.
+    *   **Logic**:
+        *   Verify `oldPassword`.
+        *   Hash `newPassword`.
+        *   Update passwordHash.
+    *   **Response**: Confirmation message.
+
+9.  **`requestPasswordReset(email)`**
+    *   **Purpose**: To initiate a password reset process.
+    *   **Parameters**: `email`.
+    *   **Logic**:
+        *   Generate a unique, time-limited reset token.
+        *   Send an email to the user with a reset link containing the token.
+    *   **Response**: Confirmation message.
+
+10. **`resetPassword(resetToken, newPassword)`**
+    *   **Purpose**: To set a new password using a reset token.
+    *   **Parameters**: `resetToken`, `newPassword`.
+    *   **Logic**:
+        *   Validate the `resetToken`.
+        *   Hash `newPassword`.
+        *   Update passwordHash and invalidate the token.
+    *   **Response**: Confirmation message.
+
+## Implementation Structure (Example)
+
+Refer to `resource.txt` for a basic class structure. Adapt it for the User.
+
+```javascript
+// Example User Structure
+class User {
+  constructor(db) { // Assuming a database connection is passed
+    this.db = db; // or initialize users array: this.users = [];
+  }
+
+  async createUser(userData) {
+    // Validate input
+    // Check for existing user
+    // Hash password
+    // const newUser = await this.db.collection('users').insertOne({ ...userData, passwordHash });
+    // return newUser; // Adapt based on DB driver
+  }
+
+  async getUserById(userId) {
+    // const user = await this.db.collection('users').findOne({ _id: userId }); // Example with MongoDB
+    // return user;
+  }
+
+  // ... other methods
+}
+```
+
+## Security Considerations
+- **Password Hashing**: Always use strong, salted hashing algorithms (e.g., bcrypt, Argon2).
+- **Input Validation**: Sanitize and validate all user inputs to prevent injection attacks (XSS, SQLi).
+- **Authorization**: Implement proper checks to ensure users can only access or modify data they are permitted to.
+- **Session Management**: Use secure methods for session tokens (e.g., JWTs with HTTPS-only cookies).
+- **Rate Limiting**: Protect against brute-force attacks on login and password reset endpoints.
+
+This guide provides a starting point. Tailor the User to the specific needs of your application.

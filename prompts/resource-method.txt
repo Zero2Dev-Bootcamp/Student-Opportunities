@@ -33,3 +33,79 @@ async function METHOD_NAME(params) {
     if (params) {
       // Validate input parameters as needed
     }
+
+    // 2. Resource Initialization (Optional)
+    // Initialize any necessary resources or dependencies
+
+    // 3. Core Logic
+    // Implement the core logic of the method
+
+    // 4. Response Creation
+    const responseData = {
+      result: 'Success',
+      data: /* Your data here */
+    };
+    return responseData;
+
+  } catch (error) {
+    console.error('Method execution error', error);
+    throw error; // Or return a structured error response
+  }
+}
+```
+
+## Coding Style Suggestions
+
+- **Use Modern JavaScript**: Embrace ES6+ features for cleaner code.
+- **Prioritize Clarity**: Write code that is easy to understand.
+- **Choose Appropriate Tools**: Select libraries and tools that best fit the task.
+- **Balance Immutability**: Use immutability where it enhances clarity and prevents bugs.
+
+## Testing Recommendations
+
+- **Focus on Key Scenarios**: Test the most important use cases.
+- **Test Edge Cases**: Consider boundary conditions and error handling.
+- **Validate Input**: Ensure your method handles invalid input gracefully.
+
+## Checklist for Implementation
+
+- [ ] Method is well-documented.
+- [ ] Code is readable and maintainable.
+- [ ] Error handling is implemented.
+- [ ] Performance is considered.
+- [ ] Testing is adequate.
+
+## Example Tool Usage (Adaptable)
+
+### Database Interaction (Example)
+```javascript
+async function fetchFromDatabase(params) {
+  try {
+    // Use your preferred database library
+    const result = await db.query(
+      'SELECT * FROM table WHERE condition = ?',
+      [params.condition]
+    );
+    return result;
+  } catch (error) {
+    console.error('Database fetch error', error);
+    throw error;
+  }
+}
+```
+
+### External API Interaction (Example)
+```javascript
+async function callExternalAPI(params) {
+  try {
+    // Use your preferred HTTP client (e.g., axios, fetch)
+    const response = await axios.get('https://example.com/api', { params });
+    return response.data;
+  } catch (error) {
+    console.error('API call error', error);
+    throw error;
+  }
+}
+```
+
+Remember: These are suggestions, not rules. Adapt them to fit your specific needs and coding style.
