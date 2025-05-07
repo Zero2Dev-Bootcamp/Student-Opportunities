@@ -1,0 +1,7 @@
+{
+  "name": "launch-lab",
+  "type": "module",
+  "scripts": {
+    "dev": "bun src/server.js"
+  }
+}
