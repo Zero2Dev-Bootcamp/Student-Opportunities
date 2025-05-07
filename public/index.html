@@ -5,53 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Launch Lab</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <nav class="navbar">
         <div class="logo">Launch Lab</div>
-        <div>
+        <div class="nav-links">
             <a href="#home">Home</a>
             <a href="#opportunities">Opportunities</a>
             <a href="#about">About</a>
             <a href="#contact">Contact</a>
+            <a href="#signin" class="signin-button">Sign In</a>
         </div>
     </nav>
-    <section class="hero">
-        <h1>Discover Your Passion</h1>
-        <p>Connect with clubs, internships, volunteer opportunities, and jobs tailored for high school students in your area.</p>
-        <a href="#signup" class="cta-button">Get Started</a>
+    <section class="hero" id="home">
+        <h1>Launch Your Future</h1>
+        <p>Connect with clubs, internships, volunteer roles, and jobs tailored for high school students!</p>
+        <a href="#signup" class="cta-button">Prepare for Takeoff!</a>
     </section>
-    <section class="internships">
+    <section class="internships" id="opportunities">
         <h2>Featured Internships</h2>
         <div class="internship-grid">
             <div class="internship-card">
                 <h3>Software Development Intern</h3>
                 <div class="company">TechTrend Innovations</div>
-                <p>Work on cutting-edge AI projects over 3 months. Gain hands-on experience in coding and testing.</p>
-                <p class="target">Looking for: Students passionate about coding and AI.</p>
+                <p>Code AI-driven apps in a 3-month internship. Learn Python and JavaScript hands-on.</p>
+                <p class="target">Perfect for: Coding enthusiasts with a passion for AI.</p>
                 <a href="#signup" class="apply-button">Apply Now</a>
             </div>
             <div class="internship-card">
                 <h3>Graphic Design Intern</h3>
                 <div class="company">CreativeSpark Studio</div>
-                <p>Create stunning visuals for marketing campaigns in a 10-week program. Learn industry-standard tools.</p>
-                <p class="target">Looking for: Creative designers with an eye for aesthetics.</p>
+                <p>Design visuals for campaigns in a 10-week program. Master Adobe tools.</p>
+                <p class="target">Perfect for: Creative teens with a flair for design.</p>
                 <a href="#signup" class="apply-button">Apply Now</a>
             </div>
             <div class="internship-card">
                 <h3>Business Analytics Intern</h3>
                 <div class="company">GrowEasy Analytics</div>
-                <p>Analyze market trends and support strategy in a 12-week internship. Develop data-driven insights.</p>
-                <p class="target">Looking for: Students interested in business and data analysis.</p>
+                <p>Analyze market trends in a 12-week internship. Develop data-driven insights.</p>
+                <p class="target">Perfect for: Students interested in business and data.</p>
                 <a href="#signup" class="apply-button">Apply Now</a>
+            </div>
+        </div>
+    </section>
+    <section class="clubs">
+        <h2>Featured Clubs</h2>
+        <div class="club-grid">
+            <div class="club-card">
+                <h3>Robotics Club</h3>
+                <div class="club-name">TechTinkerers</div>
+                <p>Build and program robots for competitions. No experience required!</p>
+                <p class="target">Perfect for: Tech lovers and problem solvers.</p>
+                <a href="#signup" class="join-button">Join Now</a>
+            </div>
+            <div class="club-card">
+                <h3>Art Club</h3>
+                <div class="club-name">CreativeCanvas</div>
+                <p>Create murals and digital art in a fun, supportive group.</p>
+                <p class="target">Perfect for: Artistic students with big ideas.</p>
+                <a href="#signup" class="join-button">Join Now</a>
+            </div>
+        </div>
+    </section>
+    <section class="testimonials">
+        <h2>What Students Say</h2>
+        <div class="testimonial-carousel">
+            <div class="testimonial active">
+                <p>"Launch Lab connected me with a coding internship that taught me real-world skills and boosted my college app!"</p>
+                <div class="author">– Alex, 17</div>
+            </div>
+            <div class="testimonial">
+                <p>"Joining an art club through Launch Lab helped me build a killer portfolio and meet amazing friends."</p>
+                <div class="author">– Maya, 16</div>
+            </div>
+            <div class="testimonial">
+                <p>"Volunteering through Launch Lab gave me a sense of purpose and awesome experiences to share."</p>
+                <div class="author">– Sam, 15</div>
             </div>
         </div>
     </section>
     <section class="features">
         <div class="feature-card">
             <h3>Explore Clubs</h3>
-            <p>Join extracurriculars that match your interests, from robotics to debate.</p>
+            <p>Join extracurriculars like robotics, debate, or art that match your passions.</p>
         </div>
         <div class="feature-card">
             <h3>Find Internships</h3>
@@ -59,11 +96,26 @@
         </div>
         <div class="feature-card">
             <h3>Volunteer Locally</h3>
-            <p>Make a difference in your community with nearby volunteer opportunities.</p>
+            <p>Make a difference with nearby volunteer opportunities.</p>
         </div>
         <div class="feature-card">
             <h3>Part-Time Jobs</h3>
             <p>Earn money and build skills with jobs that fit your schedule.</p>
+        </div>
+    </section>
+    <section class="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <h3>How do I apply for an internship?</h3>
+            <p>Click "Apply Now" on any internship card, fill out the form, and we'll guide you through the process!</p>
+        </div>
+        <div class="faq-item">
+            <h3>Do I need experience to join a club?</h3>
+            <p>No experience is required! Our clubs welcome beginners and experts alike.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Is Launch Lab free?</h3>
+            <p>Yes, signing up and exploring opportunities is completely free for students!</p>
         </div>
     </section>
     <section class="register-section" id="signup">
@@ -73,7 +125,7 @@
                 <label for="userType">I am a:</label>
                 <select id="userType" name="userType" required>
                     <option value="" disabled selected>Select an option</option>
-                    <option value="student">Student looking for internships</option>
+                    <option value="student">Student looking for opportunities</option>
                     <option value="company">Company offering internships</option>
                 </select>
             </div>
@@ -99,17 +151,22 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="message">Message/Internship Description</label>
-                <textarea id="message" name="message" placeholder="Tell us about yourself or your internship" required></textarea>
+                <label for="message">Message/Description</label>
+                <textarea id="message" name="message" placeholder="Tell us about yourself or your opportunity" required></textarea>
             </div>
             <button type="submit" class="submit-button">Register Now</button>
         </form>
     </section>
     <footer>
-        <p>© 2025 Students Opportunities Hub. All rights reserved.</p>
+        <p>© 2025 Launch Lab. All rights reserved.</p>
+        <div>
+            <a href="https://x.com">X</a>
+            <a href="https://instagram.com">Instagram</a>
+            <a href="https://tiktok.com">TikTok</a>
+        </div>
     </footer>
     <script>
-        // Basic form handling to show/hide fields based on user type
+        // Form handling for user type
         document.getElementById('userType').addEventListener('change', function() {
             const companyNameGroup = document.getElementById('companyNameGroup');
             const interestsGroup = document.getElementById('interestsGroup');
@@ -119,6 +176,39 @@
             } else {
                 companyNameGroup.style.display = 'none';
                 interestsGroup.style.display = 'block';
+            }
+        });
+
+        // Testimonial carousel
+        const testimonials = document.querySelectorAll('.testimonial');
+        let currentTestimonial = 0;
+        function showTestimonial(index) {
+            testimonials.forEach((t, i) => {
+                t.classList.toggle('active', i === index);
+            });
+        }
+        function nextTestimonial() {
+            currentTestimonial = (currentTestimonial + 1) % testimonials.length;
+            showTestimonial(currentTestimonial);
+        }
+        setInterval(nextTestimonial, 5000);
+        showTestimonial(currentTestimonial);
+
+        // FAQ toggle
+        document.querySelectorAll('.faq-item h3').forEach(item => {
+            item.addEventListener('click', () => {
+                const faqItem = item.parentElement;
+                faqItem.classList.toggle('active');
+            });
+        });
+
+        // Form validation
+        document.querySelector('.register-form').addEventListener('submit', function(e) {
+            const email = document.getElementById('email').value;
+            const name = document.getElementById('name').value;
+            if (!email.includes('@') || name.length < 2) {
+                e.preventDefault();
+                alert('Please enter a valid email and name.');
             }
         });
     </script>
