@@ -66,6 +66,34 @@ class User {
   }
 
   /**
+   * To retrieve all users.
+   * @returns {Promise<Array<object>|null>} An array of user objects (excluding sensitive data) or null/error.
+   */
+  async getAllUsers() {
+    try {
+      // Logic:
+      // Example: const users = await this.db.collection('users').find({}).toArray();
+      // Response: An array of user objects (excluding sensitive data like passwordHash).
+      // Ensure sensitive data like passwordHash is not returned for each user.
+
+      console.log('[User.getAllUsers] Called');
+      if (!this.db) {
+        throw new Error('Database connection not available in User resource.');
+      }
+      // Example using SQLite:
+      const stmt = this.db.prepare("SELECT id, name, email, user_type, major, graduation_year, industry, location, description FROM User");
+      const users = stmt.all();
+      
+      // It's good practice to ensure passwordHash or other sensitive fields are not returned.
+      // The current query already selects specific non-sensitive fields.
+      return users;
+    } catch (error) {
+      console.error('Error in User.getAllUsers:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * To retrieve a user's details by their ID.
    * @param {string|number} userId - The unique identifier of the user.
    * @returns {Promise<object|null>} The user object (excluding sensitive data like passwordHash) or null/error if not found.
@@ -97,12 +125,29 @@ class User {
       // Response: The user object (can include passwordHash for authentication purposes internally) or null/error if not found.
 
       console.log('[User.getUserByUsername] Called with username:', username);
-      // Placeholder for actual implementation
-      // Replace the line below with actual database logic
-      throw new Error('getUserByUsername method not fully implemented. Refer to prompts/user.txt for detailed logic.');
+      if (!this.db) {
+        throw new Error('Database connection not available in User resource.');
+      }
+      if (!username) {
+        // This case should ideally be caught by the HTTP handler before calling this method
+        throw new Error('Username cannot be empty.');
+      }
+
+      // Using prepared statements to prevent SQL injection
+      const stmt = this.db.prepare("SELECT id, name, email, user_type, major, graduation_year, industry, location, description FROM User WHERE name = ?");
+      const user = stmt.get(username); // Assuming 'name' field is used for username
+
+      if (user) {
+        // Note: prompts/user.txt mentions "can include passwordHash for authentication purposes internally".
+        // For now, we are not selecting it. If login logic needs it, this query would change.
+        return user;
+      } else {
+        return null; // User not found
+      }
     } catch (error) {
       console.error('Error in User.getUserByUsername:', error.message);
-      throw error;
+      // Log the full error for more details if needed, e.g., error.stack
+      throw error; // Re-throw to be handled by the caller (e.g., handleGet)
     }
   }
 
@@ -318,12 +363,21 @@ class User {
             });
           }
         }
-        // If neither ID nor username is provided, or if "getAllUsers" is intended,
-        // this part would need further definition (e.g., a getAllUsers method).
-        return new Response(JSON.stringify({ error: 'User ID or username query parameter not provided' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        // If neither ID nor username is provided, attempt to get all users.
+        const users = await this.getAllUsers();
+        if (users) {
+          return new Response(JSON.stringify(users), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        } else {
+          // This case might occur if getAllUsers returns null or an empty array
+          // depending on implementation, or if an error occurred that was caught and returned null.
+          return new Response(JSON.stringify({ error: 'Could not retrieve users or no users found' }), {
+            status: 404, // Or 500 if it's an unexpected error
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
       }
     } catch (error) {
       if (error.message.includes("not fully implemented")) {
@@ -471,4 +525,4 @@ class User {
   }
 }
 
-module.exports = User;
+export default User;
