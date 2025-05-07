@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Philippine Red Cross Volunteer Profile - Launch Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: #121212;
+            background-color: #F9FAFB;
+            line-height: 1.6;
+        }
+        .navbar {
+            background-color: #FFFFFF;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1E90FF;
+        }
+        .navbar a {
+            color: #121212;
+            text-decoration: none;
+            margin: 0 1rem;
+            font-family: 'Source Code Pro', monospace;
+            font-weight: 400;
+            transition: color 0.3s;
+        }
+        .navbar a:hover {
+            color: #1E90FF;
+        }
+        .profile-header {
+            padding: 3rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, #1E90FF, #00D4B4);
+            color: #E6E6E6;
+        }
+        .profile-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .profile-header p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .company-logo {
+            max-width: 150px;
+            margin: 1rem auto;
+            display: block;
+        }
+        .profile-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        .main-content {
+            background-color: #FFFFFF;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .sidebar {
+            background-color: #FFFFFF;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .main-content h2, .sidebar h2 {
+            font-size: 1.8rem;
+            color: #1E90FF;
+            margin-bottom: 1rem;
+        }
+        .main-content h3, .sidebar h3 {
+            font-size: 1.4rem;
+            color: #1E90FF;
+            margin-bottom: 0.75rem;
+        }
+        .main-content p, .sidebar p {
+            color: #374151;
+            margin-bottom: 1rem;
+        }
+        .role-list, .benefits-list, .requirements-list {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+        .role-list li, .benefits-list li, .requirements-list li {
+            padding: 0.5rem 0;
+            position: relative;
+            padding-left: 1.5rem;
+            color: #374151;
+        }
+        .role-list li::before, .benefits-list li::before, .requirements-list li::before {
+            content: '•';
+            color: #FF2D55;
+            position: absolute;
+            left: 0;
+        }
+        .cta-button {
+            background-color: #FF2D55;
+            color: #E6E6E6;
+            padding: 0.75rem 2rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-family: 'Source Code Pro', monospace;
+            font-weight: 400;
+            display: inline-block;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .cta-button:hover {
+            background-color: #E02447;
+            transform: translateY(-2px);
+        }
+        footer {
+            background-color: #121212;
+            color: #E6E6E6;
+            text-align: center;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+        a:focus, button:focus {
+            outline: 2px solid #1E90FF;
+            outline-offset: 2px;
+        }
+        @media (max-width: 768px) {
+            .profile-header h1 {
+                font-size: 1.8rem;
+            }
+            .profile-content {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+            .company-logo {
+                max-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="logo">Launch Lab</div>
+        <div>
+            <a href="index.html">Home</a>
+            <a href="opportunities.html">Opportunities</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav>
+    <section class="profile-header">
+        <img src="/assets/philippine_red_cross_logo.png" alt="Philippine Red Cross Logo" class="company-logo">
+        <h1>Philippine Red Cross</h1>
+        <p>Join our mission to provide life-saving services and alleviate human suffering through volunteerism with the Philippine Red Cross.</p>
+    </section>
+    <section class="profile-content">
+        <div class="main-content">
+            <h2>About Philippine Red Cross</h2>
+            <p>Established in 1947, the Philippine Red Cross (PRC) is the premier humanitarian organization in the Philippines, dedicated to delivering quality life-saving services, disaster response, and social welfare programs. With a strong network of volunteers, PRC responds to emergencies, promotes health, and supports vulnerable communities nationwide.</p>
+            
+            <h3>Volunteer Roles for Students</h3>
+            <ul class="role-list">
+                <li><strong>Blood Drive Volunteer:</strong> Assist in organizing and managing blood donation drives, including donor registration and promotion of the Pledge 25 program for youth aged 18–25.</li>
+                <li><strong>Disaster Response Support:</strong> Provide logistical support during disaster relief operations, such as distributing aid and assembling relief kits.</li>
+                <li><strong>Junior First Aider:</strong> Learn and apply basic first aid skills in school clinics or community events, supporting the Junior First Aiders Program.</li>
+                <li><strong>Red Cross Youth Leader:</strong> Participate in or lead Red Cross Youth (RCY) councils to organize community service projects and promote humanitarian values.</li>
+            </ul>
+
+            <h3>Benefits of Volunteering</h3>
+            <ul class="benefits-list">
+                <li>Develop leadership, communication, and teamwork skills through hands-on humanitarian work.</li>
+                <li>Receive free training in first aid, disaster preparedness, and other life-saving skills.</li>
+                <li>Earn a Certificate of Volunteering after completing 300 hours of service, enhancing college applications.</li>
+                <li>Contribute to community resilience and make a meaningful impact on vulnerable populations.</li>
+                <li>Build connections with a network of dedicated volunteers and humanitarian professionals.</li>
+            </ul>
+        </div>
+        <div class="sidebar">
+            <h2>Join Us</h2>
+            <h3>Requirements to Volunteer</h3>
+            <ul class="requirements-list">
+                <li><strong>Age:</strong> High school students aged 13–18 (parental consent required for those under 18).</li>
+                <li><strong>Commitment:</strong> Flexible, based on availability; typically weekly or monthly involvement.</li>
+                <li><strong>Training:</strong> Complete the Basic Volunteer Orientation Course (BVOC).</li>
+                <li><strong>Documents:</strong> Submit PRC Membership (MAAB), two valid IDs, resume, and 2x2 ID picture.</li>
+                <li><strong>Location:</strong> Opportunities available at local chapters or virtual roles.</li>
+            </ul>
+            <a href="#apply" class="cta-button">Apply to Volunteer</a>
+        </div>
+    </section>
+    <footer>
+        <p>© 2025 Launch Lab. All rights reserved.</p>
+    </footer>
+</body>
+</html>
