@@ -56,11 +56,54 @@ class User {
       // Response: The created user object (excluding sensitive data like passwordHash).
 
       console.log('[User.createUser] Called with userData:', userData);
-      // Placeholder for actual implementation
-      // Replace the line below with actual database logic
-      throw new Error('createUser method not fully implemented. Refer to prompts/user.txt for detailed logic.');
+      if (!this.db) {
+        throw new Error('Database connection not available in User resource.');
+      }
+
+      const { username, email, password, firstName, lastName, role, major, graduation_year } = userData;
+
+      // Basic input validation
+      if (!username || !email || !password) {
+        throw new Error('Username, email, and password are required.');
+      }
+
+      // TODO: Implement proper password hashing (e.g., bcrypt, Argon2)
+      // For now, storing password as is (NOT SECURE FOR PRODUCTION)
+      const passwordHash = password; 
+
+      // TODO: Check if username or email already exists in the Student table.
+
+      // Assuming 'username' from userData maps to 'name' in the Student table.
+      // 'firstName' and 'lastName' are not directly in Student table, 'role' is also not there.
+      // 'major' and 'graduation_year' can be part of userData.
+      
+      const stmt = this.db.prepare(
+        `INSERT INTO Student (name, email, password_hash, major, graduation_year) 
+         VALUES (?, ?, ?, ?, ?)`
+      );
+      
+      const result = stmt.run(username, email, passwordHash, major, graduation_year);
+
+      if (result.changes > 0) {
+        // Return the created student/user object (excluding passwordHash)
+        // The id is available as result.lastInsertRowid
+        return { 
+          id: result.lastInsertRowid, 
+          name: username, // or retrieve from DB if needed
+          email: email,
+          major: major,
+          graduation_year: graduation_year
+          // role: role // Not stored in Student table currently
+        };
+      } else {
+        throw new Error('Failed to create user (no rows affected).');
+      }
     } catch (error) {
       console.error('Error in User.createUser:', error.message);
+      // Check for unique constraint error (e.g., email already exists)
+      if (error.message.includes('UNIQUE constraint failed: Student.email')) {
+        throw new Error('Email already exists.');
+      }
       throw error; // Re-throw or handle as appropriate
     }
   }
@@ -345,39 +388,14 @@ class User {
           });
         }
       } else {
-        const username = url.searchParams.get('username');
-        if (username) {
-          const user = await this.getUserByUsername(username);
-          if (user) {
-            // As per prompts/user.txt, getUserByUsername can include passwordHash for internal auth.
-            // For an API response, sensitive data like passwordHash should be excluded.
-            const { passwordHash, ...userWithoutPassword } = user;
-            return new Response(JSON.stringify(userWithoutPassword), {
-              status: 200,
-              headers: { 'Content-Type': 'application/json' },
-            });
-          } else {
-            return new Response(JSON.stringify({ error: 'User not found by username' }), {
-              status: 404,
-              headers: { 'Content-Type': 'application/json' },
-            });
-          }
-        }
-        // If neither ID nor username is provided, attempt to get all users.
+        // If no ID (userid) is provided in the path, get all users.
         const users = await this.getAllUsers();
-        if (users) {
-          return new Response(JSON.stringify(users), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        } else {
-          // This case might occur if getAllUsers returns null or an empty array
-          // depending on implementation, or if an error occurred that was caught and returned null.
-          return new Response(JSON.stringify({ error: 'Could not retrieve users or no users found' }), {
-            status: 404, // Or 500 if it's an unexpected error
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
+        // getAllUsers is expected to return an array (empty or populated) on success,
+        // or throw an error if something goes wrong (which is caught by the outer try-catch).
+        return new Response(JSON.stringify(users), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
     } catch (error) {
       if (error.message.includes("not fully implemented")) {
