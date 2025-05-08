@@ -71,38 +71,65 @@ class User {
       // For now, storing password as is (NOT SECURE FOR PRODUCTION)
       const passwordHash = password; 
 
-      // TODO: Check if username or email already exists in the Student table.
+      // TODO: Check if username or email already exists in the User table.
 
-      // Assuming 'username' from userData maps to 'name' in the Student table.
-      // 'firstName' and 'lastName' are not directly in Student table, 'role' is also not there.
-      // 'major' and 'graduation_year' can be part of userData.
-      
+      // Map 'role' from userData to 'user_type' for the User table.
+      // Ensure 'role' is one of the expected values, default if necessary or throw error.
+      let user_type = userData.role; // e.g., 'student', 'company'
+      if (!['student', 'company'].includes(user_type)) {
+        // Handle invalid role: either throw error or assign a default
+        // For now, let's be strict. Or, you might default to 'student'.
+        throw new Error(`Invalid role: ${user_type}. Must be 'student' or 'company'.`);
+      }
+
+      // Prepare data for User table, including user_type and nullable fields
+      const industry = userData.industry || null; // Company-specific, null for students
+      const location = userData.location || null; // Can be common or specific
+      const description = userData.description || null; // Can be common or specific
+
       const stmt = this.db.prepare(
-        `INSERT INTO Student (name, email, password_hash, major, graduation_year) 
-         VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       );
       
-      const result = stmt.run(username, email, passwordHash, major, graduation_year);
+      const result = stmt.run(
+        username, 
+        email, 
+        passwordHash, 
+        user_type, 
+        major, // Nullable for companies
+        graduation_year, // Nullable for companies
+        industry, // Nullable for students
+        location,
+        description
+      );
 
       if (result.changes > 0) {
-        // Return the created student/user object (excluding passwordHash)
-        // The id is available as result.lastInsertRowid
+        // Return the created user object (excluding passwordHash)
         return { 
           id: result.lastInsertRowid, 
-          name: username, // or retrieve from DB if needed
+          name: username,
           email: email,
+          user_type: user_type,
           major: major,
-          graduation_year: graduation_year
-          // role: role // Not stored in Student table currently
+          graduation_year: graduation_year,
+          industry: industry,
+          location: location,
+          description: description
         };
       } else {
         throw new Error('Failed to create user (no rows affected).');
       }
     } catch (error) {
       console.error('Error in User.createUser:', error.message);
-      // Check for unique constraint error (e.g., email already exists)
-      if (error.message.includes('UNIQUE constraint failed: Student.email')) {
+      // Check for unique constraint error (e.g., email already exists on User table)
+      if (error.message.includes('UNIQUE constraint failed: User.email')) {
         throw new Error('Email already exists.');
+      }
+      if (error.message.includes('UNIQUE constraint failed: User.name') && user_type === 'company') {
+         // Assuming company names should be unique, if that's a constraint.
+         // The current schema in db.js does not enforce UNIQUE on User.name.
+         // If it did, this check would be relevant.
       }
       throw error; // Re-throw or handle as appropriate
     }
@@ -124,6 +151,7 @@ class User {
         throw new Error('Database connection not available in User resource.');
       }
       // Example using SQLite:
+      // Querying the User table as defined in db/db.js
       const stmt = this.db.prepare("SELECT id, name, email, user_type, major, graduation_year, industry, location, description FROM User");
       const users = stmt.all();
       
@@ -148,9 +176,24 @@ class User {
       // Response: The user object (excluding sensitive data like passwordHash) or null/error if not found.
 
       console.log('[User.getUserById] Called with userId:', userId);
-      // Placeholder for actual implementation
-      // Replace the line below with actual database logic
-      throw new Error('getUserById method not fully implemented. Refer to prompts/user.txt for detailed logic.');
+      if (!this.db) {
+        throw new Error('Database connection not available in User resource.');
+      }
+      if (userId === undefined || userId === null) {
+        throw new Error('User ID cannot be empty or null.');
+      }
+
+      // Assuming the table is 'User' and the primary key is 'id' as defined in db/db.js
+      const stmt = this.db.prepare(
+        "SELECT id, name, email, user_type, major, graduation_year, industry, location, description FROM User WHERE id = ?"
+      );
+      const user = stmt.get(userId);
+
+      if (user) {
+        return user;
+      } else {
+        return null; // User not found
+      }
     } catch (error) {
       console.error('Error in User.getUserById:', error.message);
       throw error;
@@ -177,6 +220,7 @@ class User {
       }
 
       // Using prepared statements to prevent SQL injection
+      // Updated to use User table and its columns as defined in db/db.js
       const stmt = this.db.prepare("SELECT id, name, email, user_type, major, graduation_year, industry, location, description FROM User WHERE name = ?");
       const user = stmt.get(username); // Assuming 'name' field is used for username
 
@@ -367,15 +411,30 @@ class User {
    * @returns {Promise<Response>} A Bun Response object.
    */
   async handleGet(req) {
+    console.log("<<<<<< ENTERING User.handleGet METHOD - LATEST VERSION >>>>>>");
     try {
       const url = new URL(req.url);
-      const pathParts = url.pathname.split('/').filter(Boolean);
-      // ID extraction: assumes ID is the last part if path is like /users/someId
-      // A more robust router would handle path parameter extraction.
-      const idFromPath = (pathParts.length > 1 && pathParts[0].toLowerCase() === 'users') ? pathParts[pathParts.length - 1] : null;
+      const pathname = url.pathname; 
+      console.log(`[User.handleGet] Received request for pathname: ${pathname}`);
+      let userId = null;
 
-      if (idFromPath) {
-        const user = await this.getUserById(idFromPath);
+      // Regex to capture ID from /user/:id or /users/:id
+      const idMatch = pathname.match(/^\/(user|users)\/([^/]+)/i);
+      console.log(`[User.handleGet] Regex match result (idMatch):`, idMatch);
+
+      if (idMatch && idMatch[2]) {
+        const potentialId = idMatch[2];
+        console.log(`[User.handleGet] Potential ID from regex: '${potentialId}'`);
+        if (potentialId.trim() !== '') {
+          userId = potentialId;
+        }
+      }
+      
+      console.log(`[User.handleGet] Determined userId: ${userId}`);
+
+      if (userId) {
+        console.log(`[User.handleGet] Path is for a specific user. Calling getUserById with ID: ${userId}`);
+        const user = await this.getUserById(userId);
         if (user) {
           return new Response(JSON.stringify(user), {
             status: 200,
@@ -388,6 +447,7 @@ class User {
           });
         }
       } else {
+        console.log(`[User.handleGet] Path is NOT for a specific user OR ID extraction failed. Calling getAllUsers.`);
         // If no ID (userid) is provided in the path, get all users.
         const users = await this.getAllUsers();
         // getAllUsers is expected to return an array (empty or populated) on success,
