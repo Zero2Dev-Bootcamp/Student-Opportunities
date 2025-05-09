@@ -1,62 +1,57 @@
-# Entity Relationship Diagram (ERD)
-
-This diagram visualizes the relationships between the database tables defined in `db/db.js`.
-
-```mermaid
 erDiagram
-    Student ||--o{ Application : "applies for (0..N)"
-    Opportunity ||--o{ Application : "receives (0..N)"
-    Company ||--o{ Opportunity : "offers (0..N)"
-    Opportunity }o--|| Company : "belongs to (0..1)"
+    USER ||--o{ OPPORTUNITY : "offers (as company)"
+    USER ||--o{ APPLICATION : "submits (as student)"
+    USER ||--o{ NOTIFICATION : "receives"
+    OPPORTUNITY ||--o{ APPLICATION : "has"
+    OPPORTUNITY }o--|| USER : "offered by"
+    APPLICATION }|--|| USER : "submitted by"
+    APPLICATION }|--|| OPPORTUNITY : "is for"
+    NOTIFICATION }|--|| USER : "belongs to"
 
-    Student {
+    USER {
         INTEGER id PK "Auto-increment"
         TEXT name "NOT NULL"
         TEXT email "UNIQUE, NOT NULL"
         TEXT password_hash "NOT NULL"
-        TEXT major
-        INTEGER graduation_year
+        TEXT user_type "NOT NULL (student or company)"
+        TEXT major "Nullable (for students)"
+        INTEGER graduation_year "Nullable (for students)"
+        TEXT industry "Nullable (for companies)"
+        TEXT location "Nullable"
+        TEXT description "Nullable"
     }
 
-    Company {
-        INTEGER id PK "Auto-increment"
-        TEXT name "UNIQUE, NOT NULL"
-        TEXT industry
-        TEXT location
-        TEXT description
-    }
-
-    Opportunity {
+    OPPORTUNITY {
         INTEGER id PK "Auto-increment"
         TEXT title "NOT NULL"
         TEXT description "NOT NULL"
-        TEXT type "NOT NULL, CHECK(type IN ('Internship', 'Job', 'Scholarship', 'Volunteer', 'Other'))"
-        INTEGER company_id FK "Ref Company(id), ON DELETE SET NULL"
-        TEXT location
-        DATE deadline
-        TEXT link
+        TEXT type "NOT NULL (Internship, Job, etc.)"
+        INTEGER company_user_id FK "Ref User(id), ON DELETE SET NULL"
+        TEXT location "Nullable"
+        DATE deadline "Nullable"
+        TEXT link "Nullable"
         DATETIME posted_date "DEFAULT CURRENT_TIMESTAMP"
-        TEXT required_skills
-        REAL stipend
-        TEXT duration
+        TEXT required_skills "Nullable"
+        REAL stipend "Nullable"
+        TEXT duration "Nullable"
     }
 
-    Application {
+    APPLICATION {
         INTEGER id PK "Auto-increment"
-        INTEGER student_id FK "Ref Student(id), NOT NULL, ON DELETE CASCADE"
+        INTEGER student_user_id FK "Ref User(id), NOT NULL, ON DELETE CASCADE"
         INTEGER opportunity_id FK "Ref Opportunity(id), NOT NULL, ON DELETE CASCADE"
         DATETIME application_date "DEFAULT CURRENT_TIMESTAMP"
-        TEXT status "NOT NULL, DEFAULT 'Submitted', CHECK(status IN ('Submitted', 'Reviewed', 'Interviewing', 'Offered', 'Accepted', 'Rejected', 'Withdrawn'))"
-        TEXT notes
+        TEXT status "NOT NULL, DEFAULT 'Submitted' (Submitted, Reviewed, etc.)"
+        TEXT notes "Nullable"
     }
-```
 
-**Key:**
-
-*   `PK`: Primary Key
-*   `FK`: Foreign Key
-*   `UK`: Unique Key
-*   `||--o{`: One-to-Many relationship (one side mandatory, many side optional/zero or more)
-*   `}o--||`: Many-to-One relationship (many side optional/zero or one, one side mandatory)
-*   `(0..N)`: Cardinality (Zero to Many)
-*   `(0..1)`: Cardinality (Zero to One)
+    NOTIFICATION {
+        INTEGER id PK "Auto-increment"
+        INTEGER user_id FK "Ref User(id), NOT NULL, ON DELETE CASCADE"
+        TEXT message "NOT NULL"
+        TEXT type "Nullable"
+        BOOLEAN is_read "DEFAULT 0"
+        DATETIME created_at "DEFAULT CURRENT_TIMESTAMP"
+        TEXT related_entity_type "Nullable"
+        INTEGER related_entity_id "Nullable"
+    }
