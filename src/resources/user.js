@@ -252,11 +252,64 @@ class User {
       // Response: The updated user object (excluding sensitive data).
 
       console.log('[User.updateUser] Called with userId:', userId, 'updateData:', updateData);
-      // Placeholder for actual implementation
-      // Replace the line below with actual database logic
-      throw new Error('updateUser method not fully implemented. Refer to prompts/user.txt for detailed logic.');
+      if (!this.db) {
+        throw new Error('Database connection not available in User resource.');
+      }
+      if (!userId) {
+        throw new Error('User ID is required for update.');
+      }
+      if (!updateData || Object.keys(updateData).length === 0) {
+        throw new Error('No update data provided.');
+      }
+
+      const allowedFields = ['name', 'email', 'major', 'graduation_year', 'industry', 'location', 'description'];
+      const fieldPlaceholders = [];
+      const values = [];
+
+      for (const field of allowedFields) {
+        if (updateData.hasOwnProperty(field)) {
+          fieldPlaceholders.push(`${field} = ?`);
+          values.push(updateData[field]);
+        }
+      }
+
+      if (fieldPlaceholders.length === 0) {
+        throw new Error('No valid fields provided for update.');
+      }
+
+      values.push(userId); // Add userId for the WHERE clause
+
+      const sql = `UPDATE User SET ${fieldPlaceholders.join(', ')} WHERE id = ?`;
+      
+      console.log(`[User.updateUser] Executing SQL: ${sql} with values:`, values);
+      const stmt = this.db.prepare(sql);
+      const result = stmt.run(...values);
+
+      if (result.changes > 0) {
+        // Fetch and return the updated user
+        return this.getUserById(userId);
+      } else {
+        // User not found or no changes made (e.g., data was the same)
+        // Check if user exists to differentiate
+        const existingUser = await this.getUserById(userId); // Added await here
+        if (!existingUser) {
+          // It's better to let handlePatch return 404 if user not found before update attempt.
+          // However, if we reach here and changes is 0, and user doesn't exist, it's an issue.
+          // For now, this path might indicate user was deleted between check and update, or ID was invalid.
+          // The handlePatch should ideally check for user existence first.
+          // Throwing an error here if user not found after attempting update with 0 changes.
+          throw new Error('User not found, cannot update.');
+        }
+        // If user exists but no changes, it could mean data was identical.
+        // Returning the existing (unchanged) user is reasonable.
+        return existingUser; 
+      }
     } catch (error) {
       console.error('Error in User.updateUser:', error.message);
+      // Consider specific DB errors, e.g., UNIQUE constraint violation if email is updated to an existing one
+      if (error.message.includes('UNIQUE constraint failed: User.email')) {
+        throw new Error('Email update would result in a duplicate.');
+      }
       throw error;
     }
   }
