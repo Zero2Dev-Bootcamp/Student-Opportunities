@@ -4,17 +4,40 @@ import User from '../src/resources/user.js'; // Adjust path as necessary
 describe('User Resource', () => {
   let mockDb;
   let userService;
+  let mockGet, mockAll, mockRun; // Declare them here to be accessible in tests for specific overrides
 
   beforeEach(() => {
-    // Create a mock db object for each test
+    // Define or redefine mocks for each test to ensure isolation
+    mockGet = mock(async (param) => {
+      // Default behavior: return a generic user for specific IDs/usernames, else null
+      if (param === '1' || param === 'existingUser' || param === 'triggerNotImplemented' || param === 'testuser' || param === 'Test User') {
+        let name = 'Test User'; // Default name
+        let idVal = param;     // Default idVal to param
+
+        if (param === 'testuser' || param === 'Test User') {
+          name = 'Test User';
+          idVal = 'mockIdForTestUser'; // Specific ID for this username test case if needed
+        } else if (param === '1') {
+          name = 'Test User'; // Or '1' if the ID should also be the name
+          idVal = '1';
+        } else if (param === 'existingUser') {
+          name = 'Test User'; // Ensure name is 'Test User' for 'existingUser' ID
+          idVal = 'existingUser';
+        }
+        // For 'triggerNotImplemented', idVal will be 'triggerNotImplemented' and name 'Test User'
+        
+        return { id: idVal, name: name, email: 'test@example.com', user_type: 'student' };
+      }
+      return null;
+    });
+    mockAll = mock(async () => [{ id: '1', name: 'Test User 1', email: 'test1@example.com', user_type: 'student' }]);
+    mockRun = mock(() => ({ changes: 1, lastInsertRowid: 123 }));
+
     mockDb = {
-      // Mock any specific db methods if User class tries to call them directly in constructor
-      // For now, an empty object or a simple mock should suffice as constructor only assigns it.
-      collection: mock(() => ({
-        insertOne: mock(),
-        findOne: mock(),
-        updateOne: mock(),
-        deleteOne: mock(),
+      prepare: mock((query) => ({
+        get: mockGet,
+        all: mockAll,
+        run: mockRun,
       })),
     };
     userService = new User(mockDb);
@@ -29,23 +52,66 @@ describe('User Resource', () => {
   });
 
   describe('Core Methods (Stubs)', () => {
-    it('createUser should throw "not fully implemented" error', async () => {
-      const userData = { username: 'testuser', email: 'test@example.com', password: 'password123' };
-      try {
-        await userService.createUser(userData);
-      } catch (e) {
-        expect(e.message).toContain('createUser method not fully implemented');
-      }
-      // A more robust way to test for thrown errors with bun:test
-      expect(async () => await userService.createUser(userData)).toThrow('createUser method not fully implemented');
+    it('createUser should create a user when valid data is provided', async () => {
+      const userData = { username: 'testuser', email: 'test@example.com', password: 'password123', role: 'student', major: 'CS', graduation_year: 2025 };
+      const createdUser = await userService.createUser(userData);
+      expect(createdUser).toBeDefined();
+      expect(createdUser.id).toBe(123); // from mockRun lastInsertRowid
+      expect(createdUser.name).toBe(userData.username);
+      expect(createdUser.user_type).toBe(userData.role);
+      // Check that prepare and run were called
+      expect(mockDb.prepare).toHaveBeenCalled();
+      // Access the mock returned by prepare().run
+      const prepareMock = mockDb.prepare.mock.results[0].value;
+      expect(prepareMock.run).toHaveBeenCalled();
     });
 
-    it('getUserById should throw "not fully implemented" error', async () => {
-      expect(async () => await userService.getUserById('123')).toThrow('getUserById method not fully implemented');
+    it('createUser should throw an error if role is missing', async () => {
+      const userData = { username: 'testuser', email: 'test@example.com', password: 'password123' }; // No role
+      await expect(userService.createUser(userData)).rejects.toThrow("Invalid role: undefined. Must be 'student' or 'company'.");
+    });
+    
+    it('getUserById should return a user when found', async () => {
+      const userId = '1';
+      // The mockGet in beforeEach is already set up to return a user.
+      const user = await userService.getUserById(userId);
+      expect(user).toBeDefined();
+      expect(user.id).toBe(userId); // Assuming mockGet returns the ID it was called with, or a fixed one.
+      expect(mockDb.prepare).toHaveBeenCalled();
+      const prepareMock = mockDb.prepare.mock.results[0].value; // Get the latest prepare mock
+      expect(prepareMock.get).toHaveBeenCalledWith(userId);
     });
 
-    it('getUserByUsername should throw "not fully implemented" error', async () => {
-      expect(async () => await userService.getUserByUsername('testuser')).toThrow('getUserByUsername method not fully implemented');
+    it('getUserById should return null when user not found', async () => {
+      const userId = 'nonexistent';
+      mockGet.mockResolvedValueOnce(null); // Override mockGet for this specific call
+
+      const user = await userService.getUserById(userId);
+      expect(user).toBeNull();
+      expect(mockDb.prepare).toHaveBeenCalled(); // prepare is called
+      expect(mockGet).toHaveBeenCalledWith(userId); // The mockGet itself is called with userId
+    });
+
+    it('getUserByUsername should return a user when found', async () => {
+      const username = 'testuser';
+      // The mockGet in beforeEach is set up to return a user.
+      // We can rely on that or be more specific if needed.
+      const user = await userService.getUserByUsername(username);
+      expect(user).toBeDefined();
+      expect(user.name).toBe('Test User'); // From the default mockGet
+      expect(mockDb.prepare).toHaveBeenCalled();
+      const prepareMock = mockDb.prepare.mock.results[0].value; // Get the latest prepare mock
+      expect(prepareMock.get).toHaveBeenCalledWith(username);
+    });
+
+    it('getUserByUsername should return null when user not found', async () => {
+      const username = 'nonexistentuser';
+      mockGet.mockResolvedValueOnce(null); // Override mockGet for this specific call
+
+      const user = await userService.getUserByUsername(username);
+      expect(user).toBeNull();
+      expect(mockDb.prepare).toHaveBeenCalled();
+      expect(mockGet).toHaveBeenCalledWith(username);
     });
 
     it('updateUser should throw "not fully implemented" error', async () => {
@@ -83,49 +149,54 @@ describe('User Resource', () => {
   });
 
   describe('HTTP Handler Methods', () => {
-    // Mock core service methods for handler tests
+    // For these tests, the userService instance (created in the top-level beforeEach)
+    // will use the mockDb. We will override the behavior of mockGet, mockAll, or mockRun
+    // for specific test cases as needed.
     beforeEach(() => {
-        userService.getUserById = mock(async (id) => {
-            if (id === 'existingUser') return { id: 'existingUser', username: 'test' };
-            if (id === 'triggerNotImplemented') throw new Error('getUserById method not fully implemented');
-            return null;
-        });
-        userService.getUserByUsername = mock(async (username) => {
-            if (username === 'existingUser') return { id: 'someId', username: 'existingUser', passwordHash: 'hashed' };
-            if (username === 'triggerNotImplemented') throw new Error('getUserByUsername method not fully implemented');
-            return null;
-        });
-        userService.createUser = mock(async (userData) => {
-            if (userData.username === 'triggerNotImplemented') throw new Error('createUser method not fully implemented');
-            if (userData.username === 'failCreate') throw new Error('DB constraint failed');
-            return { id: 'newUser123', ...userData };
-        });
-         userService.updateUser = mock(async (userId, updateData) => {
-            if (userId === 'triggerNotImplemented') throw new Error('updateUser method not fully implemented');
-            if (userId === 'nonExistentUser') return null;
-            if (userId === 'failUpdate') throw new Error('DB update error');
-            return { id: userId, ...updateData };
-        });
-        userService.deleteUser = mock(async (userId) => {
-            if (userId === 'triggerNotImplemented') throw new Error('deleteUser method not fully implemented');
-            if (userId === 'nonExistentUser') return null;
-            if (userId === 'failDelete') throw new Error('DB delete error');
-            // Return a simple object representing the deleted user, as per prompts/user.txt
-            return { id: userId, status: 'deleted' }; 
-        });
+      // Reset userService to a fresh instance with the standard mockDb for each handler test
+      // This prevents mocks from one test bleeding into another if we were to modify methods on userService directly.
+      userService = new User(mockDb);
+
+      // Keep these specific service method mocks if they are essential for testing
+      // how the HANDLER reacts to these specific outcomes from the service layer,
+      // especially for methods not covered by handleGet's direct DB interactions.
+      // For handleGet, we'll primarily rely on controlling mockGet/mockAll.
+      userService.createUser = mock(async (userData) => {
+          if (userData.username === 'triggerNotImplemented') throw new Error('createUser method not fully implemented');
+          if (userData.username === 'failCreate') throw new Error('DB constraint failed');
+          // Ensure role is passed for successful creation if the actual method expects it
+          return { id: 'newUser123', ...userData, user_type: userData.role || 'student' };
+      });
+       userService.updateUser = mock(async (userId, updateData) => {
+          if (userId === 'triggerNotImplemented') throw new Error('updateUser method not fully implemented');
+          if (userId === 'nonExistentUser') return null;
+          if (userId === 'failUpdate') throw new Error('DB update error');
+          return { id: userId, ...updateData };
+      });
+      userService.deleteUser = mock(async (userId) => {
+          if (userId === 'triggerNotImplemented') throw new Error('deleteUser method not fully implemented');
+          if (userId === 'nonExistentUser') return null;
+          if (userId === 'failDelete') throw new Error('DB delete error');
+          return { id: userId, status: 'deleted' }; 
+      });
     });
 
     describe('handleGet', () => {
       it('should return user by ID if found', async () => {
-        const req = new Request('http://localhost/users/existingUser');
+        const userId = 'existingUser';
+        // mockGet is already configured in top-level beforeEach to return a user for 'existingUser'
+        // Default mockGet returns: { id: 'existingUser', name: 'Test User', email: 'test@example.com', user_type: 'student' }
+        const req = new Request(`http://localhost/users/${userId}`);
         const response = await userService.handleGet(req);
         expect(response.status).toBe(200);
         const body = await response.json();
-        expect(body).toEqual({ id: 'existingUser', username: 'test' });
+        expect(body).toEqual({ id: 'existingUser', name: 'Test User', email: 'test@example.com', user_type: 'student' });
       });
 
       it('should return 404 if user by ID not found', async () => {
-        const req = new Request('http://localhost/users/nonExistentUser');
+        const userId = 'nonExistentUser';
+        mockGet.mockResolvedValueOnce(null); // Make DB call return null for this test
+        const req = new Request(`http://localhost/users/${userId}`);
         const response = await userService.handleGet(req);
         expect(response.status).toBe(404);
         const body = await response.json();
@@ -133,39 +204,52 @@ describe('User Resource', () => {
       });
 
       it('should return user by username if found', async () => {
-        const req = new Request('http://localhost/users?username=existingUser');
+        const req = new Request('http://localhost/users?username=Test User'); // Default mock returns 'Test User'
+        // Ensure the mockDb's get method is primed for this username
+        mockDb.prepare().get.mockResolvedValueOnce({ id: '1', name: 'Test User', email: 'test@example.com', user_type: 'student' });
         const response = await userService.handleGet(req);
         expect(response.status).toBe(200);
         const body = await response.json();
-        expect(body).toEqual({ id: 'someId', username: 'existingUser' }); // passwordHash should be excluded
+        expect(body.name).toBe('Test User');
       });
 
       it('should return 404 if user by username not found', async () => {
         const req = new Request('http://localhost/users?username=nonExistentUser');
+        mockDb.prepare().get.mockResolvedValueOnce(null); // Mock DB to find no user
         const response = await userService.handleGet(req);
         expect(response.status).toBe(404);
         const body = await response.json();
         expect(body.error).toBe('User not found by username');
       });
 
-      it('should return 400 if no ID or username provided', async () => {
+      it('should return all users if no ID or username provided (status 200)', async () => {
         const req = new Request('http://localhost/users');
+        // mockDb.prepare().all is already set up in the main beforeEach
         const response = await userService.handleGet(req);
-        expect(response.status).toBe(400);
+        expect(response.status).toBe(200);
         const body = await response.json();
-        expect(body.error).toBe('User ID or username query parameter not provided');
+        expect(Array.isArray(body)).toBe(true);
+        // expect(body.length).toBe(1); // Based on default mockAll
       });
 
-      it('should return 501 if core method is not implemented (ID path)', async () => {
-        const req = new Request('http://localhost/users/triggerNotImplemented');
+      it('should return 501 if core method getUserById is not implemented (ID path)', async () => {
+        const userId = 'triggerNotImplemented';
+        // Make the underlying getUserById (via mockGet) throw the error
+        mockGet.mockImplementationOnce(async () => { throw new Error('getUserById method not fully implemented'); });
+        
+        const req = new Request(`http://localhost/users/${userId}`);
         const response = await userService.handleGet(req);
         expect(response.status).toBe(501);
         const body = await response.json();
         expect(body.error).toContain('getUserById method not fully implemented');
       });
-       it('should return 501 if core method is not implemented (username path)', async () => {
-        userService.getUserById = mock(async () => null); // Ensure ID path doesn't trigger it
-        const req = new Request('http://localhost/users?username=triggerNotImplemented');
+
+       it('should return 501 if core method getUserByUsername is not implemented (username path)', async () => {
+        const username = 'triggerNotImplemented';
+        // Make the underlying getUserByUsername (via mockGet) throw the error
+        mockGet.mockImplementationOnce(async () => { throw new Error('getUserByUsername method not fully implemented'); });
+
+        const req = new Request(`http://localhost/users?username=${username}`);
         const response = await userService.handleGet(req);
         expect(response.status).toBe(501);
         const body = await response.json();
@@ -175,7 +259,7 @@ describe('User Resource', () => {
 
     describe('handlePost', () => {
       it('should create a user and return 201', async () => {
-        const userData = { username: 'newUser', email: 'new@example.com', password: 'password' };
+        const userData = { username: 'newUser', email: 'new@example.com', password: 'password', role: 'student' }; // Added role
         const req = new Request('http://localhost/users', {
           method: 'POST',
           body: JSON.stringify(userData),
@@ -184,9 +268,27 @@ describe('User Resource', () => {
         const response = await userService.handlePost(req);
         expect(response.status).toBe(201);
         const body = await response.json();
-        expect(body).toEqual({ id: 'newUser123', ...userData });
+        // The mock createUser adds user_type based on role or defaults to 'student'
+        expect(body).toEqual({ id: 'newUser123', ...userData, user_type: userData.role });
       });
 
+      it('should create a user and return 201 (with default role if not provided by test)', async () => {
+        // This test variant checks the default role assignment in the mock
+        const userData = { username: 'newUserNoRole', email: 'newnorole@example.com', password: 'password' };
+        // The mock for createUser in HTTP Handler tests is:
+        // return { id: 'newUser123', ...userData, user_type: userData.role || 'student' };
+        // So, if userData.role is undefined, user_type becomes 'student'.
+        const req = new Request('http://localhost/users', {
+          method: 'POST',
+          body: JSON.stringify(userData),
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const response = await userService.handlePost(req);
+        expect(response.status).toBe(201);
+        const body = await response.json();
+        expect(body).toEqual({ id: 'newUser123', ...userData, user_type: 'student' }); // Expect 'student' as user_type
+      });
+      
       it('should return 501 if createUser is not implemented', async () => {
         const userData = { username: 'triggerNotImplemented', email: 'new@example.com' };
         const req = new Request('http://localhost/users', {

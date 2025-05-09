@@ -430,10 +430,10 @@ class User {
         }
       }
       
-      console.log(`[User.handleGet] Determined userId: ${userId}`);
+      console.log(`[User.handleGet] Determined userId from path: ${userId}`);
 
       if (userId) {
-        console.log(`[User.handleGet] Path is for a specific user. Calling getUserById with ID: ${userId}`);
+        console.log(`[User.handleGet] Path is for a specific user by ID. Calling getUserById with ID: ${userId}`);
         const user = await this.getUserById(userId);
         if (user) {
           return new Response(JSON.stringify(user), {
@@ -447,16 +447,34 @@ class User {
           });
         }
       } else {
-        console.log(`[User.handleGet] Path is NOT for a specific user OR ID extraction failed. Calling getAllUsers.`);
-        // If no ID (userid) is provided in the path, get all users.
-        const users = await this.getAllUsers();
-        // getAllUsers is expected to return an array (empty or populated) on success,
-        // or throw an error if something goes wrong (which is caught by the outer try-catch).
-        return new Response(JSON.stringify(users), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
+        // No ID in path, check for username query parameter
+        const username = url.searchParams.get('username');
+        console.log(`[User.handleGet] Username from query param: ${username}`);
+
+        if (username) {
+          console.log(`[User.handleGet] Query is for a specific user by username. Calling getUserByUsername with username: ${username}`);
+          const user = await this.getUserByUsername(username);
+          if (user) {
+            return new Response(JSON.stringify(user), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            });
+          } else {
+            return new Response(JSON.stringify({ error: 'User not found by username' }), {
+              status: 404,
+              headers: { 'Content-Type': 'application/json' },
+            });
+          }
+        } else {
+          // No ID in path and no username in query, get all users
+          console.log(`[User.handleGet] No ID in path and no username query. Calling getAllUsers.`);
+          const users = await this.getAllUsers();
+          return new Response(JSON.stringify(users), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        } // This closes the else for "if (username)"
+      } // This closes the else for "if (userId)"
     } catch (error) {
       if (error.message.includes("not fully implemented")) {
         return new Response(JSON.stringify({ error: error.message }), {
