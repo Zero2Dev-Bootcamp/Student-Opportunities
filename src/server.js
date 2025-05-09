@@ -2,11 +2,13 @@ import path from 'path';
 import fs from 'fs';
 import db from '../db/db.js'; // Import the database instance
 import User from './resources/user.js'; // Import the User resource
+import Application from './resources/application.js'; // Import the Application resource
 
 const port = 3000;
 
 // Instantiate resources
 const userResource = new User(db);
+const applicationResource = new Application(db); // Instantiate Application resource
 
 Bun.serve({
   port: port,
@@ -28,8 +30,23 @@ Bun.serve({
       if (req.method === 'DELETE') {
         return userResource.handleDelete(req);
       }
-      // Add other methods (PUT, etc.) if needed
-      return new Response("Method not allowed for /user", { status: 405 });
+      return new Response("Method not allowed for /user resource", { status: 405 });
+    } 
+    // API Routing for /application or /applications
+    else if (url.pathname.startsWith('/application') || url.pathname.startsWith('/applications')) {
+      if (req.method === 'GET') {
+        return applicationResource.handleGet(req);
+      }
+      if (req.method === 'POST') {
+        return applicationResource.handlePost(req);
+      }
+      if (req.method === 'PATCH') {
+        return applicationResource.handlePatch(req);
+      }
+      if (req.method === 'DELETE') {
+        return applicationResource.handleDelete(req);
+      }
+      return new Response("Method not allowed for /application resource", { status: 405 });
     }
 
     // Static file serving
