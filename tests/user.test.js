@@ -157,8 +157,28 @@ describe('User Resource', () => {
       await expect(userService.updateUser(userId, updateData)).rejects.toThrow('User not found, cannot update.');
     });
 
-    it('deleteUser should throw "not fully implemented" error', async () => {
-      expect(async () => await userService.deleteUser('123')).toThrow('deleteUser method not fully implemented');
+    it('deleteUser should return a success message when user is deleted', async () => {
+      const userId = '123';
+      // mockRun is already set up to return { changes: 1 } by default
+      const result = await userService.deleteUser(userId);
+      
+      expect(mockDb.prepare).toHaveBeenCalled();
+      const prepareMock = mockDb.prepare.mock.results[0].value; // Get the latest prepare mock
+      expect(prepareMock.run).toHaveBeenCalledWith(userId);
+      
+      expect(result).toEqual({ id: userId, message: 'User deleted successfully.' });
+    });
+
+    it('deleteUser should return null if user not found (no rows affected)', async () => {
+      const userId = 'nonexistentUserToDelete';
+      mockRun.mockReturnValueOnce({ changes: 0 }); // Simulate no rows affected
+
+      const result = await userService.deleteUser(userId);
+      
+      expect(mockDb.prepare).toHaveBeenCalled();
+      const prepareMock = mockDb.prepare.mock.results[0].value;
+      expect(prepareMock.run).toHaveBeenCalledWith(userId);
+      expect(result).toBeNull();
     });
   });
 
