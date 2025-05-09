@@ -114,8 +114,47 @@ describe('User Resource', () => {
       expect(mockGet).toHaveBeenCalledWith(username);
     });
 
-    it('updateUser should throw "not fully implemented" error', async () => {
-      expect(async () => await userService.updateUser('123', { email: 'new@example.com' })).toThrow('updateUser method not fully implemented');
+    it('updateUser should update a user and return the updated user', async () => {
+      const userId = '123';
+      const updateData = { name: 'Updated Name', email: 'updated@example.com' };
+      
+      // Mock a user being returned by getUserById after update
+      mockGet.mockResolvedValueOnce({ id: userId, ...updateData });
+
+      const updatedUser = await userService.updateUser(userId, updateData);
+      
+      expect(mockDb.prepare).toHaveBeenCalled(); // Check if prepare was called for the UPDATE
+      const prepareMockRun = mockDb.prepare.mock.results[0].value; // This would be the prepare for UPDATE
+      expect(prepareMockRun.run).toHaveBeenCalled();
+      
+      // Check if getUserById was called (it's called internally by updateUser)
+      // This will be a separate call to prepare, so we look at the next result if available, or a specific call
+      // For simplicity, we can check if mockGet was called with userId after the update.
+      // Note: mockGet is called by getUserById.
+      expect(mockGet).toHaveBeenCalledWith(userId); // Called by this.getUserById within updateUser
+
+      expect(updatedUser).toBeDefined();
+      expect(updatedUser.id).toBe(userId);
+      expect(updatedUser.name).toBe(updateData.name);
+      expect(updatedUser.email).toBe(updateData.email);
+    });
+
+    it('updateUser should throw error if no valid fields provided', async () => {
+      const userId = '123';
+      const updateData = { invalidField: 'someValue' };
+      await expect(userService.updateUser(userId, updateData)).rejects.toThrow('No valid fields provided for update.');
+    });
+
+    it('updateUser should throw error if user not found (and no changes made)', async () => {
+      const userId = 'nonexistentUserForUpdate';
+      const updateData = { name: 'Updated Name' };
+      
+      // Mock the UPDATE to affect 0 rows
+      mockRun.mockReturnValueOnce({ changes: 0 });
+      // Mock getUserById (called after update attempt) to return null
+      mockGet.mockResolvedValueOnce(null); 
+
+      await expect(userService.updateUser(userId, updateData)).rejects.toThrow('User not found, cannot update.');
     });
 
     it('deleteUser should throw "not fully implemented" error', async () => {

@@ -327,9 +327,26 @@ class User {
       // Response: Confirmation message or the deleted user object.
 
       console.log('[User.deleteUser] Called with userId:', userId);
-      // Placeholder for actual implementation
-      // Replace the line below with actual database logic
-      throw new Error('deleteUser method not fully implemented. Refer to prompts/user.txt for detailed logic.');
+      if (!this.db) {
+        throw new Error('Database connection not available in User resource.');
+      }
+      if (!userId) {
+        throw new Error('User ID is required for deletion.');
+      }
+
+      const stmt = this.db.prepare("DELETE FROM User WHERE id = ?");
+      const result = stmt.run(userId);
+
+      if (result.changes > 0) {
+        // Successfully deleted the user
+        return { id: userId, message: 'User deleted successfully.' };
+      } else {
+        // No user found with that ID, or delete failed for other reasons (though less likely with simple delete)
+        // It's good practice for handleDelete to return a 404 if the resource to delete wasn't found.
+        // This method can signal that by returning null or a specific object.
+        // The handler (handleDelete) will then translate this to a 404.
+        return null; // Indicates user not found or not deleted
+      }
     } catch (error) {
       console.error('Error in User.deleteUser:', error.message);
       throw error;
