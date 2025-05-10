@@ -4,6 +4,25 @@
  * @file Application resource for managing student applications to opportunities.
  */
 
+// Helper function to get authentication context from request
+async function getAuthContext(req) {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('[Auth] No Authorization header or incorrect format.');
+    return null;
+  }
+  const token = authHeader.substring(7); // Remove 'Bearer '
+
+  // Mock token decoding based on login.js
+  if (token === 'mock-student') {
+    return { userId: 1, userType: 'student', token }; // student userId from login.js
+  } else if (token === 'mock-company') {
+    return { userId: 2, userType: 'company', token }; // company userId from login.js
+  }
+  console.log('[Auth] Invalid token:', token);
+  return null; // Invalid or unknown token
+}
+
 class Application {
   /**
    * Creates an instance of the Application resource.
@@ -17,7 +36,7 @@ class Application {
 
   /**
    * Creates a new application.
-   * @param {object} applicationData - Object containing student_user_id, opportunity_id, and optionally notes.
+   * @param {object} applicationData - Object containing student_user_id (from auth), opportunity_id, and optionally notes.
    * @returns {Promise<object|null>} The created application object or null/error.
    */
   async createApplication(applicationData) {
@@ -120,11 +139,12 @@ class Application {
    * Updates the status and/or notes of an application.
    * @param {string|number} applicationId - The ID of the application to update.
    * @param {object} updateData - Object containing status and/or notes.
+   * @param {object} authContext - The authentication context of the user performing the update.
    * @returns {Promise<object|null>} The updated application object or null if not found/not updated.
    */
-  async updateApplication(applicationId, updateData) {
+  async updateApplication(applicationId, updateData, authContext) {
     try {
-      console.log('[Application.updateApplication] Called for ID:', applicationId, 'with data:', updateData);
+      console.log('[Application.updateApplication] Called for ID:', applicationId, 'with data:', updateData, 'by user:', authContext.userId, authContext.userType);
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
@@ -133,6 +153,36 @@ class Application {
       }
       if (!updateData || Object.keys(updateData).length === 0) {
         throw new Error('No update data provided.');
+      }
+
+      const applicationToUpdate = await this.getApplicationById(applicationId);
+      if (!applicationToUpdate) {
+        throw new Error('Application not found, cannot update.');
+      }
+
+      // Authorization checks
+      if (authContext.userType === 'student') {
+        if (applicationToUpdate.student_user_id !== authContext.userId) {
+          throw new Error('Forbidden: Student can only update their own applications.');
+        }
+        if (updateData.status && updateData.status !== 'Withdrawn') {
+          throw new Error('Forbidden: Student can only set status to "Withdrawn" or update notes.');
+        }
+        // If student is only updating notes, status field might not be present in updateData
+        if (Object.keys(updateData).length === 1 && updateData.notes !== undefined) {
+          // This is fine, student updating notes
+        } else if (updateData.status && updateData.status !== 'Withdrawn') {
+             throw new Error('Forbidden: Student can only set status to "Withdrawn".');
+        }
+
+      } else if (authContext.userType === 'company') {
+        // Simplification: Company can update status but not withdraw.
+        // A real scenario would check if the company owns the opportunity linked to the application.
+        if (updateData.status === 'Withdrawn') {
+          throw new Error('Forbidden: Company cannot withdraw an application.');
+        }
+      } else {
+        throw new Error('Forbidden: Unknown user type cannot update application.');
       }
 
       const allowedFields = ['status', 'notes'];
@@ -185,16 +235,30 @@ class Application {
   /**
    * Deletes an application.
    * @param {string|number} applicationId - The ID of the application to delete.
-   * @returns {Promise<object|null>} Confirmation object or null if not found.
+   * @param {object} authContext - The authentication context of the user performing the deletion.
+   * @returns {Promise<object|null>} Confirmation object or null if not found/not allowed.
    */
-  async deleteApplication(applicationId) {
+  async deleteApplication(applicationId, authContext) {
     try {
-      console.log('[Application.deleteApplication] Called for ID:', applicationId);
+      console.log('[Application.deleteApplication] Called for ID:', applicationId, 'by user:', authContext.userId, authContext.userType);
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
       if (!applicationId) {
         throw new Error('Application ID is required for deletion.');
+      }
+
+      const applicationToDelete = await this.getApplicationById(applicationId);
+      if (!applicationToDelete) {
+        return null; // Application not found
+      }
+
+      // Authorization: Only student owner can delete
+      if (authContext.userType === 'student' && applicationToDelete.student_user_id === authContext.userId) {
+        // Allowed
+      } else {
+        console.warn(`[Auth] Forbidden: User ${authContext.userId} (${authContext.userType}) attempted to delete application ${applicationId} owned by ${applicationToDelete.student_user_id}`);
+        throw new Error('Forbidden: You do not have permission to delete this application.');
       }
 
       const stmt = this.db.prepare("DELETE FROM Application WHERE id = ?");
@@ -221,8 +285,24 @@ class Application {
    */
   async handlePost(req) {
     try {
-      const applicationData = await req.json();
-      console.log('[Application.handlePost] Received applicationData from req.json():', JSON.stringify(applicationData, null, 2)); // Log the received data
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (authContext.userType !== 'student') {
+        return new Response(JSON.stringify({ error: 'Forbidden: Only students can create applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const requestBody = await req.json();
+      console.log('[Application.handlePost] Received requestBody from req.json():', JSON.stringify(requestBody, null, 2));
+      
+      // Ensure student_user_id is from authenticated user, not from request body
+      const applicationData = {
+        ...requestBody,
+        student_user_id: authContext.userId 
+      };
+      
       const newApplication = await this.createApplication(applicationData);
       return new Response(JSON.stringify(newApplication), {
         status: 201, // Created
@@ -230,8 +310,9 @@ class Application {
       });
     } catch (error) {
       console.error('Error in Application.handlePost:', error.message);
+      const statusCode = error.message.startsWith('Forbidden:') ? 403 : 400;
       return new Response(JSON.stringify({ error: error.message || 'Failed to create application' }), {
-        status: 400, // Bad Request (or other appropriate error code)
+        status: statusCode,
         headers: { 'Content-Type': 'application/json' },
       });
     }
@@ -247,35 +328,49 @@ class Application {
    */
   async handleGet(req) {
     try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
       const url = new URL(req.url);
       const pathname = url.pathname;
-      const studentId = url.searchParams.get('studentId');
+      const studentIdParam = url.searchParams.get('studentId');
       const opportunityId = url.searchParams.get('opportunityId');
       
-      // Regex to capture ID from /application/:id or /applications/:id
       const idMatch = pathname.match(/^\/(application|applications)\/([^/]+)/i);
       const applicationIdFromPath = (idMatch && idMatch[2]) ? idMatch[2] : null;
 
       if (applicationIdFromPath) {
+        // TODO: Add ownership check for students (can only get their own app by ID)
+        // For now, any authenticated user can fetch by ID.
         const application = await this.getApplicationById(applicationIdFromPath);
         if (application) {
+          // Student check: can only get their own application by ID
+          if (authContext.userType === 'student' && application.student_user_id !== authContext.userId) {
+            return new Response(JSON.stringify({ error: 'Forbidden: You can only view your own applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+          }
           return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
         } else {
           return new Response(JSON.stringify({ error: 'Application not found by ID' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
         }
-      } else if (studentId) {
-        const applications = await this.getApplicationsByStudentId(studentId);
+      } else if (studentIdParam) {
+        if (authContext.userType === 'student' && parseInt(studentIdParam, 10) !== authContext.userId) {
+          return new Response(JSON.stringify({ error: 'Forbidden: Students can only view their own applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        }
+        const applications = await this.getApplicationsByStudentId(studentIdParam);
         return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
       } else if (opportunityId) {
+        // TODO: Add role-based access for companies (can only see apps for their opportunities)
         const applications = await this.getApplicationsByOpportunityId(opportunityId);
         return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
       } else {
-        // Optional: Could implement getAllApplications() if needed, or return error for non-specific GET
         return new Response(JSON.stringify({ error: 'Please specify an application ID, studentId, or opportunityId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
     } catch (error) {
       console.error('Error in Application.handleGet:', error.message);
-      return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      const statusCode = error.message.startsWith('Forbidden:') ? 403 : 500;
+      return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
     }
   }
 
@@ -288,9 +383,13 @@ class Application {
    */
   async handlePatch(req) {
     try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
       const url = new URL(req.url);
       const pathParts = url.pathname.split('/').filter(Boolean);
-      // Basic ID extraction, assumes /applications/:id
       const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[pathParts.length - 1] : null;
 
       if (!applicationId) {
@@ -298,17 +397,21 @@ class Application {
       }
 
       const updateData = await req.json();
-      const updatedApplication = await this.updateApplication(applicationId, updateData);
+      // Pass authContext to the core updateApplication method
+      const updatedApplication = await this.updateApplication(applicationId, updateData, authContext); 
       
-      if (updatedApplication) {
-        return new Response(JSON.stringify(updatedApplication), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      } else {
-         // updateApplication throws error if not found, so this case might not be hit if error handling is robust.
-        return new Response(JSON.stringify({ error: 'Application not found or update failed' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
-      }
+      // updateApplication now throws specific errors for not found or forbidden
+      return new Response(JSON.stringify(updatedApplication), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
     } catch (error) {
       console.error('Error in Application.handlePatch:', error.message);
-      return new Response(JSON.stringify({ error: error.message || 'Failed to update application' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      let statusCode = 400; // Bad Request by default
+      if (error.message.includes('not found')) {
+        statusCode = 404;
+      } else if (error.message.startsWith('Forbidden:')) {
+        statusCode = 403;
+      }
+      return new Response(JSON.stringify({ error: error.message || 'Failed to update application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
     }
   }
 
@@ -320,6 +423,11 @@ class Application {
    */
   async handleDelete(req) {
     try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
       const url = new URL(req.url);
       const pathParts = url.pathname.split('/').filter(Boolean);
       const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[pathParts.length - 1] : null;
@@ -328,15 +436,23 @@ class Application {
         return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
 
-      const result = await this.deleteApplication(applicationId);
+      // Pass authContext to the core deleteApplication method
+      const result = await this.deleteApplication(applicationId, authContext); 
       if (result) {
         return new Response(JSON.stringify(result), { status: 200, headers: { 'Content-Type': 'application/json' } });
       } else {
-        return new Response(JSON.stringify({ error: 'Application not found or delete failed' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+        // This case (null result) means application not found by deleteApplication's initial check
+        return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
       }
     } catch (error) {
       console.error('Error in Application.handleDelete:', error.message);
-      return new Response(JSON.stringify({ error: error.message || 'Failed to delete application' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      let statusCode = 500; // Internal Server Error by default
+      if (error.message.startsWith('Forbidden:')) {
+        statusCode = 403;
+      } else if (error.message.includes('not found')) { // Should be caught by the null check above, but as a fallback
+        statusCode = 404;
+      }
+      return new Response(JSON.stringify({ error: error.message || 'Failed to delete application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
     }
   }
 }
