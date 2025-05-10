@@ -1,5 +1,5 @@
 Stakeholders: Students Opportunities Hub
-Context: The project involves multiple groups with vested interests in supporting high school students.
+Context: The project involves multiple groups with vested interests in supporting high school and college students.
 Role: The project team engages stakeholders to align goals and gather requirements.
 Axioms:
 
@@ -28,4 +28,3 @@ Students: End-users seeking opportunities.
 Schools: Provide opportunity listings and promote platform.
 Parents: Support student engagement.
 Local Organizations: Post opportunities.
-

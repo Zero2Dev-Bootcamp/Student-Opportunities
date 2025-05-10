@@ -1,5 +1,5 @@
 Project Scope: Students Opportunities Hub
-Context: The platform targets high school students seeking local opportunities. It addresses the gap in centralized, teen-focused opportunity databases.
+Context: The platform targets high school and college students seeking local opportunities. It addresses the gap in centralized, student-focused opportunity databases.
 Role: The project team will define boundaries to ensure timely delivery within budget.
 Axioms:
 
@@ -22,4 +22,3 @@ Deliverables:
 
 Scope document detailing inclusions, exclusions, and constraints.
 Format: Markdown file.
-
