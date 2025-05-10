@@ -4,5 +4,13 @@
   "scripts": {
     "dev": "bun src/server.js",
     "seed": "bun run db/seed.js"
+  },
+  "module": "index.ts",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }
