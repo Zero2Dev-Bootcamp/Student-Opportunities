@@ -107,13 +107,13 @@ body {
     transform: translateY(-2px);
     animation: glitch 0.3s;
 }
-.internships, .clubs, .testimonials, .features, .register-section, .faq {
+.internships, .clubs, .testimonials, .features, .register-section, .faq, .opportunities, .login-section, .opportunity-details, .notifications, .post-opportunity {
     padding: 2rem;
     text-align: center;
     max-width: 1200px;
     margin: 0 auto;
 }
-.internships h2, .clubs h2, .testimonials h2, .features h2, .register-section h2, .faq h2 {
+.opportunities h2, .login-section h2, .opportunity-details h2, .notifications h2, .post-opportunity h2 {
     color: #1E90FF;
     font-size: 2rem;
     margin-bottom: 2rem;
@@ -132,7 +132,7 @@ body {
     color: #121212;
     border: 1px solid #00D4B4;
     transition: transform 0.3s;
-}$
+}
 .internship-card:hover, .club-card:hover {
     transform: translateY(-5px);
 }
@@ -220,14 +220,14 @@ body {
     font-family: 'Source Code Pro', monospace;
     color: #00D4B4;
 }
-.register-section {
+.register-section, .login-section, .opportunity-details, .notifications, .post-opportunity {
     padding: 3rem 2rem;
     text-align: center;
     max-width: 800px;
     margin: 0 auto;
     background-color: #121212;
 }
-.register-form {
+.login-form, .opportunity-form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -287,6 +287,35 @@ body {
     box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55;
     transform: translateY(-2px);
 }
+.form-message {
+    margin-top: 0.5rem;
+    font-family: 'Source Code Pro', monospace;
+}
+.notification {
+    background-color: #E6E6E6;
+    color: #121212;
+    padding: 0.5rem;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.notification.read {
+    opacity: 0.7;
+}
+.notification button {
+    background-color: #FF2D55;
+    color: #E6E6E6;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 5px;
+    font-family: 'Source Code Pro', monospace;
+    cursor: pointer;
+}
+.notification button:hover {
+    box-shadow: 0 0 5px #FF2D55;
+}
 .faq {
     background-color: #121212;
 }
@@ -332,21 +361,41 @@ footer a:hover {
         font-size: 1.8rem;
     }
     .navbar {
-        justify-content: space-between;
+        /* justify-content: space-between; */ /* Original behavior overridden */
+        flex-direction: column; /* Stack logo and nav-links container */
+        align-items: flex-start; /* Align children to the start */
     }
-    .navbar .nav-links a:not(.signin-button) {
-        display: none;
+    .navbar .logo { /* Add some space below the logo when stacked */
+        margin-bottom: 0.5rem;
     }
+    .navbar .nav-links {
+        flex-direction: column; /* Stack individual nav links */
+        align-items: flex-start; /* Align nav links to the start */
+        width: 100%; /* Ensure the nav-links container takes full width */
+    }
+    .navbar .nav-links a { /* Style all links within nav-links for mobile */
+        margin: 0.4rem 0; /* Vertical margin for spacing */
+        padding: 0.4rem 0; /* Padding for touch targets */
+        width: 100%; /* Make each link take full width for easier interaction */
+        box-sizing: border-box; /* Include padding in width calculation */
+    }
+    /* The rule .navbar .nav-links a:not(.signin-button) { display: none; } is effectively removed by not re-declaring it here. */
     .navbar .signin-button {
-        margin: 0;
+        margin: 0.5rem 0; /* Consistent vertical margin */
+        /* padding: 0.5rem 1rem; */ /* Inherits global styling */
+        width: auto; /* Allow button to size based on its content, or use 100% if preferred */
+        align-self: flex-start; /* Align with other stacked links */
     }
-    .register-form {
+    .register-form, .login-form, .opportunity-form {
         padding: 1.5rem;
     }
-    .internships h2, .clubs h2, .testimonials h2, .features h2, .faq h2 {
+    .internships h2, .clubs h2, .testimonials h2, .features h2, .faq h2, .opportunities h2, .login-section h2, .opportunity-details h2, .notifications h2, .post-opportunity h2 {
         font-size: 1.5rem;
     }
     .cta-button {
         margin: 0.5rem;
+    }
+    .internship-grid, .club-grid {
+        grid-template-columns: 1fr;
     }
 }
