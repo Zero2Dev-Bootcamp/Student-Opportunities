@@ -222,6 +222,7 @@ class Application {
   async handlePost(req) {
     try {
       const applicationData = await req.json();
+      console.log('[Application.handlePost] Received applicationData from req.json():', JSON.stringify(applicationData, null, 2)); // Log the received data
       const newApplication = await this.createApplication(applicationData);
       return new Response(JSON.stringify(newApplication), {
         status: 201, // Created
