@@ -1,5 +1,5 @@
 Design Guidelines: Students Opportunities Hub
-Context: Consistent design ensures a cohesive user experience for teens.
+Context: Consistent design ensures a cohesive user experience for students (high school and college).
 Role: Designers establish visual and UX standards.
 Axioms:
 
@@ -21,4 +21,3 @@ Deliverables:
 
 Design guideline document.
 Format: Markdown file.
-
