@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Studexplore</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Studexplore</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="opportunities.html">Opportunities</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+            <a href="index.html#signup" class="signin-button">Sign Up</a>
+        </div>
+        <!-- The menu-toggle div was removed to match the appearance of index.html's navbar.
+             If mobile-specific toggle functionality is still desired and styled differently,
+             it might need to be re-added or style.css adjusted. -->
+    </nav>
+
+    <main class="login-section">
+        <form id="loginForm" class="login-form">
+            <h2>Login to Studexplore</h2>
+            <p class="form-intro">Access your account to discover new opportunities or manage your listings.</p>
+            <div class="form-group">
+                <label for="loginEmail">Email Address</label>
+                <input type="email" id="loginEmail" name="email" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" name="password" placeholder="Enter your password" required>
+            </div>
+            <button type="submit" class="submit-button">Login</button>
+            <div id="loginMessage" class="form-message"></div>
+            <p class="form-switch">Don't have an account? <a href="index.html#signup">Sign Up</a></p>
+        </form>
+    </main>
+
+    <footer>
+        <p>© 2025 Studexplore. All rights reserved.</p>
+        <div class="social-media">
+            <a href="#">X</a>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initLogin } from '../src/resources/login.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initLogin();
+        });
+    </script>
+    <script>
+        // Basic mobile menu toggle functionality (if a toggle button is present)
+        // const mobileMenuButton = document.getElementById('mobile-menu');
+        // const navLinkItems = document.querySelector('.nav-links');
+
+        // if (mobileMenuButton && navLinkItems) {
+        //     mobileMenuButton.addEventListener('click', () => {
+        //         navLinkItems.classList.toggle('active');
+        //     });
+        // }
+        // Commenting out mobile menu JS as the toggle button was removed for visual consistency.
+    </script>
+</body>
+</html>
