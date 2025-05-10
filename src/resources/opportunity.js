@@ -44,7 +44,7 @@ async function submitApplication(opportunityId) {
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             },
             body: JSON.stringify({
-                student_user_id: localStorage.getItem('userId'),
+                // student_user_id is now derived from the auth token on the backend
                 opportunity_id: opportunityId,
                 notes: 'Excited to apply!'
             })
