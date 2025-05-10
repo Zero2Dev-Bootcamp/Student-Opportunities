@@ -1,0 +1,291 @@
+{
+  "version": "1",
+  "name": "Student Opportunities API Tests",
+  "requests": [
+    {
+      "name": "Serve index.html (GET /)",
+      "method": "GET",
+      "url": "http://localhost:3000/",
+      "headers": [],
+      "body": null,
+      "tests": [
+        {
+          "type": "status",
+          "value": 200
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "text/html" 
+        }
+      ]
+    },
+    {
+      "name": "Serve login.html (GET /login.html)",
+      "method": "GET",
+      "url": "http://localhost:3000/login.html",
+      "headers": [],
+      "body": null,
+      "tests": [
+        {
+          "type": "status",
+          "value": 200
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "text/html"
+        }
+      ]
+    },
+    {
+      "name": "Serve dashboard.html (GET /dashboard.html)",
+      "method": "GET",
+      "url": "http://localhost:3000/dashboard.html",
+      "headers": [],
+      "body": null,
+      "tests": [
+        {
+          "type": "status",
+          "value": 200
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "text/html"
+        }
+      ]
+    },
+    {
+      "name": "Serve style.css (GET /style.css)",
+      "method": "GET",
+      "url": "http://localhost:3000/style.css",
+      "headers": [],
+      "body": null,
+      "tests": [
+        {
+          "type": "status",
+          "value": 200
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "text/css"
+        }
+      ]
+    },
+    {
+      "name": "Serve js/app.js",
+      "method": "GET",
+      "url": "http://localhost:3000/js/app.js",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 },
+        { "type": "header", "key": "content-type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "name": "Serve js/register.js",
+      "method": "GET",
+      "url": "http://localhost:3000/js/register.js",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 },
+        { "type": "header", "key": "content-type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "name": "Serve js/login.js",
+      "method": "GET",
+      "url": "http://localhost:3000/js/login.js",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 },
+        { "type": "header", "key": "content-type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "name": "Serve js/opportunities.js",
+      "method": "GET",
+      "url": "http://localhost:3000/js/opportunities.js",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 },
+        { "type": "header", "key": "content-type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "name": "Serve js/opportunity.js",
+      "method": "GET",
+      "url": "http://localhost:3000/js/opportunity.js",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 },
+        { "type": "header", "key": "content-type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "name": "Serve js/notifications.js",
+      "method": "GET",
+      "url": "http://localhost:3000/js/notifications.js",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 },
+        { "type": "header", "key": "content-type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "name": "Serve js/postOpportunity.js",
+      "method": "GET",
+      "url": "http://localhost:3000/js/postOpportunity.js",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 },
+        { "type": "header", "key": "content-type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "name": "Serve assets/js/dashboard.js",
+      "method": "GET",
+      "url": "http://localhost:3000/assets/js/dashboard.js",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 },
+        { "type": "header", "key": "content-type", "value": "application/javascript" }
+      ]
+    },
+    {
+      "name": "Register User (POST /api/users)",
+      "method": "POST",
+      "url": "http://localhost:3000/api/users",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "type": "json",
+        "content": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"user_type\": \"student\"\n}"
+      },
+      "tests": [
+        { "type": "status", "value": 201 }
+      ]
+    },
+    {
+      "name": "Get User by ID (GET /api/users/:id)",
+      "method": "GET",
+      "url": "http://localhost:3000/api/users/1",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 }
+      ]
+    },
+    {
+      "name": "Login User (POST /api/login)",
+      "method": "POST",
+      "url": "http://localhost:3000/api/login",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "type": "json",
+        "content": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+      },
+      "tests": [
+        { "type": "status", "value": 200 }
+      ]
+    },
+    {
+      "name": "List Opportunities (GET /api/opportunities)",
+      "method": "GET",
+      "url": "http://localhost:3000/api/opportunities",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 }
+      ]
+    },
+    {
+      "name": "Create Opportunity (POST /api/opportunities)",
+      "method": "POST",
+      "url": "http://localhost:3000/api/opportunities",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "type": "json",
+        "content": "{\n  \"title\": \"Software Engineer Intern\",\n  \"description\": \"Exciting internship opportunity.\",\n  \"company_id\": 1,\n  \"location\": \"Remote\"\n}"
+      },
+      "tests": [
+        { "type": "status", "value": 201 }
+      ]
+    },
+    {
+      "name": "Get Opportunity by ID (GET /api/opportunities/:id)",
+      "method": "GET",
+      "url": "http://localhost:3000/api/opportunities/1",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 }
+      ]
+    },
+    {
+      "name": "List Notifications (GET /api/notifications)",
+      "method": "GET",
+      "url": "http://localhost:3000/api/notifications",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 }
+      ]
+    },
+    {
+      "name": "Update Notification (PATCH /api/notifications/:id)",
+      "method": "PATCH",
+      "url": "http://localhost:3000/api/notifications/1",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "type": "json",
+        "content": "{\n  \"is_read\": true\n}"
+      },
+      "tests": [
+        { "type": "status", "value": 200 }
+      ]
+    },
+    {
+      "name": "List Applications (GET /api/applications)",
+      "method": "GET",
+      "url": "http://localhost:3000/api/applications",
+      "headers": [],
+      "body": null,
+      "tests": [
+        { "type": "status", "value": 200 }
+      ]
+    },
+    {
+      "name": "Create Application (POST /api/applications)",
+      "method": "POST",
+      "url": "http://localhost:3000/api/applications",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "type": "json",
+        "content": "{\n  \"user_id\": 1,\n  \"opportunity_id\": 1,\n  \"status\": \"pending\"\n}"
+      },
+      "tests": [
+        { "type": "status", "value": 201 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,281 @@
+/* General Dashboard Styles */
+/* body styles are inherited from style.css */
+
+main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    /* background-color: #E6E6E6; Removed to revert to dark theme */
+    /* color: #121212; Removed to revert to dark theme text color */
+}
+
+h2 { /* Dashboard specific h2 styling, if different from style.css general h2 */
+    color: #1E90FF; /* Consistent with style.css */
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+h3 { /* Dashboard specific h3 styling */
+    color: #1E90FF; /* Consistent with style.css */
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Navbar styles are primarily inherited from style.css */
+/* Burger menu styles removed as the HTML structure has changed */
+
+
+/* Profile Section */
+.profile-section {
+    background-color: #E6E6E6; /* Light background, consistent with style.css cards */
+    color: #121212; /* Dark text for light backgrounds */
+    padding: 2rem;
+    border-radius: 8px; /* Dashboard specific radius, style.css cards have 10px */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.profile-section h2 {
+    color: #1E90FF;
+    /* text-align: left; */ /* Inherits center from general h2 if not overridden */
+    margin-bottom: 1rem;
+}
+
+#profile-summary p {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+#profile-summary strong {
+    font-family: 'Source Code Pro', monospace; /* Theme font */
+    color: #1E90FF; /* Primary accent */
+}
+
+/* Opportunities Section */
+.opportunities { /* This class is used in style.css for general opportunity pages, ensure specificity or alignment */
+    margin-bottom: 2rem;
+}
+
+.internship-grid, .club-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Card styles are largely inherited from .internship-card, .club-card in style.css */
+.internship-card, .club-card {
+    /* background-color, color, padding, box-shadow, border, border-radius (10px) are inherited from style.css */
+    /* Dashboard specific: slightly different border-radius if desired, or remove to use style.css's 10px */
+    border-radius: 8px; /* Overriding style.css's 10px for a dashboard-specific look */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* style.css has transform, dashboard adds box-shadow transition */
+    text-align: left; /* Explicitly set, though style.css also has it */
+}
+
+.internship-card:hover, .club-card:hover {
+    /* transform: translateY(-5px); is inherited from style.css */
+    box-shadow: 0 4px 10px rgba(0, 212, 180, 0.5), 0 2px 5px rgba(0,0,0,0.3); /* Combines original shadow with glow */
+}
+
+.internship-card h3, .club-card h3 {
+    color: #1E90FF; /* Primary accent for card titles, consistent with style.css */
+    font-size: 1.3rem; /* Potentially dashboard specific size */
+    margin-bottom: 0.5rem;
+}
+
+.internship-card .company, .club-card .club-name {
+    font-family: 'Source Code Pro', monospace; /* Theme font */
+    font-size: 0.9rem;
+    color: #FF2D55; /* Secondary accent, consistent with style.css */
+    margin-bottom: 0.75rem;
+}
+
+.internship-card p, .club-card p {
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.internship-card .target, .club-card .target {
+    font-style: italic;
+    font-size: 0.9rem;
+    color: #00D4B4; /* Tertiary accent, consistent with style.css */
+    margin-bottom: 1rem;
+}
+
+/* Apply button styles are inherited from .apply-button / .join-button in style.css */
+/* If dashboard buttons need specific tweaks, they can be added here */
+.internship-card .apply-button, .club-card .apply-button { /* Assuming .apply-button for clubs too on dashboard */
+    /* background-color, color, padding, border-radius, font-family, transition inherited */
+    /* Example of a dashboard-specific tweak if needed: */
+    /* padding: 0.5rem 1rem; */ /* Slightly different padding */
+}
+
+.internship-card .apply-button:hover, .club-card .apply-button:hover {
+    /* hover effects inherited from style.css */
+}
+
+
+/* Applications Section */
+.applications-section {
+    /* background-color: #121212; Inherited */
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.applications-section h2 {
+    color: #1E90FF;
+    margin-bottom: 1rem;
+}
+
+#application-list {
+    list-style: none;
+    padding: 0;
+}
+
+#application-list li {
+    background-color: #2a2a2a; /* Darker item background on main dark bg */
+    color: #E6E6E6; /* Ensure text is light */
+    padding: 1rem;
+    border-radius: 5px;
+    margin-bottom: 0.75rem;
+    border-left: 4px solid #00D4B4; /* Tertiary accent border */
+    font-size: 1rem;
+}
+
+#application-list li strong {
+    color: #1E90FF; /* Primary accent */
+}
+
+
+/* Notifications Section */
+.notifications { /* This class is used in style.css for general notification pages */
+    /* background-color: #121212; Inherited */
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.notifications h2 {
+    color: #1E90FF;
+    margin-bottom: 1rem;
+}
+
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* .notification class is used in style.css, dashboard specific overrides below */
+.notification {
+    background-color: #2a2a2a; /* Darker item on main dark bg, style.css uses #E6E6E6 */
+    color: #E6E6E6; /* Ensure text is light, style.css uses #121212 */
+    padding: 1rem; /* style.css has 0.5rem */
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid #FF2D55; /* Secondary accent for notifications */
+}
+
+.notification p {
+    margin: 0;
+    flex-grow: 1;
+}
+
+.notification button {
+    /* Uses styles from .submit-button or general button styles in style.css if applicable */
+    /* Explicit dashboard notification button style: */
+    background-color: #FF2D55; /* Theme button color */
+    color: #E6E6E6;
+    border: none;
+    padding: 0.5rem 1rem; /* style.css has 0.3rem 0.6rem */
+    border-radius: 5px;
+    font-family: 'Source Code Pro', monospace;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    margin-left: 1rem;
+}
+
+.notification button:hover {
+    background-color: #E02447; /* Darker shade of theme button color */
+    transform: translateY(-2px); /* Consistent hover effect */
+}
+
+.notification.read {
+    opacity: 0.6; /* style.css has 0.7 */
+    border-left-color: #6c757d; /* Grey out read notifications */
+}
+
+.notification.read button {
+    background-color: #6c757d; /* style.css has this too */
+    cursor: default;
+}
+
+
+/* Footer */
+/* Footer styles are primarily inherited from style.css */
+/* Dashboard specific overrides: */
+footer {
+    background-color: #0a0a0a; /* Even darker for dashboard footer, style.css has #121212 */
+    color: #A0A0A0; /* Lighter grey for dashboard footer text, style.css has #E6E6E6 */
+    /* padding, margin-top, border-top, text-align inherited or slightly tweaked if needed */
+    padding: 1.5rem 1rem; /* style.css has 1rem */
+    border-top: 1px solid #1E90FF; /* Consistent */
+}
+
+footer p {
+    margin-bottom: 0.5rem;
+}
+
+.social-media-links a {
+    color: #00D4B4; /* Tertiary accent, consistent with style.css */
+    margin: 0 0.75rem; /* style.css has 0.5rem */
+    text-decoration: none;
+    font-size: 1.2rem;
+    transition: color 0.3s;
+}
+
+.social-media-links a:hover {
+    color: #FF2D55; /* Secondary accent on hover, consistent */
+}
+
+/* Responsive Design - Specific to Dashboard Layout */
+@media (max-width: 768px) {
+    main {
+        padding: 1rem;
+    }
+
+    h2 {
+        font-size: 1.8rem;
+    }
+
+    h3 {
+        font-size: 1.3rem;
+    }
+
+    .internship-grid, .club-grid {
+        grid-template-columns: 1fr; /* Stack cards on smaller screens */
+    }
+
+    /* Responsive navbar styles for the old ul/li/burger structure are removed. */
+    /* General responsive navbar behavior is handled by style.css */
+
+    .profile-section, .applications-section, .notifications {
+        padding: 1.5rem;
+    }
+
+    .notification {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .notification button {
+        margin-top: 0.5rem;
+        margin-left: 0;
+        width: 100%;
+    }
+}

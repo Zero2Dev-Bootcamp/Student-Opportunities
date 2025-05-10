@@ -3,69 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Philippine Red Cross Volunteer Profile - Launch Lab</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <title>Philippine Red Cross - Studexplore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Company profile specific styles can be added to a new CSS file or inline if very minor -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Poppins', sans-serif;
-            color: #121212;
-            background-color: #F9FAFB;
-            line-height: 1.6;
-        }
-        .navbar {
-            background-color: #FFFFFF;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        .navbar .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1E90FF;
-        }
-        .navbar a {
-            color: #121212;
-            text-decoration: none;
-            margin: 0 1rem;
-            font-family: 'Source Code Pro', monospace;
-            font-weight: 400;
-            transition: color 0.3s;
-        }
-        .navbar a:hover {
-            color: #1E90FF;
-        }
-        .profile-header {
+        /* Minor specific styles for company profile page if needed, prefer style.css for common elements */
+        .profile-header-company { /* Renamed to avoid conflict with .profile-header if it exists in style.css with different purpose */
             padding: 3rem 2rem;
             text-align: center;
-            background: linear-gradient(135deg, #1E90FF, #00D4B4);
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.8), rgba(0, 212, 180, 0.8)), url('https://source.unsplash.com/random/1600x900/?community,volunteer') no-repeat center center/cover;
             color: #E6E6E6;
+            position: relative;
         }
-        .profile-header h1 {
-            font-size: 2.5rem;
+        .profile-header-company::before { /* Overlay to ensure text readability if background image is too light/busy */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 18, 18, 0.5); /* Dark overlay, adjust opacity as needed */
+            z-index: 1;
+        }
+        .profile-header-company .company-logo {
+            max-width: 120px; /* Adjusted size */
+            margin: 0 auto 1rem auto; /* Centered with bottom margin */
+            border-radius: 8px; /* Optional: rounded corners for logo */
+            background-color: rgba(255, 255, 255, 0.9); /* Light semi-transparent bg for logo */
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        .profile-header-company h1 {
+            font-size: 2.5rem; /* Consistent with .hero h1 */
             font-weight: 700;
             margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
         }
-        .profile-header p {
-            font-size: 1.2rem;
-            max-width: 600px;
-            margin: 0 auto;
+        .profile-header-company p {
+            font-size: 1.2rem; /* Consistent with .hero p */
+            max-width: 700px;
+            margin: 0 auto 1.5rem auto;
+            position: relative;
+            z-index: 2;
         }
-        .company-logo {
-            max-width: 150px;
-            margin: 1rem auto;
-            display: block;
-        }
-        .profile-content {
+        .profile-content-company { /* Renamed to avoid conflict */
             max-width: 1200px;
             margin: 2rem auto;
             padding: 0 2rem;
@@ -73,89 +58,52 @@
             grid-template-columns: 2fr 1fr;
             gap: 2rem;
         }
-        .main-content {
-            background-color: #FFFFFF;
+        .main-content-company, .sidebar-company { /* Renamed */
+            background-color: #E6E6E6; /* Light card background from style.css */
+            color: #121212; /* Dark text for light cards */
             padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 10px; /* Consistent with .internship-card */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Consistent with .internship-card */
         }
-        .sidebar {
-            background-color: #FFFFFF;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .main-content-company h2, .sidebar-company h2 {
+            font-size: 1.8rem; /* Slightly smaller than page titles */
+            color: #1E90FF; /* Primary accent */
+            margin-bottom: 1.5rem;
         }
-        .main-content h2, .sidebar h2 {
-            font-size: 1.8rem;
-            color: #1E90FF;
+        .main-content-company h3, .sidebar-company h3 {
+            font-size: 1.4rem;
+            color: #1E90FF; /* Primary accent */
             margin-bottom: 1rem;
         }
-        .main-content h3, .sidebar h3 {
-            font-size: 1.4rem;
-            color: #1E90FF;
-            margin-bottom: 0.75rem;
-        }
-        .main-content p, .sidebar p {
-            color: #374151;
+        .main-content-company p, .sidebar-company p,
+        .main-content-company li, .sidebar-company li {
+            color: #121212; /* Dark text for readability on light background */
             margin-bottom: 1rem;
         }
         .role-list, .benefits-list, .requirements-list {
             list-style: none;
+            padding-left: 0; /* Remove default padding */
             margin-bottom: 1.5rem;
         }
         .role-list li, .benefits-list li, .requirements-list li {
             padding: 0.5rem 0;
             position: relative;
-            padding-left: 1.5rem;
-            color: #374151;
+            padding-left: 1.8rem; /* Space for custom bullet */
         }
         .role-list li::before, .benefits-list li::before, .requirements-list li::before {
-            content: '•';
-            color: #FF2D55;
+            content: '✓'; /* Checkmark or other themed bullet */
+            color: #00D4B4; /* Tertiary accent color */
             position: absolute;
             left: 0;
+            font-weight: bold;
         }
-        .cta-button {
-            background-color: #FF2D55;
-            color: #E6E6E6;
-            padding: 0.75rem 2rem;
-            border-radius: 5px;
-            text-decoration: none;
-            font-family: 'Source Code Pro', monospace;
-            font-weight: 400;
-            display: inline-block;
-            transition: background-color 0.3s, transform 0.3s;
-        }
-        .cta-button:hover {
-            background-color: #E02447;
-            transform: translateY(-2px);
-        }
-        footer {
-            background-color: #121212;
-            color: #E6E6E6;
-            text-align: center;
-            padding: 1rem;
-            margin-top: 2rem;
-        }
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            border: 0;
-        }
-        a:focus, button:focus {
-            outline: 2px solid #1E90FF;
-            outline-offset: 2px;
-        }
+        /* CTA button will use .cta-button from style.css or .apply-button styles */
+
         @media (max-width: 768px) {
-            .profile-header h1 {
-                font-size: 1.8rem;
+            .profile-header-company h1 {
+                font-size: 2rem;
             }
-            .profile-content {
+            .profile-content-company {
                 grid-template-columns: 1fr;
                 padding: 0 1rem;
             }
@@ -167,21 +115,24 @@
 </head>
 <body>
     <nav class="navbar" role="navigation" aria-label="Main navigation">
-        <div class="logo">Launch Lab</div>
-        <div>
+        <div class="logo">Studexplore</div> <!-- Changed from Launch Lab to Studexplore -->
+        <div class="nav-links"> <!-- Added class nav-links -->
             <a href="index.html">Home</a>
             <a href="opportunities.html">Opportunities</a>
-            <a href="#about">About</a>
-            <a href="#contact">Contact</a>
+            <!-- Removed About and Contact as they are not in dashboard's nav, can be added if needed -->
+            <a href="login.html" class="signin-button">Sign In</a> <!-- Added Sign In button -->
         </div>
     </nav>
-    <section class="profile-header">
-        <img src="/assets/philippine_red_cross_logo.png" alt="Philippine Red Cross Logo" class="company-logo">
+
+    <section class="profile-header-company">
+        <!-- Assuming logo path is relative to public folder or an absolute URL -->
+        <img src="https://www.redcross.org.ph/wp-content/uploads/2023/05/prc-logo-300x294.png" alt="Philippine Red Cross Logo" class="company-logo">
         <h1>Philippine Red Cross</h1>
-        <p>Join our mission to provide life-saving services and alleviate human suffering through volunteerism with the Philippine Red Cross.</p>
+        <p>Join our mission to provide life-saving services and alleviate human suffering through volunteerism.</p>
     </section>
-    <section class="profile-content">
-        <div class="main-content">
+
+    <section class="profile-content-company">
+        <div class="main-content-company">
             <h2>About Philippine Red Cross</h2>
             <p>Established in 1947, the Philippine Red Cross (PRC) is the premier humanitarian organization in the Philippines, dedicated to delivering quality life-saving services, disaster response, and social welfare programs. With a strong network of volunteers, PRC responds to emergencies, promotes health, and supports vulnerable communities nationwide.</p>
             
@@ -202,7 +153,7 @@
                 <li>Build connections with a network of dedicated volunteers and humanitarian professionals.</li>
             </ul>
         </div>
-        <div class="sidebar">
+        <div class="sidebar-company">
             <h2>Join Us</h2>
             <h3>Requirements to Volunteer</h3>
             <ul class="requirements-list">
@@ -212,11 +163,18 @@
                 <li><strong>Documents:</strong> Submit PRC Membership (MAAB), two valid IDs, resume, and 2x2 ID picture.</li>
                 <li><strong>Location:</strong> Opportunities available at local chapters or virtual roles.</li>
             </ul>
-            <a href="#apply" class="cta-button">Apply to Volunteer</a>
+            <!-- Using .cta-button class from style.css for consistency -->
+            <a href="index.html#signup" class="cta-button">Apply to Volunteer</a>
         </div>
     </section>
-    <footer>
-        <p>© 2025 Launch Lab. All rights reserved.</p>
+
+    <footer> <!-- Footer will be styled by style.css -->
+        <p>© 2025 Studexplore. All rights reserved.</p>
+        <div class="social-media-links"> <!-- Added class for consistency if styled in style.css -->
+            <a href="#" aria-label="X">X</a>
+            <a href="#" aria-label="Instagram">Instagram</a>
+            <a href="#" aria-label="TikTok">TikTok</a>
+        </div>
     </footer>
 </body>
 </html>

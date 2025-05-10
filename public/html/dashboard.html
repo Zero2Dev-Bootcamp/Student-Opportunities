@@ -4,24 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - Studexplore</title>
-    <link rel="stylesheet" href="dashboard.css">
-    <script src="../src/resources/login.js" type="module"></script> {/* For logout() - path might need adjustment if login.js is moved/bundled */}
-    <script src="js/dashboard.js" type="module" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css"> <!-- General styles -->
+    <link rel="stylesheet" href="../assets/css/dashboard.css"> <!-- Dashboard specific styles, overrides general if needed -->
+    <script src="../src/resources/login.js" type="module"></script> <!-- For logout() - path might need adjustment if login.js is moved/bundled -->
+    <script src="../assets/js/dashboard.js" type="module" defer></script>
 </head>
 <body>
     <nav class="navbar">
         <div class="logo">Studexplore</div>
-        <ul class="nav-links">
-            <li><a href="index.html#home">Home</a></li>
-            <li><a href="opportunities.html">Opportunities</a></li>
-            <li><a href="#profile">Profile</a></li>
-            <li><a href="#notifications">Notifications</a></li>
-            <li><a href="#" id="logout-link">Logout</a></li>
-        </ul>
-        <div class="burger">
-            <div class="line1"></div>
-            <div class="line2"></div>
-            <div class="line3"></div>
+        <div class="nav-links">
+            <a href="index.html#home">Home</a>
+            <a href="opportunities.html">Opportunities</a>
+            <a href="#profile">Profile</a>
+            <a href="#notifications">Notifications</a>
+            <a href="#" id="logout-link">Logout</a>
         </div>
     </nav>
 

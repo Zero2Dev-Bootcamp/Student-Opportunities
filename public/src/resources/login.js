@@ -23,26 +23,49 @@ export function initLogin() {
             return;
         }
         const email = emailInput.value;
-        const mockToken = email.includes('company') ? { token: 'mock-company', userId: 2, userType: 'company' } : { token: 'mock-student', userId: 1, userType: 'student' };
-        localStorage.setItem('authToken', mockToken.token);
-        localStorage.setItem('userId', mockToken.userId);
-        localStorage.setItem('userType', mockToken.userType);
-        
-        const formMessageElement = document.getElementById('loginMessage'); // Get it directly by ID
-        if (formMessageElement) {
-            formMessageElement.textContent = 'Logged in! Redirecting...';
-            formMessageElement.style.color = '#2e7d32'; // Green for success
-        }
-        
-        // updateNav(); // Removed this call as it might cause issues and dashboard has its own nav
-        
-        setTimeout(() => {
-            if (mockToken.userType === 'student') {
-                window.location.href = 'dashboard.html'; // Redirect students to dashboard
+        const formMessageElement = document.getElementById('loginMessage');
+
+        fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: email }),
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(({ status, body }) => {
+            if (status === 200) {
+                localStorage.setItem('authToken', body.token);
+                localStorage.setItem('userId', body.userId);
+                localStorage.setItem('userType', body.userType);
+                
+                if (formMessageElement) {
+                    formMessageElement.textContent = 'Logged in! Redirecting...';
+                    formMessageElement.style.color = '#2e7d32'; // Green for success
+                }
+                
+                setTimeout(() => {
+                    if (body.userType === 'student') {
+                        window.location.href = 'dashboard.html'; // Redirect students to dashboard
+                    } else {
+                        window.location.href = 'opportunities.html'; // Companies can go to opportunities or a future company dashboard
+                    }
+                }, 1000);
             } else {
-                window.location.href = 'opportunities.html'; // Companies can go to opportunities or a future company dashboard
+                if (formMessageElement) {
+                    formMessageElement.textContent = body.message || 'Login failed. Please try again.';
+                    formMessageElement.style.color = 'red';
+                }
+                console.error('Login failed:', body.message);
             }
-        }, 1000);
+        })
+        .catch(error => {
+            console.error('Error during login:', error);
+            if (formMessageElement) {
+                formMessageElement.textContent = 'An error occurred. Please try again.';
+                formMessageElement.style.color = 'red';
+            }
+        });
     });
 }
 

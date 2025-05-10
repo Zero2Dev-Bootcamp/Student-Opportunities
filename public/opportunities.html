@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Opportunities - Launch Lab</title>
+    <title>Opportunities - Studexplore</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
     <style>
         * {
@@ -13,17 +13,17 @@
         }
         body {
             font-family: 'Poppins', sans-serif;
-            color: #121212;
-            background-color: #F9FAFB;
+            color: #E6E6E6; /* Updated */
+            background-color: #121212; /* Updated */
             line-height: 1.6;
         }
         .navbar {
-            background-color: #FFFFFF;
+            background-color: #1E90FF; /* Updated */
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            /* box-shadow: 0 2px 4px rgba(0,0,0,0.1); */ /* Removed/Commented as main style.css navbar doesn't have it */
             position: sticky;
             top: 0;
             z-index: 1000;
@@ -31,18 +31,29 @@
         .navbar .logo {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1E90FF;
+            color: #E6E6E6; /* Updated */
         }
         .navbar a {
-            color: #121212;
+            color: #E6E6E6; /* Updated */
             text-decoration: none;
             margin: 0 1rem;
             font-family: 'Source Code Pro', monospace;
             font-weight: 400;
-            transition: color 0.3s;
+            transition: color 0.3s, transform 0.3s; /* Updated */
         }
         .navbar a:hover {
-            color: #1E90FF;
+            color: #FF2D55; /* Updated */
+            transform: translateY(-2px); /* Added */
+            animation: glitch 0.3s; /* Added */
+        }
+        /* Added glitch animation */
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            60% { transform: translate(-2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
         }
         .opportunities-header {
             padding: 3rem 2rem;
@@ -67,10 +78,11 @@
             display: flex;
             flex-wrap: wrap;
             gap: 1rem;
-            background-color: #FFFFFF;
+            background-color: #E6E6E6; /* Updated */
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Keep shadow, or adjust if needed for dark theme */
+            color: #121212; /* Added for text within this section */
         }
         .filter-search .form-group {
             flex: 1;
@@ -79,36 +91,38 @@
         .filter-search label {
             font-family: 'Source Code Pro', monospace;
             font-size: 0.9rem;
-            color: #374151;
+            color: #121212; /* Updated */
             margin-bottom: 0.5rem;
             display: block;
         }
         .filter-search input, .filter-search select {
             width: 100%;
             padding: 0.75rem;
-            border: 1px solid #D1D5DB;
+            border: 1px solid #121212; /* Updated */
             border-radius: 5px;
             font-size: 1rem;
-            background-color: #F9FAFB;
+            background-color: #FFFFFF; /* Updated */
+            color: #121212; /* Added for input text */
         }
         .filter-search input:focus, .filter-search select:focus {
-            border-color: #1E90FF;
+            border-color: #00D4B4; /* Updated */
             outline: none;
-            box-shadow: 0 0 5px rgba(30, 144, 255, 0.3);
+            box-shadow: 0 0 5px #00D4B4; /* Updated */
         }
         .filter-search button {
-            background-color: #1E90FF;
+            background-color: #FF2D55; /* Updated */
             color: #E6E6E6;
             padding: 0.75rem 1.5rem;
             border: none;
             border-radius: 5px;
             font-family: 'Source Code Pro', monospace;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: box-shadow 0.3s, transform 0.3s; /* Updated */
             align-self: flex-end;
         }
         .filter-search button:hover {
-            background-color: #1565C0;
+            box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55; /* Updated */
+            transform: translateY(-2px); /* Added */
         }
         .opportunities-list {
             max-width: 1200px;
@@ -127,11 +141,12 @@
             gap: 1.5rem;
         }
         .opportunity-card {
-            background-color: #FFFFFF;
+            background-color: #E6E6E6; /* Updated */
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Keep shadow, or adjust */
             transition: transform 0.3s;
+            color: #121212; /* Added for card text */
         }
         .opportunity-card:hover {
             transform: translateY(-5px);
@@ -143,31 +158,33 @@
         }
         .opportunity-card .company {
             font-family: 'Source Code Pro', monospace;
-            color: #6B7280;
+            color: #FF2D55; /* Updated */
             margin-bottom: 0.75rem;
         }
         .opportunity-card .type {
             font-size: 0.9rem;
-            color: #FF2D55;
+            color: #FF2D55; /* This was already good, but ensure it's intended for dark theme context */
             font-weight: 600;
             margin-bottom: 0.75rem;
         }
         .opportunity-card p {
-            color: #374151;
+            color: #121212; /* Updated */
             margin-bottom: 1rem;
         }
         .opportunity-card .apply-button {
-            background-color: #1E90FF;
+            background-color: #FF2D55; /* Updated */
             color: #E6E6E6;
             padding: 0.5rem 1rem;
             border-radius: 5px;
             text-decoration: none;
             font-family: 'Source Code Pro', monospace;
             display: inline-block;
-            transition: background-color 0.3s;
+            transition: box-shadow 0.3s, transform 0.3s; /* Updated */
         }
         .opportunity-card .apply-button:hover {
-            background-color: #1565C0;
+            box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55; /* Updated */
+            transform: translateY(-2px); /* Added */
+            animation: glitch 0.3s; /* Added */
         }
         footer {
             background-color: #121212;
@@ -187,7 +204,7 @@
             border: 0;
         }
         a:focus, button:focus, input:focus, select:focus {
-            outline: 2px solid #1E90FF;
+            outline: 2px solid #00D4B4; /* Updated */
             outline-offset: 2px;
         }
         @media (max-width: 768px) {
@@ -209,7 +226,7 @@
 </head>
 <body>
     <nav class="navbar" role="navigation" aria-label="Main navigation">
-        <div class="logo">Launch Lab</div>
+        <div class="logo">Studexplore</div>
         <div>
             <a href="index.html">Home</a>
             <a href="#opportunities" aria-current="page">Opportunities</a>
@@ -279,7 +296,7 @@
         </div>
     </section>
     <footer>
-        <p>© 2025 Launch Lab. All rights reserved.</p>
+        <p>© 2025 Studexplore. All rights reserved.</p>
     </footer>
 </body>
 </html>
