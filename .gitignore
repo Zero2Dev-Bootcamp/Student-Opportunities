@@ -1,3 +1,6 @@
+# Environment variables
+.env
+
 # dependencies (bun install)
 node_modules
 
