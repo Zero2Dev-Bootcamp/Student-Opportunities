@@ -69,57 +69,125 @@ class User {
 
       // TODO: Implement proper password hashing (e.g., bcrypt, Argon2)
       // For now, storing password as is (NOT SECURE FOR PRODUCTION)
-      const passwordHash = password; 
+      // TODO: Implement proper password hashing (e.g., bcrypt, Argon2)
+      const passwordHash = password;
 
       // TODO: Check if username or email already exists in the User table.
+      // This check should ideally happen before attempting insertion.
+      // Example:
+      // const existingUser = this.db.prepare("SELECT id FROM User WHERE email = ?").get(email);
+      // if (existingUser) { throw new Error('Email already exists.'); }
 
       // Map 'role' from userData to 'user_type' for the User table.
-      // Ensure 'role' is one of the expected values, default if necessary or throw error.
-      let user_type = userData.role; // e.g., 'student', 'company'
+      let user_type = userData.role;
       if (!['student', 'company'].includes(user_type)) {
-        // Handle invalid role: either throw error or assign a default
-        // For now, let's be strict. Or, you might default to 'student'.
         throw new Error(`Invalid role: ${user_type}. Must be 'student' or 'company'.`);
       }
 
       // Prepare data for User table, including user_type and nullable fields
-      const industry = userData.industry || null; // Company-specific, null for students
-      const location = userData.location || null; // Can be common or specific
-      const description = userData.description || null; // Can be common or specific
+      const industry = userData.industry || null;
+      const location = userData.location || null; // Get location from userData
+      const description = userData.description || null;
+      const interests = userData.interests || []; // Get interests array
 
+      // Use a transaction to ensure atomicity
+      const insertUserAndInterests = this.db.transaction((userData) => {
+        const userStmt = this.db.prepare(
+          `INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        );
+        const userResult = userStmt.run(
+          userData.username,
+          userData.email,
+          passwordHash, // Use the hashed password
+          userData.role, // user_type
+          userData.major,
+          userData.graduation_year,
+          industry,
+          location, // Save location
+          description
+        );
+
+        if (userResult.changes === 0) {
+          throw new Error('Failed to insert user.');
+        }
+
+        const userId = userResult.lastInsertRowid;
+
+        // Insert interests only for students and if interests are provided
+        if (userData.role === 'student' && userData.interests && userData.interests.length > 0) {
+          const interestStmt = this.db.prepare(
+            `INSERT INTO UserInterests (user_id, interest) VALUES (?, ?)`
+          );
+          for (const interest of userData.interests) {
+            interestStmt.run(userId, interest);
+          }
+        }
+        return userId; // Return the new user ID
+      });
+
+      // Execute the transaction
+      const newUserId = insertUserAndInterests(userData);
+
+      // Return the created user object (excluding passwordHash)
+      return {
+        id: newUserId,
+        name: username,
+        email: email,
+        user_type: user_type,
+        major: major,
+        graduation_year: graduation_year,
+        industry: industry,
+        location: location, // Include location in response
+        description: description,
+        interests: user_type === 'student' ? interests : [] // Include interests in response for students
+      };
+
+      /* Old non-transactional code:
       const stmt = this.db.prepare(
-        `INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description) 
+        `INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       );
-      
+
       const result = stmt.run(
-        username, 
-        email, 
-        passwordHash, 
-        user_type, 
-        major, // Nullable for companies
-        graduation_year, // Nullable for companies
-        industry, // Nullable for students
-        location,
+        username,
+        email,
+        passwordHash,
+        user_type,
+        major,
+        graduation_year,
+        industry,
+        location, // Pass location here
         description
       );
 
       if (result.changes > 0) {
+        const userId = result.lastInsertRowid;
+        // Insert interests if user is student and interests are provided
+        if (user_type === 'student' && interests.length > 0) {
+            const interestStmt = this.db.prepare("INSERT INTO UserInterests (user_id, interest) VALUES (?, ?)");
+            for (const interest of interests) {
+                interestStmt.run(userId, interest);
+            }
+        }
+
         // Return the created user object (excluding passwordHash)
-        return { 
-          id: result.lastInsertRowid, 
+        return {
+          id: userId,
           name: username,
           email: email,
           user_type: user_type,
           major: major,
           graduation_year: graduation_year,
           industry: industry,
-          location: location,
-          description: description
+          location: location, // Include location in response
+          description: description,
+          interests: user_type === 'student' ? interests : [] // Include interests in response for students
         };
       } else {
         throw new Error('Failed to create user (no rows affected).');
       }
+      */
     } catch (error) {
       console.error('Error in User.createUser:', error.message);
       // Check for unique constraint error (e.g., email already exists on User table)

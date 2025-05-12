@@ -3,16 +3,17 @@ import path from 'path';
 import db from '../db/db.js'; // Import the database instance
 import User from '../public/src/resources/user.js'; // Import the User resource
 import Application from './resources/application.js'; // Import the Application resource
-import Opportunity from './resources/opportunities.js'; // Import the Opportunity resource
+import OpportunityResource from './resources/opportunityResource.js'; // Import the Opportunity resource
 import Notifications from './resources/notifications.js'; // Import the Notifications resource
 import { handleHttpRequest } from './httphandlermethods.js'; // Import the new HTTP handler
 
-const port = 3000;
+let serverInstance = null; // Variable to hold the server instance
+
 // Define __dirname for ES modules
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const publicDir = path.join(__dirname, '..', 'public');
 
-// Instantiate resources
+// Instantiate resources (keep this outside startServer if resources are stateless and reusable)
 const userResource = new User(db);
 const applicationResource = new Application(db); // Instantiate Application resource
 const opportunityResource = new Opportunity(db); // Instantiate Opportunity resource
@@ -25,16 +26,41 @@ const resources = {
   notificationResource,
 };
 
-Bun.serve({
-  port: port,
-  async fetch(req) {
-    // Delegate request handling to the imported function
-    return handleHttpRequest(req, resources, publicDir);
-  },
-  error(error) {
-    console.error("Unhandled server error:", error);
-    return new Response("Internal Server Error", { status: 500 });
-  },
-});
+export async function startServer(port = 3000) {
+  if (serverInstance) {
+    console.warn(`Server already running on port ${serverInstance.port}`);
+    return serverInstance;
+  }
 
-console.log(`Server running at http://localhost:${port}`);
+  serverInstance = Bun.serve({
+    port: port,
+    async fetch(req) {
+      // Delegate request handling to the imported function
+      // Pass the existing resources and publicDir
+      return handleHttpRequest(req, resources, publicDir);
+    },
+    error(error) {
+      console.error("Unhandled server error:", error);
+      return new Response("Internal Server Error", { status: 500 });
+    },
+  });
+
+  console.log(`Server started on http://localhost:${port}`);
+  return serverInstance;
+}
+
+export async function stopServer() {
+  if (serverInstance) {
+    serverInstance.stop(true); // Pass true to force close connections
+    console.log(`Server stopped on port ${serverInstance.port}`);
+    serverInstance = null;
+  } else {
+    console.warn("Server is not running.");
+  }
+}
+
+// Optional: Automatically start server if run directly (e.g., `bun src/server.js`)
+// This checks if the module is the main module being run.
+if (import.meta.main) {
+  startServer(3000);
+}

@@ -106,7 +106,8 @@ export async function handleHttpRequest(req, resources, publicDir) {
     const projectRoot = path.join(currentDir, '..'); // Adjust if structure differs
     const staticPublicDir = path.join(projectRoot, 'public'); // Use the passed publicDir or recalculate if needed
 
-    const htmlFilesInHtmlDir = ['/index.html', '/login.html', '/dashboard.html'];
+    // Update the list of known HTML files in the 'html' directory
+    const htmlFilesInHtmlDir = ['/index.html', '/login.html', '/studentdashboard.html', '/companydashboard.html'];
 
     if (requestedPath === '/') {
       filePath = path.join(staticPublicDir, 'html', 'index.html');

@@ -2,7 +2,7 @@ export function initOpportunity() {
     window.addEventListener('hashchange', loadOpportunityDetails);
 }
 
-async function loadOpportunityDetails() {
+export async function loadOpportunityDetails() {
     const hash = window.location.hash;
     if (hash.startsWith('#opportunity/')) {
         const id = hash.split('/').pop();
@@ -35,7 +35,7 @@ async function loadOpportunityDetails() {
     }
 }
 
-async function submitApplication(opportunityId) {
+export async function submitApplication(opportunityId) {
     try {
         const response = await fetch('/applications', {
             method: 'POST',
