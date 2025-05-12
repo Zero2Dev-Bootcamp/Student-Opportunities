@@ -46,6 +46,12 @@
                 <!-- Club cards will be loaded here by dashboard.js -->
                 <p>Loading clubs...</p>
             </div>
+
+            <h3>Events</h3>
+            <div class="event-grid" id="event-grid">
+                <!-- Event opportunities will be loaded here by JavaScript -->
+                <p>Loading events...</p>
+            </div>
         </section>
 
         <section id="recent-applications" class="applications-section">
@@ -60,12 +66,21 @@
             <h2>Notifications</h2>
             <div class="notification-list" id="notification-list">
                 <!-- Notifications will be loaded here by dashboard.js -->
-                <p>Loading notifications...</p>
-            </div>
-        </section>
-    </main>
+            <p>Loading notifications...</p>
+        </div>
+    </section>
 
-    <footer>
+    <section id="opportunity" class="opportunity-section" style="display: none;">
+        <h2>Opportunity Details</h2>
+        <div id="opportunity-content">
+            <!-- Opportunity details will be loaded here -->
+        </div>
+        <button id="apply-now" style="display: none;">Apply Now</button>
+        <div class="form-message"></div>
+    </section>
+</main>
+
+<footer>
         <p>© 2025 Studexplore. All rights reserved.</p>
         <div class="social-media-links">
             <a href="#" aria-label="X">X</a>

@@ -151,8 +151,16 @@
                 </div>
             </div>
             <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a password" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" placeholder="Your city or region">
+            </div>
+            <div class="form-group">
                 <label for="message">Message/Description</label>
-                <textarea id="message" name="message" placeholder="Tell us about yourself or your opportunity" required></textarea>
+                <textarea id="message" name="message" placeholder="Tell us about yourself or your opportunity"></textarea> <!-- Made optional based on user.js -->
             </div>
             <button type="submit" class="submit-button">Register Now</button>
         </form>
