@@ -8,7 +8,8 @@
   "module": "index.ts",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "jsdom": "^26.1.0"
   },
   "peerDependencies": {
     "typescript": "^5"

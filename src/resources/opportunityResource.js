@@ -1,4 +1,4 @@
-import db from '../db/db.js';
+import db from '../../db/db.js'; // Corrected import path
 
 class OpportunityResource {
   constructor(db) {

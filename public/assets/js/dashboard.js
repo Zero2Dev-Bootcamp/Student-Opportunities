@@ -71,7 +71,7 @@ async function loadProfileData(userId) {
         return;
     }
     try {
-        const response = await fetchWithAuth(`/users/${userId}`);
+        const response = await fetchWithAuth(`/api/users/${userId}`); // Added /api prefix
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({})); // Catch if response is not JSON
             throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
@@ -96,7 +96,7 @@ async function loadOpportunities() {
     const internshipGrid = document.getElementById('internship-grid');
     const clubGrid = document.getElementById('club-grid');
     try {
-        const response = await fetchWithAuth('/opportunities'); // Endpoint for all opportunities
+        const response = await fetchWithAuth('/api/opportunities'); // Added /api prefix
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(`Failed to fetch opportunities: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
@@ -167,7 +167,7 @@ async function loadApplications(studentId) {
     }
 
     try {
-        const response = await fetchWithAuth(`/applications?studentId=${studentId}`);
+        const response = await fetchWithAuth(`/api/applications?studentId=${studentId}`); // Added /api prefix
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(`Failed to fetch applications: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
@@ -180,7 +180,7 @@ async function loadApplications(studentId) {
         }
 
         // Fetch all opportunities to get their titles for display in applications
-        const oppsResponse = await fetchWithAuth('/opportunities');
+        const oppsResponse = await fetchWithAuth('/api/opportunities'); // Added /api prefix
         if (!oppsResponse.ok) throw new Error('Could not fetch opportunity details for applications.');
         const allOpportunities = await oppsResponse.json();
         const opportunityMap = new Map(allOpportunities.map(op => [op.id, op.title]));
@@ -209,7 +209,7 @@ async function loadNotifications() {
     if (!notificationList) return;
 
     try {
-        const response = await fetchWithAuth('/notifications');
+        const response = await fetchWithAuth('/api/notifications'); // Added /api prefix
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
@@ -235,7 +235,7 @@ async function loadNotifications() {
 
 async function markNotificationAsRead(notificationId) {
     try {
-        const response = await fetchWithAuth(`/notifications/${notificationId}`, {
+        const response = await fetchWithAuth(`/api/notifications/${notificationId}`, { // Added /api prefix
             method: 'PATCH',
             body: JSON.stringify({ is_read: true }),
         });

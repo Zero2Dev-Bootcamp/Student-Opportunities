@@ -39,6 +39,22 @@ describe('User Resource', () => {
         all: mockAll,
         run: mockRun,
       })),
+      // Add mock transaction method - it should return a function
+      transaction: mock((callback) => {
+        // Return a function that takes the arguments (like userData)
+        // and then executes the original callback with those arguments.
+        return (...args) => {
+          try {
+            // Execute the original callback function passed to transaction,
+            // forwarding the arguments received by the returned function.
+            return callback(...args);
+          } catch (e) {
+            // Simulate transaction rollback on error (though simplified)
+            console.error("Mock transaction error:", e);
+            throw e;
+          }
+        };
+      }),
     };
     userService = new User(mockDb);
   });

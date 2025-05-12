@@ -4,7 +4,7 @@ import db from '../db/db.js'; // Import the database instance
 import User from '../public/src/resources/user.js'; // Import the User resource
 import Application from './resources/application.js'; // Import the Application resource
 import OpportunityResource from './resources/opportunityResource.js'; // Import the Opportunity resource
-import Notifications from './resources/notifications.js'; // Import the Notifications resource
+import NotificationResource from './resources/notificationResource.js'; // Import the Notifications resource
 import { handleHttpRequest } from './httphandlermethods.js'; // Import the new HTTP handler
 
 let serverInstance = null; // Variable to hold the server instance
@@ -16,8 +16,8 @@ const publicDir = path.join(__dirname, '..', 'public');
 // Instantiate resources (keep this outside startServer if resources are stateless and reusable)
 const userResource = new User(db);
 const applicationResource = new Application(db); // Instantiate Application resource
-const opportunityResource = new Opportunity(db); // Instantiate Opportunity resource
-const notificationResource = new Notifications(db); // Instantiate Notifications resource
+const opportunityResource = new OpportunityResource(db); // Instantiate Opportunity resource
+const notificationResource = new NotificationResource(db); // Instantiate Notifications resource
 
 const resources = {
   userResource,

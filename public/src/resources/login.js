@@ -22,7 +22,17 @@ export function initLogin() {
             }
             return;
         }
+        const passwordInput = form.querySelector('#loginPassword'); // Get password input
+        if (!passwordInput) {
+            console.error("Password input with id 'loginPassword' not found within the form.");
+            if (messageArea) {
+                messageArea.textContent = 'Configuration error: Password field not found.';
+                messageArea.style.color = 'red';
+            }
+            return;
+        }
         const email = emailInput.value;
+        const password = passwordInput.value; // Get password value
         const formMessageElement = document.getElementById('loginMessage');
 
         fetch('/api/login', {
@@ -30,7 +40,8 @@ export function initLogin() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email: email }),
+            // Send both email and password
+            body: JSON.stringify({ email: email, password: password }),
         })
         .then(response => response.json().then(data => ({ status: response.status, body: data })))
         .then(({ status, body }) => {

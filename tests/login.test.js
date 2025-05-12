@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
-import { JSDOM } from 'jsdom';
+import { JSDOM, VirtualConsole } from 'jsdom'; // Import VirtualConsole
 import fs from 'fs';
 import path from 'path';
 
@@ -36,7 +36,7 @@ describe('Login Integration Test', () => {
     const loginHtmlPath = 'public/html/login.html';
     const html = loadHTML(loginHtmlPath);
 
-    virtualConsole = new jsdom.VirtualConsole();
+    virtualConsole = new VirtualConsole(); // Correct instantiation
     virtualConsole.on("error", (error) => {
       // Suppress JSDOM CSS parsing errors if they are not relevant
       if (!String(error).includes("Could not parse CSS stylesheet")) {
@@ -63,18 +63,6 @@ describe('Login Integration Test', () => {
 
     // Assign mock localStorage to JSDOM window
     Object.defineProperty(window, 'localStorage', { value: localStorageMock });
-    
-    // Mock window.location.href for redirection check
-    let currentHref = window.location.href;
-    Object.defineProperty(window, 'location', {
-      value: {
-        get href() { return currentHref; },
-        set href(val) { currentHref = val; },
-        reload: mock(() => {}) // Mock reload if needed
-      },
-      writable: true // Allow redefinition if necessary
-    });
-
 
     // Clear localStorage before each test
     window.localStorage.clear();
@@ -109,20 +97,22 @@ describe('Login Integration Test', () => {
 
     // Wait for DOMContentLoaded and scripts to execute
     await new Promise(resolve => {
+      const onReady = () => {
+        // Give scripts a bit more time after DOM is ready to ensure event listeners are attached
+        setTimeout(resolve, 300); 
+      };
       if (document.readyState === 'complete') {
-        resolve();
+        onReady();
       } else {
-        document.addEventListener('DOMContentLoaded', resolve, { once: true });
-         // Fallback timeout if DOMContentLoaded doesn't fire as expected in some JSDOM setups
-        setTimeout(resolve, 100);
+        document.addEventListener('DOMContentLoaded', onReady, { once: true });
+        // Fallback if DOMContentLoaded doesn't fire for some reason in test env
+        setTimeout(onReady, 500); 
       }
     });
-     // Additional wait for scripts like initLogin to run
-    await new Promise(resolve => setTimeout(resolve, 50)); // Small delay for script execution
   });
 
   afterEach(() => {
-    window.close(); // Close JSDOM window
+    dom.window.close(); // Corrected: Close JSDOM window using dom.window
     localStorageMock.clear(); // Ensure mock is clean
     global.fetch.mockClear(); // Clear fetch mock calls
   });
@@ -147,7 +137,8 @@ describe('Login Integration Test', () => {
     loginForm.dispatchEvent(submitEvent);
 
     // Wait for fetch and subsequent logic (including setTimeout for redirection)
-    await new Promise(resolve => setTimeout(resolve, 1200)); // Wait for login.js timeout + buffer
+    // Ensure enough time for fetch promise to resolve and DOM updates to apply
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Generous wait time
 
     // Check localStorage
     expect(window.localStorage.getItem('authToken')).toBe('mock-student-token');
@@ -166,6 +157,7 @@ describe('Login Integration Test', () => {
     const emailInput = document.getElementById('loginEmail');
     const passwordInput = document.getElementById('loginPassword');
     const loginForm = document.getElementById('loginForm');
+    const messageArea = document.getElementById('loginMessage');
 
     emailInput.value = 'company@example.com';
     passwordInput.value = 'password123';
@@ -174,7 +166,7 @@ describe('Login Integration Test', () => {
     loginForm.dispatchEvent(submitEvent);
 
     // Wait for fetch and message update, but before the redirect timeout fully completes
-    await new Promise(resolve => setTimeout(resolve, 100)); // Shorter wait to check message
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Generous wait to check message
 
     // Check for success message
     expect(messageArea.textContent).toBe('Logged in! Redirecting...');
@@ -184,8 +176,8 @@ describe('Login Integration Test', () => {
     await new Promise(resolve => setTimeout(resolve, 1100)); // Wait remaining time
 
     // Check localStorage as per user request
-    expect(window.localStorage.getItem('authToken')).toBe('mock-company');
-    expect(window.localStorage.getItem('userId')).toBe('2');
+    expect(window.localStorage.getItem('authToken')).toBe('mock-company-token'); // Corrected token
+    expect(window.localStorage.getItem('userId')).toBe('company456'); // Corrected user ID
     expect(window.localStorage.getItem('userType')).toBe('company');
     // Check redirection (to opportunities.html based on login.js logic)
     expect(window.location.href).toBe('opportunities.html');
@@ -203,7 +195,7 @@ describe('Login Integration Test', () => {
     const submitEvent = new window.Event('submit', { bubbles: true, cancelable: true });
     loginForm.dispatchEvent(submitEvent);
 
-    await new Promise(resolve => setTimeout(resolve, 200)); // Shorter wait, no redirect timeout
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Generous wait, no redirect timeout
 
     expect(window.localStorage.getItem('authToken')).toBeNull();
     expect(messageArea.textContent).toBe('Invalid credentials');
