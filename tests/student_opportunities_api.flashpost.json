@@ -39,9 +39,9 @@
       ]
     },
     {
-      "name": "Serve dashboard.html (GET /dashboard.html)",
+      "name": "Serve studentdashboard.html (GET /studentdashboard.html)",
       "method": "GET",
-      "url": "http://localhost:3000/dashboard.html",
+      "url": "http://localhost:3000/studentdashboard.html",
       "headers": [],
       "body": null,
       "tests": [
