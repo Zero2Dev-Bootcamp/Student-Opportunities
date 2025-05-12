@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
-import User from '../src/resources/user.js'; // Adjust path as necessary
+import User from '../public/src/resources/user.js'; // Corrected path
 
 describe('User Resource', () => {
   let mockDb;
