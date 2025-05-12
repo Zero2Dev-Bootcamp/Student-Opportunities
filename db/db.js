@@ -56,7 +56,7 @@ const initDb = () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       description TEXT NOT NULL,
-      type TEXT NOT NULL CHECK(type IN ('Internship', 'Job', 'Scholarship', 'Volunteer', 'Other')), -- Type of opportunity
+      type TEXT NOT NULL CHECK(type IN ('Internship', 'Job', 'Scholarship', 'Volunteer', 'Other', 'Event')), -- Type of opportunity
       company_user_id INTEGER, -- Link to a User of type 'company'
       location TEXT,
       deadline DATE,
@@ -109,6 +109,18 @@ const initDb = () => {
   db.run(`CREATE INDEX IF NOT EXISTS idx_notification_user_id ON Notification(user_id);`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_notification_is_read ON Notification(is_read);`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_notification_type ON Notification(type);`);
+
+  // Create UserInterests table (linking users to their interests)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS UserInterests (
+      user_id INTEGER NOT NULL,
+      interest TEXT NOT NULL,
+      PRIMARY KEY (user_id, interest), -- Composite primary key prevents duplicate interests per user
+      FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE -- If user is deleted, delete their interests
+    );
+  `);
+  // Add index for faster lookup by user_id
+  db.run(`CREATE INDEX IF NOT EXISTS idx_userinterests_user_id ON UserInterests(user_id);`);
 
 };
 

@@ -46,9 +46,9 @@ export function initLogin() {
                 
                 setTimeout(() => {
                     if (body.userType === 'student') {
-                        window.location.href = 'dashboard.html'; // Redirect students to dashboard
+                        window.location.href = 'studentdashboard.html'; // Redirect students to student dashboard
                     } else {
-                        window.location.href = 'opportunities.html'; // Companies can go to opportunities or a future company dashboard
+                        window.location.href = 'companydashboard.html'; // Redirect companies to company dashboard (will create this file next)
                     }
                 }, 1000);
             } else {
