@@ -5,12 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="../../style.css"> <!-- Using a general CSS for now -->
+    <link rel="stylesheet" href="../assets/css/company-dashboard.css"> <!-- Company dashboard styles for navbar -->
 </head>
 <body>
+    <nav class="navbar">
+        <div class="logo">Admin Dashboard</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="admin-dashboard.html">Users</a>
+            <!-- Add other admin links here if needed -->
+            <a href="#" id="logout-link">Logout</a>
+        </div>
+    </nav>
+
     <div class="container">
         <h2>Admin Dashboard</h2>
         <div id="user-data">
             <!-- User data will be loaded here -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body">
+                    <!-- User rows will be added here by JavaScript -->
+                </tbody>
+            </table>
         </div>
     </div>
 

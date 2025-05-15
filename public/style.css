@@ -399,3 +399,30 @@ footer a:hover {
         grid-template-columns: 1fr;
     }
 }
+
+/* Admin Dashboard Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+th, td {
+    border: 1px solid #333;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+th {
+    background-color: #1E90FF;
+    color: #E6E6E6;
+}
+
+td {
+    background-color: #121212;
+    color: #E6E6E6;
+}
+
+tr:nth-child(even) td {
+    background-color: #1a1a1a;
+}

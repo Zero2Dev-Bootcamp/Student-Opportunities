@@ -16,12 +16,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function displayUsers(users) {
-    const userList = document.createElement('ul');
+    const userTableBody = document.getElementById('user-table-body');
+    userTableBody.innerHTML = ''; // Clear existing rows
     users.forEach(user => {
-        const listItem = document.createElement('li');
-        // Use user.name for the name instead of user.username
-        listItem.textContent = `ID: ${user.id}, Name: ${user.name}, Email: ${user.email}`; // Adjust based on actual user data structure
-        userList.appendChild(listItem);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.id}</td>
+            <td>${user.name}</td>
+            <td>${user.user_type}</td>
+            <td>${user.email}</td>
+            <td><button class="view-details-button" data-user-id="${user.id}">View Details</button></td>
+        `; // Added email column and View Details button
+
+        userTableBody.appendChild(row);
     });
-    document.getElementById('user-data').appendChild(userList);
+
+    // Add event listeners to the buttons after they are added to the DOM
+    document.querySelectorAll('.view-details-button').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const userId = event.target.dataset.userId;
+            window.location.href = `/html/user-details.html?id=${userId}`;
+        });
+    });
 }
