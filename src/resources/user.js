@@ -112,41 +112,75 @@ class User {
 
       const updates = [];
       const values = [];
-      const allowedFields = ['name', 'email', 'password_hash', 'major', 'graduation_year', 'industry', 'location', 'description']; // Exclude user_type from direct update
+      // Exclude 'interests' and 'user_type' from the main User table update
+      const allowedFields = ['name', 'email', 'password_hash', 'major', 'graduation_year', 'industry', 'location', 'description'];
 
-      for (const field in updateData) {
-          if (allowedFields.includes(field)) {
-              updates.push(`${field} = ?`);
-              values.push(updateData[field]);
-          } else {
-              console.warn(`[User.updateUser] Ignoring disallowed field for update: ${field}`);
-          }
+      // Use explicit BEGIN, COMMIT, and ROLLBACK for transaction
+      try {
+        this.db.run('BEGIN'); // Start transaction
+
+        for (const field in updateData) {
+            if (allowedFields.includes(field)) {
+                updates.push(`${field} = ?`);
+                values.push(updateData[field]);
+            } else if (field !== 'interests') { // Log disallowed fields other than interests
+                console.warn(`[User.updateUser] Ignoring disallowed field for update: ${field}`);
+            }
+        }
+
+        if (updates.length > 0) {
+            values.push(id); // Add user ID for the WHERE clause
+            const sql = `UPDATE User SET ${updates.join(', ')} WHERE id = ?`;
+            console.log('[User.updateUser] Executing SQL:', sql, 'with values:', values);
+            const stmt = this.db.prepare(sql);
+            const result = stmt.run(...values);
+
+            if (result.changes === 0) {
+                // Check if the user exists before concluding update failed because user not found
+                const existingUser = this.getUserById(id);
+                if (!existingUser) {
+                     throw new Error("User not found, cannot update.");
+                }
+                // If user exists but no changes, maybe the data was the same, or another issue
+                console.warn(`[User.updateUser] Update executed for user ID ${id}, but no changes were made to main User table.`);
+            }
+             console.log(`[User.updateUser] User ID ${id} main User table updated. Changes: ${result.changes}`);
+        } else {
+             console.log(`[User.updateUser] No main User table fields to update for user ID ${id}.`);
+        }
+
+
+        // Handle interests separately
+        if (updateData.hasOwnProperty('interests') && Array.isArray(updateData.interests)) {
+            console.log(`[User.updateUser] Updating interests for user ID ${id}`);
+            // 1. Remove existing interests
+            this.db.prepare("DELETE FROM UserInterests WHERE user_id = ?").run(id);
+
+            // 2. Insert new interests
+            if (updateData.interests.length > 0) {
+                const interestStmt = this.db.prepare("INSERT INTO UserInterests (user_id, interest) VALUES (?, ?)");
+                for (const interest of updateData.interests) {
+                    interestStmt.run(id, interest);
+                }
+                 console.log(`[User.updateUser] Inserted ${updateData.interests.length} new interests for user ID ${id}.`);
+            } else {
+                 console.log(`[User.updateUser] No new interests to insert for user ID ${id}.`);
+            }
+        } else if (updateData.hasOwnProperty('interests')) {
+             console.warn(`[User.updateUser] 'interests' field provided but is not an array for user ID ${id}. Ignoring interests update.`);
+        }
+
+
+        this.db.run('COMMIT'); // Commit transaction
+        console.log(`[User.updateUser] User ID ${id} update transaction committed.`);
+        return this.getUserById(id); // Return the updated user object
+
+      } catch (error) {
+        this.db.run('ROLLBACK'); // Rollback transaction on error
+        console.error(`Error in User.updateUser transaction: ${error.message}`);
+        throw error; // Re-throw the error
       }
 
-      if (updates.length === 0) {
-          throw new Error("No valid fields provided for update.");
-      }
-
-      values.push(id); // Add user ID for the WHERE clause
-
-      const sql = `UPDATE User SET ${updates.join(', ')} WHERE id = ?`;
-      console.log('[User.updateUser] Executing SQL:', sql, 'with values:', values);
-      const stmt = this.db.prepare(sql);
-      const result = stmt.run(...values);
-
-      if (result.changes === 0) {
-          // Check if the user exists before concluding update failed because user not found
-          const existingUser = this.getUserById(id);
-          if (!existingUser) {
-               throw new Error("User not found, cannot update.");
-          }
-          // If user exists but no changes, maybe the data was the same, or another issue
-          console.warn(`[User.updateUser] Update executed for user ID ${id}, but no changes were made.`);
-          // Depending on requirements, you might return the existing user or a specific status
-      }
-
-      console.log(`[User.updateUser] User ID ${id} updated. Changes: ${result.changes}`);
-      return this.getUserById(id); // Return the updated user object
     } catch (error) {
       console.error(`Error in User.updateUser: ${error.message}`);
       throw error;

@@ -279,3 +279,47 @@ footer p {
         width: 100%;
     }
 }
+
+/* Profile Edit Buttons */
+.profile-section .edit-button,
+.profile-section .save-button,
+.profile-section .cancel-button {
+    font-family: 'Source Code Pro', monospace;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s;
+    margin-right: 0.5rem; /* Add some space between buttons */
+    margin-top: 1rem; /* Space above buttons */
+}
+
+.profile-section .edit-button {
+    background-color: #1E90FF; /* Primary accent color */
+    color: #E6E6E6;
+}
+
+.profile-section .edit-button:hover {
+    box-shadow: 0 0 10px #1E90FF, 0 0 20px #1E90FF;
+    transform: translateY(-2px);
+}
+
+.profile-section .save-button {
+    background-color: #00D4B4; /* Tertiary accent color */
+    color: #121212; /* Dark text for contrast */
+}
+
+.profile-section .save-button:hover {
+    box-shadow: 0 0 10px #00D4B4, 0 0 20px #00D4B4;
+    transform: translateY(-2px);
+}
+
+.profile-section .cancel-button {
+    background-color: #FF2D55; /* Secondary accent color */
+    color: #E6E6E6;
+}
+
+.profile-section .cancel-button:hover {
+    box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55;
+    transform: translateY(-2px);
+}

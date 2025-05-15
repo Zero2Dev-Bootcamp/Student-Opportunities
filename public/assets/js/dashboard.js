@@ -1,3 +1,5 @@
+console.log('--- Loading dashboard.js ---'); // Add a log at the very beginning
+
 import { logout } from '../../src/resources/login.js'; // Adjusted path due to moving dashboard.js
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadOpportunities();
     loadApplications(userId);
     loadNotifications();
+    // Load profile data initially
+    loadProfileData(userId);
 });
 
 function setupEventListeners() {
@@ -26,6 +30,20 @@ function setupEventListeners() {
             e.preventDefault();
             logout(); // Call the imported logout function
         });
+    }
+
+    const editProfileBtn = document.getElementById('edit-profile-btn');
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', toggleEditMode);
+    }
+    if (saveProfileBtn) {
+        saveProfileBtn.addEventListener('click', saveProfile);
+    }
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', toggleEditMode); // Cancel also toggles mode
     }
 
     const burger = document.querySelector('.burger');
@@ -51,6 +69,108 @@ function setupEventListeners() {
             }
         });
     }
+
+    const applyNowButton = document.getElementById('apply-now');
+    if (applyNowButton) {
+        applyNowButton.addEventListener('click', handleApplyNowClick);
+    }
+}
+
+function handleApplyNowClick() {
+    // Assuming the opportunity ID is stored somewhere accessible when the button is visible
+    // For now, let's assume we can get it from the URL hash or a data attribute
+    // A more robust solution would involve storing the current opportunity ID when details are loaded
+    const urlHash = window.location.hash;
+    const opportunityMatch = urlHash.match(/^#opportunity\/(\d+)$/);
+
+    if (opportunityMatch && opportunityMatch[1]) {
+        const opportunityId = opportunityMatch[1];
+        window.location.href = `application-add.html?opportunityId=${opportunityId}`;
+    } else {
+        // If opportunity ID is not in the hash, perhaps it's stored elsewhere
+        // Or, if the button is only shown when viewing details loaded dynamically,
+        // the ID should be available in the scope where the button is made visible.
+        console.error("Could not determine Opportunity ID for application.");
+        alert("Error: Could not determine which opportunity to apply for.");
+        // Optionally, redirect to a generic application page or show an error message on the page
+        // window.location.href = 'application-add.html'; // Redirect without ID
+    }
+}
+
+function toggleEditMode() {
+    console.log('[toggleEditMode] Called'); // Log when toggleEditMode is called
+    const profileSummary = document.getElementById('profile-summary');
+    const profileEditForm = document.getElementById('profile-edit-form');
+    const editProfileBtn = document.getElementById('edit-profile-btn');
+
+    if (profileSummary.style.display !== 'none') {
+        // Switch to edit mode
+        profileSummary.style.display = 'none';
+        profileEditForm.style.display = 'block';
+        editProfileBtn.style.display = 'none';
+        populateEditForm(); // Populate form with current data
+    } else {
+        // Switch back to view mode
+        profileSummary.style.display = 'block';
+        profileEditForm.style.display = 'none';
+        editProfileBtn.style.display = 'block';
+        loadProfileData(localStorage.getItem('userId')); // Reload data to show potentially unsaved changes or original data
+    }
+}
+
+function populateEditForm() {
+    // Get current displayed data
+    const name = document.getElementById('profile-name').textContent;
+    const email = document.getElementById('profile-email').textContent;
+    const interests = document.getElementById('profile-interests').textContent;
+    const major = document.getElementById('profile-major').textContent;
+    const graduationYear = document.getElementById('profile-graduation-year').textContent;
+
+    // Populate form fields
+    document.getElementById('edit-name').value = name === 'Loading...' || name === 'N/A' ? '' : name;
+    document.getElementById('edit-email').value = email === 'Loading...' || email === 'N/A' ? '' : email;
+    document.getElementById('edit-interests').value = interests === 'Loading...' || interests === 'N/A' ? '' : interests;
+    document.getElementById('edit-major').value = major === 'Loading...' || major === 'N/A' ? '' : major;
+    document.getElementById('edit-graduation-year').value = graduationYear === 'Loading...' || graduationYear === 'N/A' ? '' : graduationYear;
+}
+
+async function saveProfile() {
+    console.log('[saveProfile] Called'); // Log when saveProfile is called
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+        console.error('User ID not found. Cannot save profile.');
+        alert('Error: User not identified. Cannot save profile.');
+        return;
+    }
+
+    const updatedData = {
+        name: document.getElementById('edit-name').value,
+        email: document.getElementById('edit-email').value,
+        // Interests might need special handling if stored as an array on backend
+        interests: document.getElementById('edit-interests').value.split(',').map(interest => interest.trim()).filter(interest => interest !== ''),
+        major: document.getElementById('edit-major').value,
+        graduation_year: document.getElementById('edit-graduation-year').value,
+    };
+
+    try {
+        const response = await fetchWithAuth(`/api/users/${userId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updatedData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Failed to save profile: ${response.status} ${response.statusText}`);
+        }
+
+        // Profile saved successfully, switch back to view mode and reload data
+        toggleEditMode();
+        // loadProfileData(userId); // loadProfileData is called by toggleEditMode when switching back to view
+
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        alert(`Could not save profile: ${error.message}`);
+    }
 }
 
 async function fetchWithAuth(url, options = {}) {
@@ -71,20 +191,32 @@ async function loadProfileData(userId) {
         return;
     }
     try {
-        const response = await fetchWithAuth(`/api/users/${userId}`); // Added /api prefix
+        // Add a cache-busting query parameter (timestamp)
+        const timestamp = new Date().getTime();
+        const response = await fetchWithAuth(`/api/users/${userId}?_=${timestamp}`); // Added /api prefix and cache buster
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({})); // Catch if response is not JSON
             throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
         }
         const user = await response.json();
 
+        console.log('[loadProfileData] Fetched user data:', user); // Log the fetched user data
+
         document.getElementById('profile-name').textContent = user.name || 'N/A';
         document.getElementById('profile-email').textContent = user.email || 'N/A';
         document.getElementById('profile-major').textContent = user.major || 'N/A';
         document.getElementById('profile-graduation-year').textContent = user.graduation_year || 'N/A';
         
-        const userInterests = localStorage.getItem('userInterests'); // From login/registration
-        document.getElementById('profile-interests').textContent = userInterests ? JSON.parse(userInterests).join(', ') : (user.interests ? user.interests.join(', ') : 'N/A');
+        // Check if user.interests is an array before joining
+        const interestsToDisplay = Array.isArray(user.interests) ? user.interests.join(', ') : (user.interests || 'N/A');
+        document.getElementById('profile-interests').textContent = interestsToDisplay;
+
+        // The localStorage 'userInterests' might be from initial registration;
+        // it might be better to rely solely on the fetched user.interests after updates.
+        // Keeping the localStorage logic for now but noting this potential discrepancy.
+        // const userInterests = localStorage.getItem('userInterests'); // From login/registration
+        // document.getElementById('profile-interests').textContent = userInterests ? JSON.parse(userInterests).join(', ') : (user.interests ? user.interests.join(', ') : 'N/A');
+
 
     } catch (error) {
         console.error('Error loading profile data:', error);

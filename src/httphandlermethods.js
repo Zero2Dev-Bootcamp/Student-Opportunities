@@ -21,6 +21,10 @@ export async function handleHttpRequest(req, resources, publicDir) {
     if (req.method === 'POST') { // Handles /api/users for registration
       return userResource.handlePost(req);
     }
+    if (req.method === 'PATCH') { // Handles /api/users/:id for updates
+        // The user ID is expected to be in the URL path, which handlePatch will extract
+        return userResource.handlePatch(req);
+    }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/users` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
   // /api/login (POST: authenticate user)
