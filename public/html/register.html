@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <h1>Register</h1>
+    <form class="register-form">
+        <div class="form-message"></div>
+        <div>
+            <label for="name">Username:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div>
+            <label for="userType">Registering as:</label>
+            <select id="userType" name="userType">
+                <option value="student">Student</option>
+                <option value="company">Company</option>
+            </select>
+        </div>
+        <div id="companyNameGroup" style="display: none;">
+            <label for="companyName">Company Name:</label>
+            <input type="text" id="companyName" name="companyName">
+        </div>
+        <div>
+            <label for="location">Location:</label>
+            <input type="text" id="location" name="location">
+        </div>
+        <div>
+            <label for="message">Message/Description:</label>
+            <textarea id="message" name="message"></textarea>
+        </div>
+        <div id="interestsGroup">
+            <p>Select your interests:</p>
+            <div>
+                <input type="checkbox" id="interest1" name="interests" value="software">
+                <label for="interest1">Software Development</label>
+            </div>
+            <div>
+                <input type="checkbox" id="interest2" name="interests" value="data">
+                <label for="interest2">Data Science</label>
+            </div>
+            <div>
+                <input type="checkbox" id="interest3" name="interests" value="design">
+                <label for="interest3">Design</label>
+            </div>
+        </div>
+        <button type="submit">Register</button>
+    </form>
+    <script src="../src/resources/register.js" type="module"></script>
+</body>
+</html>
