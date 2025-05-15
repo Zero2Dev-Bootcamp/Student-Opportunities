@@ -102,6 +102,29 @@ export async function handleHttpRequest(req, resources, publicDir) {
     }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/applications` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
+  // Admin Routes
+  // /admin/users (GET: retrieve all users)
+  else if (url.pathname === '/admin/users') {
+    if (req.method === 'GET') {
+      try {
+        const users = await userResource.getAllUsers(); // Assuming userResource has a getAllUsers method
+        return new Response(JSON.stringify(users), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        console.error('Error fetching all users:', error);
+        return new Response(JSON.stringify({ message: 'Failed to retrieve users' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+    return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /admin/users. Please use GET.` }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
   // Route for serving uploaded application files
   else if (url.pathname.startsWith('/uploads/applications/')) {
       if (req.method === 'GET') {
@@ -153,7 +176,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
       const file = Bun.file(filePath);
       const exists = await file.exists();
       if (exists) {
-        // Bun will attempt to set Content-Type automatically for known types.
+        // Bun will attempt to set Content-Type automatically.
         return new Response(file);
       }
     } catch (error) {

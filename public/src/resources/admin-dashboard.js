@@ -19,7 +19,8 @@ function displayUsers(users) {
     const userList = document.createElement('ul');
     users.forEach(user => {
         const listItem = document.createElement('li');
-        listItem.textContent = `ID: ${user.id}, Username: ${user.username}, Email: ${user.email}`; // Adjust based on actual user data structure
+        // Use user.name for the name instead of user.username
+        listItem.textContent = `ID: ${user.id}, Name: ${user.name}, Email: ${user.email}`; // Adjust based on actual user data structure
         userList.appendChild(listItem);
     });
     document.getElementById('user-data').appendChild(userList);

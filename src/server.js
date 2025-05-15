@@ -2,7 +2,7 @@ import path from 'path';
 // import fs from 'fs'; // fs might not be needed anymore if all file ops are in httphandlermethods
 import db from '../db/db.js'; // Import the database instance
 import User from '../public/src/resources/user.js'; // Import the User resource
-import Application from './resources/application.js'; // Import the Application resource
+import Application from './resources/studentapplications.js'; // Import the Application resource
 import OpportunityResource from './resources/opportunityResource.js'; // Import the Opportunity resource
 import NotificationResource from './resources/notificationResource.js'; // Import the Notifications resource
 import { handleHttpRequest } from './httphandlermethods.js'; // Import the new HTTP handler

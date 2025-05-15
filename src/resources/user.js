@@ -386,7 +386,7 @@ class User {
       try {
           const stmt = this.db.prepare("SELECT id, name, email, user_type, major, graduation_year, industry, location, description FROM User");
           const users = stmt.all();
-          console.log('[User.getAllUsers] Query result count:', users.length);
+          console.log('[User.getAllUsers] Number of users found:', users.length); // Added logging
           return users;
       } catch (error) {
           console.error(`Error in User.getAllUsers: ${error.message}`);
