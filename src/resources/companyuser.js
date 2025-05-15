@@ -1,4 +1,4 @@
-import db from '../db/db.js'; // Assuming db.js is in the parent directory
+import db from '../../db/db.js'; // Corrected path to db.js
 
 class CompanyUser {
   constructor(db) {
