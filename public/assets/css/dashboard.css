@@ -25,22 +25,49 @@ h3 { /* Dashboard specific h3 styling */
 /* Navbar styles are primarily inherited from style.css */
 /* Burger menu styles removed as the HTML structure has changed */
 
+/* Ensure nav-links has relative positioning for dropdown */
+.navbar .nav-links {
+    position: relative; /* Added for dropdown positioning */
+    display: flex; /* Keep flex display */
+    align-items: center; /* Keep items centered */
+}
 
-/* Profile Section */
+
+/* Dashboard Layout - Newsfeed Style */
+.dashboard-container {
+    display: flex;
+    gap: 2rem; /* Space between profile section and newsfeed */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
 .profile-section {
+    flex: 0 0 300px; /* Fixed width for profile section */
     background-color: #E6E6E6; /* Light background, consistent with style.css cards */
     color: #121212; /* Dark text for light backgrounds */
     padding: 2rem;
     border-radius: 8px; /* Dashboard specific radius, style.css cards have 10px */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    margin-bottom: 2rem;
+    margin-bottom: 2rem; /* Add margin bottom for smaller screens */
     text-align: left;
+}
+
+.newsfeed-container {
+    flex-grow: 1; /* Newsfeed takes remaining space */
+    min-width: 300px; /* Minimum width for newsfeed */
 }
 
 .profile-section h2 {
     color: #1E90FF;
     /* text-align: left; */ /* Inherits center from general h2 if not overridden */
     margin-bottom: 1rem;
+}
+
+#profile-summary {
+    text-align: center; /* Center profile picture and summary */
+}
+
+#profile-summary img {
+    margin-bottom: 1rem; /* Space below profile picture */
 }
 
 #profile-summary p {
@@ -53,81 +80,146 @@ h3 { /* Dashboard specific h3 styling */
     color: #1E90FF; /* Primary accent */
 }
 
-/* Opportunities Section */
-.opportunities { /* This class is used in style.css for general opportunity pages, ensure specificity or alignment */
-    margin-bottom: 2rem;
+/* Profile Edit Buttons */
+.profile-section .edit-button,
+.profile-section .save-button,
+.profile-section .cancel-button {
+    font-family: 'Source Code Pro', monospace;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s;
+    margin-right: 0.5rem; /* Add some space between buttons */
+    margin-top: 1rem; /* Space above buttons */
 }
 
-.internship-grid, .club-grid {
+.profile-section .edit-button {
+    background-color: #1E90FF; /* Primary accent color */
+    color: #E6E6E6;
+}
+
+.profile-section .edit-button:hover {
+    box-shadow: 0 0 10px #1E90FF, 0 0 20px #1E90FF;
+    transform: translateY(-2px);
+}
+
+.profile-section .save-button {
+    background-color: #00D4B4; /* Tertiary accent color */
+    color: #121212; /* Dark text for contrast */
+}
+
+.profile-section .save-button:hover {
+    box-shadow: 0 0 10px #00D4B4, 0 0 20px #00D4B4;
+    transform: translateY(-2px);
+}
+
+.profile-section .cancel-button {
+    background-color: #FF2D55; /* Secondary accent color */
+    color: #E6E6E6;
+}
+
+.profile-section .cancel-button:hover {
+    box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55;
+    transform: translateY(-2px);
+}
+
+
+/* Newsfeed Sections (Opportunities and Applications) */
+.newsfeed-container section {
+    background-color: #121212; /* Dark background */
+    color: #E6E6E6; /* Light text */
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 2rem; /* Space between sections in the newsfeed */
+}
+
+.newsfeed-container h2 {
+    color: #1E90FF;
+    margin-bottom: 1rem;
+    text-align: left; /* Align section titles to the left in newsfeed */
+}
+
+.newsfeed-container h3 {
+    color: #1E90FF;
+    margin-bottom: 1rem;
+}
+
+/* Opportunities Grid within Newsfeed */
+.internship-grid, .club-grid, .event-grid { /* Include event-grid here */
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-/* Card styles are largely inherited from .internship-card, .club-card in style.css */
-.internship-card, .club-card {
-    /* background-color, color, padding, box-shadow, border, border-radius (10px) are inherited from style.css */
-    /* Dashboard specific: slightly different border-radius if desired, or remove to use style.css's 10px */
-    border-radius: 8px; /* Overriding style.css's 10px for a dashboard-specific look */
-    transition: transform 0.3s ease, box-shadow 0.3s ease; /* style.css has transform, dashboard adds box-shadow transition */
-    text-align: left; /* Explicitly set, though style.css also has it */
+/* Card styles within Newsfeed */
+.internship-card, .club-card, .event-card { /* Include event-card here */
+    background-color: #2a2a2a; /* Darker item background on main dark bg */
+    color: #E6E6E6; /* Ensure text is light */
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: left;
+    border-left: 4px solid #00D4B4; /* Tertiary accent border */
 }
 
-.internship-card:hover, .club-card:hover {
-    /* transform: translateY(-5px); is inherited from style.css */
-    box-shadow: 0 4px 10px rgba(0, 212, 180, 0.5), 0 2px 5px rgba(0,0,0,0.3); /* Combines original shadow with glow */
+.internship-card:hover, .club-card:hover, .event-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0, 212, 180, 0.5), 0 2px 5px rgba(0,0,0,0.3);
 }
 
-.internship-card h3, .club-card h3 {
-    color: #1E90FF; /* Primary accent for card titles, consistent with style.css */
-    font-size: 1.3rem; /* Potentially dashboard specific size */
+.internship-card h3, .club-card h3, .event-card h3 {
+    color: #1E90FF;
+    font-size: 1.3rem;
     margin-bottom: 0.5rem;
 }
 
-.internship-card .company, .club-card .club-name {
-    font-family: 'Source Code Pro', monospace; /* Theme font */
+.internship-card .company, .club-card .club-name, .event-card .organizer { /* Include event organizer */
+    font-family: 'Source Code Pro', monospace;
     font-size: 0.9rem;
-    color: #FF2D55; /* Secondary accent, consistent with style.css */
+    color: #FF2D55;
     margin-bottom: 0.75rem;
 }
 
-.internship-card p, .club-card p {
+.internship-card p, .club-card p, .event-card p {
     margin-bottom: 0.75rem;
     font-size: 0.95rem;
 }
 
-.internship-card .target, .club-card .target {
+.internship-card .target, .club-card .target, .event-card .date-location { /* Include event date/location */
     font-style: italic;
     font-size: 0.9rem;
-    color: #00D4B4; /* Tertiary accent, consistent with style.css */
+    color: #00D4B4;
     margin-bottom: 1rem;
 }
 
-/* Apply button styles are inherited from .apply-button / .join-button in style.css */
-/* If dashboard buttons need specific tweaks, they can be added here */
-.internship-card .apply-button, .club-card .apply-button { /* Assuming .apply-button for clubs too on dashboard */
-    /* background-color, color, padding, border-radius, font-family, transition inherited */
-    /* Example of a dashboard-specific tweak if needed: */
-    /* padding: 0.5rem 1rem; */ /* Slightly different padding */
+/* Apply/Join Button styles within Newsfeed */
+.internship-card .apply-button, .club-card .apply-button, .event-card .apply-button { /* Assuming apply-button class for all */
+    background-color: #FF2D55;
+    color: #E6E6E6;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 400;
+    display: inline-block;
+    transition: box-shadow 0.3s, transform 0.3s;
 }
 
-.internship-card .apply-button:hover, .club-card .apply-button:hover {
-    /* hover effects inherited from style.css */
+.internship-card .apply-button:hover, .club-card .apply-button:hover, .event-card .apply-button:hover {
+    box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55;
+    transform: translateY(-2px);
 }
 
 
-/* Applications Section */
-.applications-section {
-    /* background-color: #121212; Inherited */
-    padding: 2rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
-}
-
+/* Recent Applications List within Newsfeed */
 .applications-section h2 {
     color: #1E90FF;
     margin-bottom: 1rem;
+    text-align: left; /* Align section title to the left */
 }
 
 #application-list {
@@ -141,8 +233,9 @@ h3 { /* Dashboard specific h3 styling */
     padding: 1rem;
     border-radius: 5px;
     margin-bottom: 0.75rem;
-    border-left: 4px solid #00D4B4; /* Tertiary accent border */
+    border-left: 4px solid #FF2D55; /* Secondary accent border for applications */
     font-size: 1rem;
+    text-align: left;
 }
 
 #application-list li strong {
@@ -150,8 +243,8 @@ h3 { /* Dashboard specific h3 styling */
 }
 
 
-/* Notifications Section */
-.notifications { /* This class is used in style.css for general notification pages */
+/* Notifications Section (Regular Display) */
+.notifications {
     /* background-color: #121212; Inherited */
     padding: 2rem;
     border-radius: 8px;
@@ -161,6 +254,7 @@ h3 { /* Dashboard specific h3 styling */
 .notifications h2 {
     color: #1E90FF;
     margin-bottom: 1rem;
+    text-align: center; /* Center title for regular section */
 }
 
 .notification-list {
@@ -179,6 +273,7 @@ h3 { /* Dashboard specific h3 styling */
     justify-content: space-between;
     align-items: center;
     border-left: 4px solid #FF2D55; /* Secondary accent for notifications */
+    font-size: 1rem;
 }
 
 .notification p {
@@ -211,7 +306,7 @@ h3 { /* Dashboard specific h3 styling */
 }
 
 .notification.read button {
-    background-color: #6c757d; /* style.css has this too */
+    background-color: #6c757d;
     cursor: default;
 }
 
@@ -257,8 +352,24 @@ footer p {
         font-size: 1.3rem;
     }
 
-    .internship-grid, .club-grid {
+    .dashboard-container {
+        flex-direction: column; /* Stack profile and newsfeed on smaller screens */
+        gap: 1rem; /* Reduce gap */
+    }
+
+    .profile-section {
+        flex: auto; /* Allow profile section to take full width */
+        margin-bottom: 1rem; /* Adjust margin */
+    }
+
+    .newsfeed-container section {
+        padding: 1.5rem; /* Reduce padding */
+        margin-bottom: 1rem; /* Reduce margin */
+    }
+
+    .internship-grid, .club-grid, .event-grid {
         grid-template-columns: 1fr; /* Stack cards on smaller screens */
+        gap: 1rem; /* Reduce gap */
     }
 
     /* Responsive navbar styles for the old ul/li/burger structure are removed. */
@@ -278,48 +389,4 @@ footer p {
         margin-left: 0;
         width: 100%;
     }
-}
-
-/* Profile Edit Buttons */
-.profile-section .edit-button,
-.profile-section .save-button,
-.profile-section .cancel-button {
-    font-family: 'Source Code Pro', monospace;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: box-shadow 0.3s, transform 0.3s;
-    margin-right: 0.5rem; /* Add some space between buttons */
-    margin-top: 1rem; /* Space above buttons */
-}
-
-.profile-section .edit-button {
-    background-color: #1E90FF; /* Primary accent color */
-    color: #E6E6E6;
-}
-
-.profile-section .edit-button:hover {
-    box-shadow: 0 0 10px #1E90FF, 0 0 20px #1E90FF;
-    transform: translateY(-2px);
-}
-
-.profile-section .save-button {
-    background-color: #00D4B4; /* Tertiary accent color */
-    color: #121212; /* Dark text for contrast */
-}
-
-.profile-section .save-button:hover {
-    box-shadow: 0 0 10px #00D4B4, 0 0 20px #00D4B4;
-    transform: translateY(-2px);
-}
-
-.profile-section .cancel-button {
-    background-color: #FF2D55; /* Secondary accent color */
-    color: #E6E6E6;
-}
-
-.profile-section .cancel-button:hover {
-    box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55;
-    transform: translateY(-2px);
 }
