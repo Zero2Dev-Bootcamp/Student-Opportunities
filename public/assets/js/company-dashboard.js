@@ -99,6 +99,29 @@ function renderReceivedApplications(applications) {
         applicationItem.appendChild(applicantInfo);
         applicationItem.appendChild(opportunityInfo);
         applicationItem.appendChild(statusInfo);
+
+        // Display uploaded files
+        if (application.files && application.files.length > 0) {
+            const filesList = document.createElement('div');
+            filesList.innerHTML = '<strong>Uploaded Files:</strong>';
+            const ul = document.createElement('ul');
+            application.files.forEach(file => {
+                const li = document.createElement('li');
+                // Assuming file_path is something like 'uploads/applications/unique-filename.pdf'
+                // We'll create a link to a hypothetical backend route that serves files
+                // A more secure approach would use a file ID or a temporary token
+                const fileLink = document.createElement('a');
+                fileLink.href = `/uploads/applications/${file.file_path.split('/').pop()}`; // Link to a hypothetical serving endpoint
+                fileLink.textContent = file.file_name;
+                fileLink.target = '_blank'; // Open in new tab
+                li.appendChild(fileLink);
+                ul.appendChild(li);
+            });
+            filesList.appendChild(ul);
+            applicationItem.appendChild(filesList);
+        }
+
+
         applicationItem.appendChild(viewButton);
         applicationItem.appendChild(changeStatusButton);
 

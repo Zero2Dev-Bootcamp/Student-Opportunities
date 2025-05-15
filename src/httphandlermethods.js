@@ -102,6 +102,31 @@ export async function handleHttpRequest(req, resources, publicDir) {
     }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/applications` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
+  // Route for serving uploaded application files
+  else if (url.pathname.startsWith('/uploads/applications/')) {
+      if (req.method === 'GET') {
+          const filename = url.pathname.substring('/uploads/applications/'.length);
+          // Basic security check: prevent directory traversal
+          if (filename.includes('..') || filename.startsWith('/')) {
+              return new Response("Forbidden", { status: 403 });
+          }
+          const filePath = path.join(UPLOAD_DIR, filename);
+          try {
+              const file = Bun.file(filePath);
+              const exists = await file.exists();
+              if (exists) {
+                  // Bun will attempt to set Content-Type automatically
+                  return new Response(file);
+              } else {
+                  return new Response("File not found", { status: 404 });
+              }
+          } catch (error) {
+              console.error('Error serving uploaded file:', error);
+              return new Response("Internal Server Error", { status: 500 });
+          }
+      }
+       return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /uploads/applications/` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
+  }
   // Static file serving (if not an API route handled above)
   else {
     let filePath;

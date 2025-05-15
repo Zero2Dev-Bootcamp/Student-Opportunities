@@ -123,6 +123,111 @@ describe('Registration Integration Test', () => {
         return originalFetch(requestUrl, options);
     };
 
+    // --- Create Pseudoprofiles and Opportunities ---
+    const companyUsers = [];
+    const studentUsers = [];
+    const opportunities = [];
+
+    // Create 2 Company Users
+    for (let i = 1; i <= 2; i++) {
+        const companyData = {
+            name: `Test Company ${i}`,
+            username: `testcompany${i}`,
+            email: `company${i}@test.com`,
+            password: 'password123',
+            user_type: 'company',
+            role: 'company', // user.js expects 'role'
+            industry: `Industry ${i}`,
+            location: `City ${i}`,
+            description: `Description for Company ${i}`
+        };
+        const response = await fetch(`${SERVER_URL}/api/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(companyData),
+        });
+        const company = await response.json();
+        companyUsers.push(company);
+    }
+
+    // Create 5 Student Users
+    for (let i = 1; i <= 5; i++) {
+        const studentData = {
+            name: `Test Student ${i}`,
+            username: `teststudent${i}`,
+            email: `student${i}@test.com`,
+            password: 'password123',
+            user_type: 'student',
+            role: 'student', // user.js expects 'role'
+            major: `Major ${i}`,
+            graduation_year: 2025 + i,
+            interests: [`interest${i}`, 'technology'] // Add some interests
+        };
+         const response = await fetch(`${SERVER_URL}/api/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentData),
+        });
+        const student = await response.json();
+        studentUsers.push(student);
+    }
+
+    // Create Opportunities associated with Companies
+    if (companyUsers.length >= 2) {
+        const opp1Data = {
+            title: 'Software Engineer Intern',
+            description: 'Exciting internship opportunity.',
+            company_user_id: companyUsers[0].id, // Link to Company 1
+            location: 'Remote',
+            required_skills: 'JavaScript,Node.js,technology',
+            type: 'Internship'
+        };
+         const response1 = await fetch(`${SERVER_URL}/api/opportunities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(opp1Data),
+        });
+        const opp1 = await response1.json();
+        opportunities.push(opp1);
+
+        const opp2Data = {
+            title: 'Graphic Design Intern',
+            description: 'Design visuals for campaigns.',
+            company_user_id: companyUsers[1].id, // Link to Company 2
+            location: 'Remote',
+            required_skills: 'Design,arts',
+            type: 'Internship'
+        };
+         const response2 = await fetch(`${SERVER_URL}/api/opportunities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(opp2Data),
+        });
+        const opp2 = await response2.json();
+        opportunities.push(opp2);
+
+         const opp3Data = {
+            title: 'Marketing Assistant',
+            description: 'Assist in marketing campaigns.',
+            company_user_id: companyUsers[0].id, // Link to Company 1
+            location: 'On-site',
+            required_skills: 'Marketing,Communication',
+            type: 'Job'
+        };
+         const response3 = await fetch(`${SERVER_URL}/api/opportunities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(opp3Data),
+        });
+        const opp3 = await response3.json();
+        opportunities.push(opp3);
+    }
+
+    // Make created users and opportunities available to tests
+    window.testData = { companyUsers, studentUsers, opportunities };
+    console.log('[tests/register.test.js] Created test data.');
+    // --- End Create Pseudoprofiles and Opportunities ---
+
 
     // Wait for DOM and scripts like the userType change handler
     await new Promise(resolve => {
