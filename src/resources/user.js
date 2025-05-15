@@ -1,8 +1,12 @@
 import db from '../db/db.js'; // Assuming db.js is in the parent directory
+import CompanyUser from './companyuser.js';
+import StudentUser from './studentuser.js';
 
 class User {
   constructor(db) {
     this.db = db;
+    this.companyUser = new CompanyUser(db);
+    this.studentUser = new StudentUser(db);
   }
 
   // Core Methods
@@ -26,13 +30,12 @@ class User {
       // Hash the password (using a simple mock for now)
       const passwordHash = `hashed_${userData.password}`; // TODO: Implement proper password hashing
 
-      // Prepare nullable fields
+      // Prepare nullable fields (keeping them in User table for now as per original schema)
       const major = userData.major || null;
       const graduation_year = userData.graduation_year || null;
       const industry = userData.industry || null;
       const location = userData.location || null; // Get location from userData
       const description = userData.description || null;
-      const interests = userData.interests || []; // Get interests array
 
       // Use explicit BEGIN, COMMIT, and ROLLBACK for transaction
       try {
@@ -46,12 +49,13 @@ class User {
         }
         const userId = userResult.lastInsertRowId;
 
-        if (userData.role === "student" && interests.length > 0) {
-          const interestStmt = this.db.prepare("INSERT INTO UserInterests (user_id, interest) VALUES (?, ?)");
-          for (const interest of interests) {
-            interestStmt.run(userId, interest);
-          }
+        // Delegate role-specific data creation
+        if (userData.role === "student") {
+          await this.studentUser.createStudentSpecificData(userId, userData);
+        } else if (userData.role === "company") {
+          await this.companyUser.createCompanySpecificData(userId, userData);
         }
+
 
         this.db.run('COMMIT'); // Commit transaction
         console.log(`[User.createUser] User created with ID: ${userId}`);
