@@ -21,7 +21,7 @@ const notificationResource = new NotificationResource(db); // Instantiate Notifi
 
 const resources = {
   userResource,
-  applicationResource,
+  studentapplicationsResource: applicationResource,
   opportunityResource,
   notificationResource,
 };

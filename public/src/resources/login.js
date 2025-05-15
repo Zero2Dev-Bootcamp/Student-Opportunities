@@ -56,10 +56,16 @@ export function initLogin() {
                 }
                 
                 setTimeout(() => {
-                    if (body.userType === 'student') {
+                    if (body.userType === 'admin') {
+                        window.location.href = 'admin-dashboard.html'; // Redirect admins to admin dashboard
+                    } else if (body.userType === 'student') {
                         window.location.href = 'studentdashboard.html'; // Redirect students to student dashboard
+                    } else if (body.userType === 'company') {
+                        window.location.href = 'companydashboard.html'; // Redirect companies to company dashboard
                     } else {
-                        window.location.href = 'companydashboard.html'; // Redirect companies to company dashboard (will create this file next)
+                        // Handle unexpected user types or default redirection
+                        console.warn('Unknown user type received:', body.userType);
+                        window.location.href = 'index.html'; // Default redirect to home or a generic dashboard
                     }
                 }, 1000);
             } else {

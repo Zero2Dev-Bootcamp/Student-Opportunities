@@ -37,7 +37,21 @@ export async function handleHttpRequest(req, resources, publicDir) {
           });
         }
 
-        // Mock authentication logic
+        // Mock authentication logic: Check for a specific admin credential
+        if (email === 'admin@testapp.com' && body.password === 'adminpassword') {
+             console.log('[Login Mock] Admin login successful.');
+             return new Response(JSON.stringify({
+                 token: 'mock-admin', // Use a distinct token for admin
+                 userId: 999, // Mock admin user ID
+                 userType: 'admin',
+                 message: 'Admin login successful'
+             }), {
+                 status: 200,
+                 headers: { 'Content-Type': 'application/json' }
+             });
+        }
+
+        // Existing mock authentication logic for student/company
         const mockToken = email.includes('company')
           ? { token: 'mock-company', userId: 2, userType: 'company', message: 'Login successful' }
           : { token: 'mock-student', userId: 1, userType: 'student', message: 'Login successful' };
@@ -161,7 +175,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
     const staticPublicDir = path.join(projectRoot, 'public'); // Use the passed publicDir or recalculate if needed
 
     // Update the list of known HTML files in the 'html' directory
-    const htmlFilesInHtmlDir = ['/index.html', '/login.html', '/studentdashboard.html', '/companydashboard.html'];
+    const htmlFilesInHtmlDir = ['/index.html', '/login.html', '/studentdashboard.html', '/companydashboard.html', '/admin-dashboard.html']; // Added admin-dashboard.html
 
     if (requestedPath === '/') {
       filePath = path.join(staticPublicDir, 'html', 'index.html');
