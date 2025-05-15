@@ -275,9 +275,13 @@ class User {
   async handlePost(req) {
     console.log('[User.handlePost] Called');
     try {
+      console.log('[User.handlePost] Attempting to parse request body as JSON');
       const userData = await req.json();
+      console.log('[User.handlePost] Successfully parsed request body:', JSON.stringify(userData, null, 2));
       // Assuming createUser handles validation and hashing
+      console.log('[User.handlePost] Calling createUser');
       const newUser = await this.createUser(userData);
+      console.log('[User.handlePost] createUser successful. New user ID:', newUser ? newUser.id : 'N/A');
       return new Response(JSON.stringify(newUser), {
         headers: { 'Content-Type': 'application/json' },
         status: 201 // 201 Created

@@ -2,17 +2,17 @@ export function initRegistration() {
     const form = document.querySelector('.register-form');
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const data = {
-            name: form.name.value,
-            email: form.email.value,
-            password: form.password.value,
-            user_type: form.userType.value,
-            location: form.location.value || null,
-            description: form.message.value,
-            interests: form.userType.value === 'student' ? Array.from(form.querySelectorAll('input[name="interests"]:checked')).map(i => i.value) : []
-        };
+            const data = {
+                username: form.name.value,
+                email: form.email.value,
+                password: form.password.value,
+                role: form.userType.value,
+                location: form.location.value || null,
+                description: form.message.value,
+                interests: form.userType.value === 'student' ? Array.from(form.querySelectorAll('input[name="interests"]:checked')).map(i => i.value) : []
+            };
         try {
-            const response = await fetch('/users', {
+            const response = await fetch('/api/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)

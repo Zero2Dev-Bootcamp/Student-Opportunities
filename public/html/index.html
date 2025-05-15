@@ -20,11 +20,12 @@
     </nav>
     <section class="hero" id="home">
         <h1>Launch Your Future</h1>
-        <p>Connect with clubs, internships, volunteer roles, and jobs tailored for high school students!</p>
+        <p>Find the perfect experiences to boost your credentials as you connect with clubs, land internships, explore volunteer roles, and discover jobs that align with your goals</p>
         <a href="#signup" class="cta-button">Prepare for Takeoff!</a>
     </section>
     <section class="internships" id="opportunities">
         <h2>Featured Internships</h2>
+        <!-- TODO: Replace static cards with dynamic data from FastAPI /api/opportunities -->
         <div class="internship-grid">
             <div class="internship-card">
                 <h3>Software Development Intern</h3>
@@ -68,18 +69,18 @@
             </div>
         </div>
     </section>
-    <section class="testimonials">
+    <section class="testimonials" aria-label="Student testimonials">
         <h2>What Students Say</h2>
         <div class="testimonial-carousel">
-            <div class="testimonial active">
+            <div class="testimonial active" aria-hidden="false">
                 <p>"Studexplore connected me with a coding internship that taught me real-world skills and boosted my college app!"</p>
                 <div class="author">– Alex, 17</div>
             </div>
-            <div class="testimonial">
+            <div class="testimonial" aria-hidden="true">
                 <p>"Joining an art club through Studexplore helped me build a killer portfolio and meet amazing friends."</p>
                 <div class="author">– Maya, 16</div>
             </div>
-            <div class="testimonial">
+            <div class="testimonial" aria-hidden="true">
                 <p>"Volunteering through Studexplore gave me a sense of purpose and awesome experiences to share."</p>
                 <div class="author">– Sam, 15</div>
             </div>
@@ -120,13 +121,13 @@
     </section>
     <section class="register-section" id="signup">
         <h2>Join the Hub</h2>
-        <form class="register-form" action="/submit" method="POST">
+        <form class="register-form" action="" method="POST">
             <div class="form-group">
                 <label for="userType">I am a:</label>
                 <select id="userType" name="userType" required>
                     <option value="" disabled selected>Select an option</option>
                     <option value="student">Student looking for opportunities</option>
-                    <option value="company">Company offering internships</option>
+                    <option value="company">Organization offering opportunities</option>
                 </select>
             </div>
             <div class="form-group">
@@ -160,10 +161,10 @@
             </div>
             <div class="form-group">
                 <label for="message">Message/Description</label>
-                <textarea id="message" name="message" placeholder="Tell us about yourself or your opportunity"></textarea> <!-- Made optional based on user.js -->
+                <textarea id="message" name="message" placeholder="Tell us about yourself or your opportunity"></textarea>
             </div>
             <button type="submit" class="submit-button">Register Now</button>
-            <div class="form-message" style="margin-top: 15px;"></div> <!-- Added message area for registration form -->
+            <div class="form-message" style="margin-top: 15px;"></div>
         </form>
     </section>
     <footer>
@@ -181,6 +182,7 @@
         function showTestimonial(index) {
             testimonials.forEach((t, i) => {
                 t.classList.toggle('active', i === index);
+                t.setAttribute('aria-hidden', i !== index);
             });
         }
         function nextTestimonial() {
@@ -198,21 +200,23 @@
             });
         });
 
+        // Registration form
         function initRegistration() {
             const form = document.querySelector('.register-form');
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const data = {
-                    name: form.name.value,
-                    email: form.email.value,
-                    password: form.password.value,
-                    user_type: form.userType.value,
-                    location: form.location.value || null,
-                    description: form.message.value,
-                    interests: form.userType.value === 'student' ? Array.from(form.querySelectorAll('input[name="interests"]:checked')).map(i => i.value) : []
-                };
+                    const data = {
+                        username: form.name.value,
+                        email: form.email.value,
+                        password: form.password.value,
+                        role: form.userType.value,
+                        location: form.location.value || null,
+                        description: form.message.value,
+                        interests: form.userType.value === 'student' ? Array.from(form.querySelectorAll('input[name="interests"]:checked')).map(i => i.value) : [],
+                        company_name: form.userType.value === 'company' ? form.companyName.value : null
+                    };
                 try {
-                    const response = await fetch('/users', {
+                    const response = await fetch('/api/users', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
@@ -220,16 +224,17 @@
                     const result = await response.json();
                     const message = form.querySelector('.form-message');
                     if (response.ok) {
-                        message.textContent = 'Registered! Please log in.';
-                        message.style.color = '#2e7d32'; // Green for success
+                        message.textContent = 'Registered! Redirecting to login...';
+                        message.style.color = '#2e7d32';
                         localStorage.setItem('userInterests', JSON.stringify(data.interests));
-                        setTimeout(() => window.location.hash = '#signin', 1000);
+                        setTimeout(() => window.location.href = 'login.html', 1000);
                     } else {
                         message.textContent = result.error || 'Registration failed.';
-                        message.style.color = '#FF2D55'; // Red for error
+                        message.style.color = '#FF2D55';
                     }
                 } catch (error) {
                     form.querySelector('.form-message').textContent = 'Server error.';
+                    form.querySelector('.form-message').style.color = '#FF2D55';
                     console.error('Registration error:', error);
                 }
             });
@@ -238,7 +243,7 @@
             document.getElementById('userType').addEventListener('change', (e) => {
                 const companyNameGroup = document.getElementById('companyNameGroup');
                 const interestsGroup = document.getElementById('interestsGroup');
-                if (this.value === 'company') {
+                if (e.target.value === 'company') {
                     companyNameGroup.style.display = 'block';
                     interestsGroup.style.display = 'none';
                 } else {
@@ -249,133 +254,6 @@
         }
 
         initRegistration();
-
-        // Testimonial carousel
-        const testimonials = document.querySelectorAll('.testimonial');
-        let currentTestimonial = 0;
-        function showTestimonial(index) {
-            testimonials.forEach((t, i) => {
-                t.classList.toggle('active', i === index);
-            });
-        }
-        function nextTestimonial() {
-            currentTestimonial = (currentTestimonial + 1) % testimonials.length;
-            showTestimonial(currentTestimonial);
-        }
-        setInterval(nextTestimonial, 5000);
-        showTestimonial(currentTestimonial);
-
-        // FAQ toggle
-        document.querySelectorAll('.faq-item h3').forEach(item => {
-            item.addEventListener('click', () => {
-                const faqItem = item.parentElement;
-                faqItem.classList.toggle('active');
-            });
-        });
-    </script>
-    <script>
-        // Testimonial carousel
-        const testimonials = document.querySelectorAll('.testimonial');
-        let currentTestimonial = 0;
-        function showTestimonial(index) {
-            testimonials.forEach((t, i) => {
-                t.classList.toggle('active', i === index);
-            });
-        }
-        function nextTestimonial() {
-            currentTestimonial = (currentTestimonial + 1) % testimonials.length;
-            showTestimonial(currentTestimonial);
-        }
-        setInterval(nextTestimonial, 5000);
-        showTestimonial(currentTestimonial);
-
-        // FAQ toggle
-        document.querySelectorAll('.faq-item h3').forEach(item => {
-            item.addEventListener('click', () => {
-                const faqItem = item.parentElement;
-                faqItem.classList.toggle('active');
-            });
-        });
-    </script>
-    <script>
-        function initRegistration() {
-            const form = document.querySelector('.register-form');
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const data = {
-                    name: form.name.value,
-                    email: form.email.value,
-                    password: form.password.value,
-                    user_type: form.userType.value,
-                    location: form.location.value || null,
-                    description: form.message.value,
-                    interests: form.userType.value === 'student' ? Array.from(form.querySelectorAll('input[name="interests"]:checked')).map(i => i.value) : []
-                };
-                try {
-                    const response = await fetch('/users', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    const result = await response.json();
-                    const message = form.querySelector('.form-message');
-                    if (response.ok) {
-                        message.textContent = 'Registered! Please log in.';
-                        message.style.color = '#2e7d32'; // Green for success
-                        localStorage.setItem('userInterests', JSON.stringify(data.interests));
-                        setTimeout(() => window.location.hash = '#signin', 1000);
-                    } else {
-                        message.textContent = result.error || 'Registration failed.';
-                        message.style.color = '#FF2D55'; // Red for error
-                    }
-                } catch (error) {
-                    form.querySelector('.form-message').textContent = 'Server error.';
-                    console.error('Registration error:', error);
-                }
-            });
-
-            // Toggle form fields based on user type
-            document.getElementById('userType').addEventListener('change', (e) => {
-                const companyNameGroup = document.getElementById('companyNameGroup');
-                const interestsGroup = document.getElementById('interestsGroup');
-                if (this.value === 'company') {
-                    companyNameGroup.style.display = 'block';
-                    interestsGroup.style.display = 'none';
-                } else {
-                    companyNameGroup.style.display = 'none';
-                    interestsGroup.style.display = 'block';
-                }
-            });
-        }
-
-        initRegistration();
-
-        // Testimonial carousel
-        const testimonials = document.querySelectorAll('.testimonial');
-        let currentTestimonial = 0;
-        function showTestimonial(index) {
-            testimonials.forEach((t, i) => {
-                t.classList.toggle('active', i === index);
-            });
-        }
-        function nextTestimonial() {
-            currentTestimonial = (currentTestimonial + 1) % testimonials.length;
-            showTestimonial(currentTestimonial);
-        }
-        setInterval(nextTestimonial, 5000);
-        showTestimonial(currentTestimonial);
-
-        // FAQ toggle
-        document.querySelectorAll('.faq-item h3').forEach(item => {
-            item.addEventListener('click', () => {
-                const faqItem = item.parentElement;
-                faqItem.classList.toggle('active');
-            });
-        });
     </script>
 </body>
 </html>
-
-</final_file_content>
-
-IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this file, including any auto-formatting (e.g., if you used single quotes but the
