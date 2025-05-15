@@ -1,189 +1,112 @@
-import { logout } from '../../src/resources/login.js'; // Adjust path as needed
-
 document.addEventListener('DOMContentLoaded', () => {
-    const logoutLink = document.getElementById('logout-link');
-    if (logoutLink) {
-        logoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            logout();
+    const editProfileBtn = document.getElementById('edit-profile-btn');
+    const profileEditForm = document.getElementById('profile-edit-form');
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+
+    const companyNameSpan = document.getElementById('company-name');
+    const companyEmailSpan = document.getElementById('company-email');
+    const companyIndustrySpan = document.getElementById('company-industry');
+    const companyLocationSpan = document.getElementById('company-location');
+    const companyDescriptionSpan = document.getElementById('company-description');
+
+    const editCompanyNameInput = document.getElementById('edit-company-name');
+    const editCompanyEmailInput = document.getElementById('edit-company-email');
+    const editCompanyIndustryInput = document.getElementById('edit-company-industry');
+    const editCompanyLocationInput = document.getElementById('edit-company-location');
+    const editCompanyDescriptionTextarea = document.getElementById('edit-company-description');
+
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', () => {
+            // Populate the edit form with the current company profile information
+            editCompanyNameInput.value = companyNameSpan.textContent;
+            editCompanyEmailInput.value = companyEmailSpan.textContent;
+            editCompanyIndustryInput.value = companyIndustrySpan.textContent;
+            editCompanyLocationInput.value = companyLocationSpan.textContent;
+            editCompanyDescriptionTextarea.value = companyDescriptionSpan.textContent;
+
+            // Show the edit form
+            profileEditForm.style.display = 'block';
         });
     }
 
-    // Initialize company dashboard specific functionality
-    initCompanyDashboard();
-});
-
-function initCompanyDashboard() {
-    // Placeholder for company dashboard initialization logic
-    console.log('Company dashboard initialized.');
-
-    // Load company profile, opportunities, applications
-    loadCompanyProfile();
-    loadPostedOpportunities();
-    loadReceivedApplications();
-
-    // Add event listener for the post opportunity form
-    const postOppForm = document.getElementById('postOpportunityForm');
-    if(postOppForm) {
-        postOppForm.addEventListener('submit', handlePostOpportunity);
-    }
-}
-
-async function loadCompanyProfile() {
-    // Fetch company profile data from the backend
-    console.log('Loading company profile...');
-    // Example: const response = await fetch('/api/users/' + localStorage.getItem('userId'));
-    // Example: const companyProfile = await response.json();
-    // Example: Display profile data in the #company-profile-summary section
-}
-
-async function loadPostedOpportunities() {
-    // Fetch opportunities posted by the current company from the backend
-    console.log('Loading posted opportunities...');
-    // Example: const response = await fetch('/api/opportunities?companyId=' + localStorage.getItem('userId'));
-    // Example: const postedOpportunities = await response.json();
-    // Example: Render posted opportunities in the #opportunity-list section
-}
-
-async function loadReceivedApplications() {
-    // Fetch applications received for the current company's opportunities from the backend
-    console.log('Loading received applications...');
-    // Example: const response = await fetch('/api/applications?companyId=' + localStorage.getItem('userId'));
-    // Example: const receivedApplications = await response.json();
-    // Example: Render received applications in the #application-list section
-    renderReceivedApplications(receivedApplications);
-}
-
-function renderReceivedApplications(applications) {
-    const applicationListDiv = document.getElementById('application-list');
-    applicationListDiv.innerHTML = ''; // Clear previous content
-
-    if (!applications || applications.length === 0) {
-        applicationListDiv.innerHTML = '<p>No applications received yet.</p>';
-        return;
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', () => {
+            // Hide the edit form
+            profileEditForm.style.display = 'none';
+        });
     }
 
-    applications.forEach(application => {
-        const applicationItem = document.createElement('div');
-        applicationItem.classList.add('application-item'); // Add a class for styling
+    if (saveProfileBtn) {
+        saveProfileBtn.addEventListener('click', async () => {
+            // Get the updated profile information from the edit form
+            const updatedProfile = {
+                name: editCompanyNameInput.value,
+                email: editCompanyEmailInput.value,
+                industry: editCompanyIndustryInput.value,
+                location: editCompanyLocationInput.value,
+                description: editCompanyDescriptionTextarea.value
+            };
 
-        // Assuming application object includes opportunity_title from the backend join
-        // And assuming we might need to fetch student user details to display name/email
-        // For now, using placeholder or available data
-        const applicantInfo = document.createElement('p');
-        // This is a simplification; ideally, fetch student user details
-        applicantInfo.innerHTML = `<strong>Applicant ID:</strong> ${application.student_user_id}`; // Displaying ID for now
+            try {
+                // Send the updated profile information to the server
+                const response = await fetch('/api/company/profile', { // Replace with your API endpoint
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
+                    },
+                    body: JSON.stringify(updatedProfile)
+                });
 
-        const opportunityInfo = document.createElement('p');
-        opportunityInfo.innerHTML = `<strong>For:</strong> ${application.opportunity_title || 'N/A'}`; // Use opportunity_title from join
+                if (response.ok) {
+                    // Update the company profile summary with the updated information
+                    companyNameSpan.textContent = updatedProfile.name;
+                    companyEmailSpan.textContent = updatedProfile.email;
+                    companyIndustrySpan.textContent = updatedProfile.industry;
+                    companyLocationSpan.textContent = updatedProfile.location;
+                    companyDescriptionSpan.textContent = updatedProfile.description;
 
-        const statusInfo = document.createElement('p');
-        statusInfo.innerHTML = `<strong>Status:</strong> ${application.status || 'N/A'}`;
+                    // Hide the edit form
+                    profileEditForm.style.display = 'none';
 
-        const viewButton = document.createElement('button');
-        viewButton.textContent = 'View Application';
-        viewButton.addEventListener('click', () => {
-            // TODO: Implement view application details
-            console.log('View Application clicked for ID:', application.id);
-            // Example: navigate to application detail page or open modal
-            // window.location.href = `/application.html?id=${application.id}`;
+                    alert('Profile updated successfully!');
+                } else {
+                    alert('Failed to update profile.');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('An error occurred while updating the profile.');
+            }
         });
+    }
 
-        const changeStatusButton = document.createElement('button');
-        changeStatusButton.textContent = 'Change Status';
-        changeStatusButton.addEventListener('click', () => {
-            // TODO: Implement change status functionality (e.g., open a modal with status options)
-            console.log('Change Status clicked for ID:', application.id);
-        });
-
-        applicationItem.appendChild(applicantInfo);
-        applicationItem.appendChild(opportunityInfo);
-        applicationItem.appendChild(statusInfo);
-
-        // Display uploaded files
-        if (application.files && application.files.length > 0) {
-            const filesList = document.createElement('div');
-            filesList.innerHTML = '<strong>Uploaded Files:</strong>';
-            const ul = document.createElement('ul');
-            application.files.forEach(file => {
-                const li = document.createElement('li');
-                // Assuming file_path is something like 'uploads/applications/unique-filename.pdf'
-                // We'll create a link to a hypothetical backend route that serves files
-                // A more secure approach would use a file ID or a temporary token
-                const fileLink = document.createElement('a');
-                fileLink.href = `/uploads/applications/${file.file_path.split('/').pop()}`; // Link to a hypothetical serving endpoint
-                fileLink.textContent = file.file_name;
-                fileLink.target = '_blank'; // Open in new tab
-                li.appendChild(fileLink);
-                ul.appendChild(li);
+    // Function to load company profile data
+    async function loadCompanyProfile() {
+        try {
+            const response = await fetch('/api/company/profile', { // Replace with your API endpoint
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
+                }
             });
-            filesList.appendChild(ul);
-            applicationItem.appendChild(filesList);
+
+            if (response.ok) {
+                const profile = await response.json();
+                companyNameSpan.textContent = profile.name;
+                companyEmailSpan.textContent = profile.email;
+                companyIndustrySpan.textContent = profile.industry;
+                companyLocationSpan.textContent = profile.location;
+                companyDescriptionSpan.textContent = profile.description;
+            } else {
+                console.error('Failed to load company profile.');
+            }
+        } catch (error) {
+            console.error('Error loading company profile:', error);
         }
-
-
-        applicationItem.appendChild(viewButton);
-        applicationItem.appendChild(changeStatusButton);
-
-        applicationListDiv.appendChild(applicationItem);
-    });
-}
-
-
-async function handlePostOpportunity(event) {
-    event.preventDefault();
-    const form = event.target;
-    const messageArea = document.getElementById('postOppMessage');
-    const companyUserId = localStorage.getItem('userId'); // Assuming company user ID is stored
-
-    if (!companyUserId) {
-        messageArea.textContent = 'Error: Company user ID not found. Please log in again.';
-        messageArea.style.color = 'red';
-        return;
     }
 
-    const formData = {
-        title: form.elements.title.value,
-        description: form.elements.description.value,
-        type: form.elements.type.value,
-        location: form.elements.location.value,
-        required_skills: form.elements.required_skills.value,
-        company_user_id: parseInt(companyUserId, 10), // Ensure it's an integer
-        // Add other fields like deadline, link, stipend, duration if needed
-        deadline: form.elements.deadline ? form.elements.deadline.value : null,
-        link: form.elements.link ? form.elements.link.value : null,
-        stipend: form.elements.stipend ? parseFloat(form.elements.stipend.value) : null,
-        duration: form.elements.duration ? form.elements.duration.value : null,
-    };
-
-    try {
-        const response = await fetch('/api/opportunities', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
-            },
-            body: JSON.stringify(formData)
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            messageArea.textContent = 'Opportunity posted successfully!';
-            messageArea.style.color = 'green';
-            form.reset();
-            // Optionally reload the posted opportunities list
-            loadPostedOpportunities();
-        } else {
-            messageArea.textContent = `Error: ${result.error || 'Failed to post opportunity'}`;
-            messageArea.style.color = 'red';
-        }
-    } catch (error) {
-        console.error('Error posting opportunity:', error);
-        messageArea.textContent = 'An unexpected error occurred.';
-        messageArea.style.color = 'red';
-    }
-}
-
-// Export functions if they need to be called from other modules
-// export { initCompanyDashboard, loadCompanyProfile, loadPostedOpportunities, loadReceivedApplications, handlePostOpportunity };
+    // Load company profile on page load
+    loadCompanyProfile();
+});
