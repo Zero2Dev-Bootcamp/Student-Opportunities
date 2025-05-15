@@ -71,7 +71,7 @@ function renderOpportunities(opportunitiesToRender, container) {
             <p>Type: ${op.type || 'N/A'}</p>
             <p>Company: ${op.company_name || 'N/A'}</p>
             <p>Skills: ${op.required_skills || 'General'}</p>
-            <a href="opportunity.html#opportunity/${op.id}">View Details</a>
+            <a href="html/application-add.html?opportunityId=${op.id}" class="apply-button">Apply Now</a>
         </li>
     `).join('');
 

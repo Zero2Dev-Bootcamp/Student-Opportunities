@@ -1,8 +1,123 @@
-/* Styles for application pages */
-body {
-    font-family: sans-serif;
+/* Specific styles for application pages */
+
+/* Inherit general styles from ../../style.css */
+
+main {
+    padding: 2rem;
+    max-width: 800px; /* Adjust max-width for the form */
+    margin: 0 auto;
+    /* background-color: #121212; Inherited from body */
+    /* color: #E6E6E6; Inherited from body */
 }
 
 h1 {
-    color: green;
+    color: #1E90FF; /* Primary accent color */
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+#opportunity-details {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #E6E6E6; /* Light text for dark background */
+}
+
+#opportunity-details h2 {
+    color: #00D4B4; /* Tertiary accent for opportunity title */
+    font-size: 1.5rem;
+}
+
+#applicationForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: #E6E6E6; /* Light background for form */
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    color: #121212; /* Dark text for light background */
+    text-align: left;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
+    color: #121212; /* Dark text for labels */
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid #121212;
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: #FFFFFF; /* White background for inputs */
+    color: #121212; /* Dark text for input */
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #00D4B4;
+    outline: none;
+    box-shadow: 0 0 5px #00D4B4;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.submit-button {
+    background-color: #FF2D55; /* Secondary accent color */
+    color: #E6E6E6;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 400;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s;
+    align-self: flex-start; /* Align button to the left */
+}
+
+.submit-button:hover {
+    box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55;
+    transform: translateY(-2px);
+}
+
+.form-message {
+    margin-top: 0.5rem;
+    font-family: 'Source Code Pro', monospace;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    main {
+        padding: 1rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    #opportunity-details h2 {
+        font-size: 1.3rem;
+    }
+
+    #applicationForm {
+        padding: 1.5rem;
+    }
+
+    .submit-button {
+        align-self: stretch; /* Stretch button to full width */
+    }
 }
