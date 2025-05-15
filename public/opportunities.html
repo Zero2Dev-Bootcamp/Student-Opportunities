@@ -262,7 +262,7 @@
             </select>
             <span id="type-hint" class="sr-only">Select the type of opportunity you are looking for.</span>
         </div>
-        <button type="button" aria-label="Search opportunities">Search</button>
+        <button type="button" aria-label="Search opportunities" id="search-button">Search</button>
     </section>
     <section class="opportunities-list">
         <h2>Available Opportunities</h2>
@@ -300,5 +300,10 @@
     <footer>
         <p>© 2025 Studexplore. All rights reserved.</p>
     </footer>
+    <script>
+        document.getElementById('search-button').addEventListener('click', function() {
+            window.location.href = 'searchopportunities.html';
+        });
+    </script>
 </body>
 </html>

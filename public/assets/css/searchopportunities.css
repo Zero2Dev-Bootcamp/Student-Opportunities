@@ -1,0 +1,93 @@
+/* Basic styling for the search results header */
+.search-results-header {
+    padding: 3rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #1E90FF, #00D4B4);
+    color: #E6E6E6;
+}
+
+.search-results-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.search-results-header p {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Reusing styles from opportunities.css for consistency */
+.opportunities-list {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.opportunities-list h2 {
+    font-size: 1.8rem;
+    color: #1E90FF;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.opportunity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.opportunity-card {
+    background-color: #E6E6E6; /* Updated */
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Keep shadow, or adjust */
+    transition: transform 0.3s;
+    color: #121212; /* Added for card text */
+}
+
+.opportunity-card:hover {
+    transform: translateY(-5px);
+}
+
+.opportunity-card h3 {
+    font-size: 1.4rem;
+    color: #1E90FF;
+    margin-bottom: 0.5rem;
+}
+
+.opportunity-card .company {
+    font-family: 'Source Code Pro', monospace;
+    color: #FF2D55; /* Updated */
+    margin-bottom: 0.75rem;
+}
+
+.opportunity-card .type {
+    font-size: 0.9rem;
+    color: #FF2D55; /* This was already good, but ensure it's intended for dark theme context */
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.opportunity-card p {
+    color: #121212; /* Updated */
+    margin-bottom: 1rem;
+}
+
+.opportunity-card .apply-button {
+    background-color: #FF2D55; /* Updated */
+    color: #E6E6E6;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    display: inline-block;
+    transition: box-shadow 0.3s, transform 0.3s; /* Updated */
+}
+
+.opportunity-card .apply-button:hover {
+    box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55; /* Updated */
+    transform: translateY(-2px); /* Added */
+    animation: glitch 0.3s; /* Added */
+}
