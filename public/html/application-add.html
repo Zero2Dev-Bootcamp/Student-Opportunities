@@ -3,17 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Application</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <title>Apply for Opportunity - Studexplore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css"> <!-- General styles -->
+    <link rel="stylesheet" href="../assets/css/application.css"> <!-- Specific styles for application -->
 </head>
 <body>
-    <h1>Add Application</h1>
-    <form>
-        <label for="opportunity">Opportunity:</label><br>
-        <input type="text" id="opportunity" name="opportunity"><br>
-        <label for="applicant">Applicant:</label><br>
-        <input type="text" id="applicant" name="applicant"><br>
-        <input type="submit" value="Submit">
-    </form>
+    <nav class="navbar">
+        <div class="logo">Studexplore (Student)</div>
+        <div class="nav-links">
+            <a href="index.html#home">Home</a>
+            <a href="opportunities.html">Opportunities</a>
+            <a href="applications.html">My Applications</a>
+            <a href="notifications.html">Notifications</a>
+            <a href="#profile">Profile</a>
+            <a href="#" id="logout-link">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <h1>Apply for Opportunity</h1>
+        <div id="opportunity-details">
+            <h2>Opportunity Title: <span id="opportunity-title">Loading...</span></h2>
+            <!-- Display other relevant opportunity details here if fetched -->
+        </div>
+
+        <form id="applicationForm">
+            <div class="form-group">
+                <label for="notes">Notes/Cover Letter (Optional):</label>
+                <textarea id="notes" name="notes" rows="8"></textarea>
+            </div>
+
+            <!-- File upload fields -->
+            <div class="form-group">
+                <label for="transcript">Upload Transcript (Optional):</label>
+                <input type="file" id="transcript" name="transcript" accept=".pdf,.doc,.docx">
+            </div>
+            <div class="form-group">
+                <label for="enrollmentProof">Upload Enrollment Proof (Optional):</label>
+                <input type="file" id="enrollmentProof" name="enrollmentProof" accept=".pdf,.doc,.docx">
+            </div>
+             <div class="form-group">
+                <label for="otherFiles">Other Supporting Files (Optional):</label>
+                <input type="file" id="otherFiles" name="otherFiles" multiple>
+            </div>
+
+            <button type="submit" class="submit-button">Submit Application</button>
+            <div id="applicationMessage" class="form-message"></div>
+        </form>
+    </main>
+
+    <footer>
+        <p>© 2025 Studexplore. All rights reserved.</p>
+        <div class="social-media-links">
+            <a href="#" aria-label="X">X</a>
+            <a href="#" aria-label="Instagram">Instagram</a>
+            <a href="#" aria-label="TikTok">TikTok</a>
+        </div>
+    </footer>
+
+    <script src="../src/resources/login.js" type="module"></script> <!-- For logout() -->
+    <script src="../assets/js/application-add.js" type="module" defer></script> <!-- Application form logic -->
+
 </body>
 </html>

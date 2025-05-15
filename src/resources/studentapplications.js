@@ -134,6 +134,35 @@ class Application {
       throw error;
     }
   }
+
+  /**
+   * Retrieves all applications for opportunities posted by a specific company.
+   * @param {string|number} companyUserId - The ID of the company user.
+   * @returns {Promise<Array<object>>} An array of application objects.
+   */
+  async getApplicationsByCompanyId(companyUserId) {
+    try {
+      console.log('[Application.getApplicationsByCompanyId] Called for company ID:', companyUserId);
+      if (!this.db) {
+        throw new Error('Database connection not available.');
+      }
+      // Join Application and Opportunity tables to filter by company_user_id
+      const stmt = this.db.prepare(
+        `SELECT 
+           Application.*, 
+           Opportunity.title AS opportunity_title,
+           Opportunity.company_user_id AS opportunity_company_id
+         FROM Application
+         JOIN Opportunity ON Application.opportunity_id = Opportunity.id
+         WHERE Opportunity.company_user_id = ? 
+         ORDER BY Application.application_date DESC`
+      );
+      return stmt.all(companyUserId);
+    } catch (error) {
+      console.error('Error in Application.getApplicationsByCompanyId:', error.message);
+      throw error;
+    }
+  }
   
   /**
    * Updates the status and/or notes of an application.
@@ -291,32 +320,107 @@ class Application {
       }
 
       if (authContext.userType !== 'student') {
-        return new Response(JSON.stringify({ error: 'Forbidden: Only students can create applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Forbidden: Only students can create applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Ensure upload directory exists
+    await Bun.fs.mkdir(UPLOAD_DIR, { recursive: true });
+
+    let opportunity_id;
+    let notes = null;
+    const student_user_id = authContext.userId;
+    const uploadedFiles = [];
+
+    const contentType = req.headers.get('Content-Type');
+
+    if (contentType && contentType.includes('multipart/form-data')) {
+      console.log('[Application.handlePost] Handling multipart/form-data');
+      const formData = await req.formData();
+
+      opportunity_id = parseInt(formData.get('opportunity_id'), 10);
+      notes = formData.get('notes') || null;
+
+      // Process files
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          const file = value;
+          const originalFileName = file.name;
+          const mimeType = file.type;
+          const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${originalFileName}`;
+          const filePath = path.join(UPLOAD_DIR, uniqueFileName);
+
+          console.log(`[Application.handlePost] Saving file: ${originalFileName} to ${filePath}`);
+          await Bun.write(filePath, file);
+
+          uploadedFiles.push({
+            file_name: originalFileName,
+            file_path: filePath,
+            mime_type: mimeType,
+          });
+        }
       }
 
+    } else {
+      console.log('[Application.handlePost] Handling application/json');
       const requestBody = await req.json();
-      console.log('[Application.handlePost] Received requestBody from req.json():', JSON.stringify(requestBody, null, 2));
-      
-      // Ensure student_user_id is from authenticated user, not from request body
-      const applicationData = {
-        ...requestBody,
-        student_user_id: authContext.userId 
-      };
-      
-      const newApplication = await this.createApplication(applicationData);
-      return new Response(JSON.stringify(newApplication), {
-        status: 201, // Created
-        headers: { 'Content-Type': 'application/json' },
-      });
-    } catch (error) {
-      console.error('Error in Application.handlePost:', error.message);
-      const statusCode = error.message.startsWith('Forbidden:') ? 403 : 400;
-      return new Response(JSON.stringify({ error: error.message || 'Failed to create application' }), {
-        status: statusCode,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      opportunity_id = requestBody.opportunity_id;
+      notes = requestBody.notes || null;
     }
+
+    // Basic input validation
+    if (!student_user_id || !opportunity_id) {
+      throw new Error('student_user_id and opportunity_id are required.');
+    }
+
+    // Create the application in the database
+    const applicationData = {
+      student_user_id: student_user_id,
+      opportunity_id: opportunity_id,
+      notes: notes
+    };
+
+    const newApplication = await this.createApplication(applicationData);
+
+    // If application creation was successful and there are uploaded files, save file details to DB
+    if (newApplication && uploadedFiles.length > 0) {
+      const insertFileStmt = this.db.prepare(
+        `INSERT INTO ApplicationFile (application_id, file_name, file_path, mime_type)
+         VALUES (?, ?, ?, ?)`
+      );
+      this.db.transaction(() => {
+        for (const file of uploadedFiles) {
+          insertFileStmt.run(newApplication.id, file.file_name, file.file_path, file.mime_type);
+        }
+      })(); // Execute the transaction
+      console.log(`[Application.handlePost] Saved ${uploadedFiles.length} file details to database for application ${newApplication.id}`);
+    }
+
+    return new Response(JSON.stringify(newApplication), {
+      status: 201, // Created
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in Application.handlePost:', error.message);
+    // Clean up uploaded files if application creation failed after files were saved
+    // (This is a simplification; robust error handling might require more sophisticated cleanup)
+    // For now, rely on manual cleanup or a separate process if needed.
+
+    let statusCode = 400; // Bad Request by default
+    if (error.message.startsWith('Forbidden:')) {
+      statusCode = 403;
+    } else if (error.message.includes('Invalid student_user_id or opportunity_id')) {
+       statusCode = 400; // Bad Request for foreign key constraint
+    } else {
+       statusCode = 500; // Internal Server Error for other issues
+    }
+
+    return new Response(JSON.stringify({ error: error.message || 'Failed to create application' }), {
+      status: statusCode,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
+}
 
   /**
    * Handles GET requests for applications.
@@ -337,6 +441,7 @@ class Application {
       const pathname = url.pathname;
       const studentIdParam = url.searchParams.get('studentId');
       const opportunityId = url.searchParams.get('opportunityId');
+      const companyIdParam = url.searchParams.get('companyId'); // Added companyId parameter
       
       const idMatch = pathname.match(/^\/(application|applications)\/([^/]+)/i);
       const applicationIdFromPath = (idMatch && idMatch[2]) ? idMatch[2] : null;
@@ -350,6 +455,9 @@ class Application {
           if (authContext.userType === 'student' && application.student_user_id !== authContext.userId) {
             return new Response(JSON.stringify({ error: 'Forbidden: You can only view your own applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
           }
+          // Company check: can only get applications for their opportunities
+          // This requires fetching the opportunity to check its company_user_id
+          // For now, a basic check if the user is a company is done in the else if (companyIdParam) block
           return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
         } else {
           return new Response(JSON.stringify({ error: 'Application not found by ID' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
@@ -364,8 +472,15 @@ class Application {
         // TODO: Add role-based access for companies (can only see apps for their opportunities)
         const applications = await this.getApplicationsByOpportunityId(opportunityId);
         return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      } else {
-        return new Response(JSON.stringify({ error: 'Please specify an application ID, studentId, or opportunityId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      } else if (companyIdParam) { // Added handling for companyId parameter
+         if (authContext.userType !== 'company' || parseInt(companyIdParam, 10) !== authContext.userId) {
+           return new Response(JSON.stringify({ error: 'Forbidden: Companies can only view applications for their own opportunities.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+         }
+         const applications = await this.getApplicationsByCompanyId(companyIdParam);
+         return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      else {
+        return new Response(JSON.stringify({ error: 'Please specify an application ID, studentId, opportunityId, or companyId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
     } catch (error) {
       console.error('Error in Application.handleGet:', error.message);

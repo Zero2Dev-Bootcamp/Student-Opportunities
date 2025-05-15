@@ -51,7 +51,61 @@ async function loadReceivedApplications() {
     // Example: const response = await fetch('/api/applications?companyId=' + localStorage.getItem('userId'));
     // Example: const receivedApplications = await response.json();
     // Example: Render received applications in the #application-list section
+    renderReceivedApplications(receivedApplications);
 }
+
+function renderReceivedApplications(applications) {
+    const applicationListDiv = document.getElementById('application-list');
+    applicationListDiv.innerHTML = ''; // Clear previous content
+
+    if (!applications || applications.length === 0) {
+        applicationListDiv.innerHTML = '<p>No applications received yet.</p>';
+        return;
+    }
+
+    applications.forEach(application => {
+        const applicationItem = document.createElement('div');
+        applicationItem.classList.add('application-item'); // Add a class for styling
+
+        // Assuming application object includes opportunity_title from the backend join
+        // And assuming we might need to fetch student user details to display name/email
+        // For now, using placeholder or available data
+        const applicantInfo = document.createElement('p');
+        // This is a simplification; ideally, fetch student user details
+        applicantInfo.innerHTML = `<strong>Applicant ID:</strong> ${application.student_user_id}`; // Displaying ID for now
+
+        const opportunityInfo = document.createElement('p');
+        opportunityInfo.innerHTML = `<strong>For:</strong> ${application.opportunity_title || 'N/A'}`; // Use opportunity_title from join
+
+        const statusInfo = document.createElement('p');
+        statusInfo.innerHTML = `<strong>Status:</strong> ${application.status || 'N/A'}`;
+
+        const viewButton = document.createElement('button');
+        viewButton.textContent = 'View Application';
+        viewButton.addEventListener('click', () => {
+            // TODO: Implement view application details
+            console.log('View Application clicked for ID:', application.id);
+            // Example: navigate to application detail page or open modal
+            // window.location.href = `/application.html?id=${application.id}`;
+        });
+
+        const changeStatusButton = document.createElement('button');
+        changeStatusButton.textContent = 'Change Status';
+        changeStatusButton.addEventListener('click', () => {
+            // TODO: Implement change status functionality (e.g., open a modal with status options)
+            console.log('Change Status clicked for ID:', application.id);
+        });
+
+        applicationItem.appendChild(applicantInfo);
+        applicationItem.appendChild(opportunityInfo);
+        applicationItem.appendChild(statusInfo);
+        applicationItem.appendChild(viewButton);
+        applicationItem.appendChild(changeStatusButton);
+
+        applicationListDiv.appendChild(applicationItem);
+    });
+}
+
 
 async function handlePostOpportunity(event) {
     event.preventDefault();

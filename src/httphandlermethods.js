@@ -4,13 +4,13 @@ import Bun from 'bun'; // Import Bun for Bun.file
 /**
  * Handles incoming HTTP requests, routing them to the appropriate resource or serving static files.
  * @param {Request} req - The incoming request object.
- * @param {object} resources - An object containing instantiated resources (userResource, applicationResource, etc.).
+ * @param {object} resources - An object containing instantiated resources (userResource, studentapplicationsResource, etc.).
  * @param {string} publicDir - The path to the public directory.
  * @returns {Promise<Response>} - The response to send back to the client.
  */
 export async function handleHttpRequest(req, resources, publicDir) {
   const url = new URL(req.url);
-  const { userResource, applicationResource, opportunityResource, notificationResource } = resources;
+  const { userResource, studentapplicationsResource, opportunityResource, notificationResource } = resources;
 
   // API Routes
   // /api/users (POST: register user, GET: retrieve user by ID)
@@ -86,13 +86,19 @@ export async function handleHttpRequest(req, resources, publicDir) {
     }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/notifications` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
-  // /api/applications (GET: list applications, POST: create application)
+  // /api/applications (GET: list applications, POST: create application, PATCH: update application, DELETE: delete application)
   else if (url.pathname.startsWith('/api/applications')) {
-    if (req.method === 'GET') { // Handles /api/applications
-      return applicationResource.handleGet(req);
+    if (req.method === 'GET') { // Handles /api/applications and /api/applications/:id
+      return studentapplicationsResource.handleGet(req);
     }
     if (req.method === 'POST') { // Handles /api/applications for creation
-      return applicationResource.handlePost(req);
+      return studentapplicationsResource.handlePost(req);
+    }
+    if (req.method === 'PATCH') { // Handles /api/applications/:id for updates
+      return studentapplicationsResource.handlePatch(req);
+    }
+    if (req.method === 'DELETE') { // Handles /api/applications/:id for deletion
+      return studentapplicationsResource.handleDelete(req);
     }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/applications` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
