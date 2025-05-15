@@ -29,7 +29,7 @@
         <h1>Company Dashboard</h1>
         <p>Welcome, Company User!</p>
 
-        <section id="company-profile">
+        <section id="company-profile" class="profile-section">
             <h2>Company Profile</h2>
             <div id="company-profile-summary">
                 <p><strong>Company Name:</strong> <span id="company-name">Loading...</span></p>
@@ -37,7 +37,34 @@
                 <p><strong>Industry:</strong> <span id="company-industry">Loading...</span></p>
                 <p><strong>Location:</strong> <span id="company-location">Loading...</span></p>
                 <p><strong>Description:</strong> <span id="company-description">Loading...</span></p>
-                <!-- Add edit profile button/link here -->
+            </div>
+            <button id="edit-profile-btn" class="edit-button">Edit Profile</button>
+
+            <div id="profile-edit-form" class="form-container" style="display: none;">
+                <h3>Edit Company Profile</h3>
+                <div class="form-group">
+                    <label for="edit-company-name">Company Name:</label>
+                    <input type="text" id="edit-company-name">
+                </div>
+                <div class="form-group">
+                    <label for="edit-company-email">Email:</label>
+                    <input type="email" id="edit-company-email">
+                </div>
+                <div class="form-group">
+                    <label for="edit-company-industry">Industry:</label>
+                    <input type="text" id="edit-company-industry">
+                </div>
+                 <div class="form-group">
+                    <label for="edit-company-location">Location:</label>
+                    <input type="text" id="edit-company-location">
+                </div>
+                <div class="form-group">
+                    <label for="edit-company-description">Description:</label>
+                    <textarea id="edit-company-description"></textarea>
+                </div>
+
+                <button id="save-profile-btn" class="submit-button">Save Changes</button>
+                <button id="cancel-edit-btn" class="cancel-button">Cancel</button>
             </div>
         </section>
 

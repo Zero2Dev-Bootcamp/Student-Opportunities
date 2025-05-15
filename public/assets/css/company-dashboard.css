@@ -28,8 +28,8 @@ h3 {
 }
 
 section {
-    background-color: #121212; /* Dark background */
-    color: #E6E6E6; /* Light text */
+    background-color: #E6E6E6; /* Light background */
+    color: #121212; /* Dark text */
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -41,14 +41,52 @@ section {
     text-align: left;
 }
 
-#company-profile-summary p {
+#company-profile-summary p,
+.form-container .form-group label {
     margin-bottom: 0.5rem;
     font-size: 1.1rem;
+    color: #121212;
+}
+
+.form-container .form-group input,
+.form-container .form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid #121212;
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: #E6E6E6;
+    color: #121212;
+}
+
+.form-container .submit-button {
+    background-color: #FF2D55; /* Secondary accent color */
+    color: #E6E6E6;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 400;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.form-container .submit-button,
+.form-container .cancel-button {
+    margin-top: 1rem;
+    background-color: #E6E6E6;
+    color: #121212;
+    padding: 0.75rem;
+    border: 1px solid #121212;
+    border-radius: 5px;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 400;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s;
 }
 
 #company-profile-summary strong {
     font-family: 'Source Code Pro', monospace;
-    color: #1E90FF; /* Primary accent */
+    color: #1E90FF;
 }
 
 /* Posted Opportunities Section */
@@ -80,16 +118,16 @@ section {
     margin-bottom: 0.5rem;
 }
 
-.opportunity-item button {
+#company-profile-summary button {
     background-color: #FF2D55; /* Secondary accent color */
     color: #E6E6E6;
     border: none;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem;
     border-radius: 5px;
     font-family: 'Source Code Pro', monospace;
+    font-weight: 400;
     cursor: pointer;
-    margin-right: 0.5rem;
-    transition: background-color 0.3s, transform 0.3s;
+    transition: box-shadow 0.3s, transform 0.3s;
 }
 
 .opportunity-item button:hover {
@@ -165,8 +203,9 @@ section {
 
 .form-group label {
     font-family: 'Source Code Pro', monospace;
-    font-weight: 400;
-    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.3s;
+    margin-right: 0.5rem;
 }
 
 .form-group input,
