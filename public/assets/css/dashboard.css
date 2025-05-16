@@ -41,7 +41,7 @@ h3 { /* Dashboard specific h3 styling */
 }
 
 .profile-section {
-    flex: 0 0 300px; /* Fixed width for profile section */
+    flex: 0 0 30%; /* Flex basis for profile section */
     background-color: #E6E6E6; /* Light background, consistent with style.css cards */
     color: #121212; /* Dark text for light backgrounds */
     padding: 2rem;
@@ -51,9 +51,14 @@ h3 { /* Dashboard specific h3 styling */
     text-align: left;
 }
 
+#recommended-opportunities {
+    flex: 0 0 48%; /* Flex basis for recommended opportunities */
+    /* Inherits other styles from .opportunities */
+}
+
 .newsfeed-container {
-    flex-grow: 1; /* Newsfeed takes remaining space */
-    min-width: 300px; /* Minimum width for newsfeed */
+    flex-basis: 100%; /* Newsfeed takes full width below */
+    /* min-width: 300px; Removed as it's no longer the main flex-grow item */
 }
 
 .profile-section h2 {
