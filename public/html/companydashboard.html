@@ -26,7 +26,7 @@
             <a href="#post-opportunity">Post New Opportunity</a>
             <a href="#company-profile">Company Profile</a>
             <a href="#applications">View Applications</a>
-            <a href="#" id="logout-link">Logout</a>
+            <a href="index.html" id="logout-link">Logout</a>
         </div>
     </nav>
 
@@ -163,8 +163,8 @@
             const logoutLink = document.getElementById('logout-link');
             if (logoutLink) {
                 logoutLink.addEventListener('click', (e) => {
-                    e.preventDefault();
                     logout();
+                    window.location.href = 'index.html';
                 });
             }
 
