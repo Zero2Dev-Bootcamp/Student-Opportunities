@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Innovators Program - CodeFuture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .profile-header-program {
+            padding: 3rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.8), rgba(0, 212, 180, 0.8)), url('https://source.unsplash.com/random/1600x900/?technology,ai') no-repeat center center/cover;
+            color: #E6E6E6;
+            position: relative;
+        }
+        .profile-header-program::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 18, 18, 0.5);
+            z-index: 1;
+        }
+        .profile-header-program .program-logo {
+            max-width: 120px;
+            margin: 0 auto 1rem auto;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+        .profile-header-program h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        .profile-header-program p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 1.5rem auto;
+            position: relative;
+            z-index: 2;
+        }
+        .profile-content-program {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        .main-content-program, .sidebar-program {
+            background-color: #E6E6E6;
+            color: #121212;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .main-content-program h2, .sidebar-program h2 {
+            font-size: 1.8rem;
+            color: #1E90FF;
+            margin-bottom: 1.5rem;
+        }
+        .main-content-program h3, .sidebar-program h3 {
+            font-size: 1.4rem;
+            color: #1E90FF;
+            margin-bottom: 1rem;
+        }
+        .main-content-program p, .sidebar-program p,
+        .main-content-program li, .sidebar-program li {
+            color: #121212;
+            margin-bottom: 1rem;
+        }
+        .course-list, .benefits-list, .requirements-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 1.5rem;
+        }
+        .course-list li, .benefits-list li, .requirements-list li {
+            padding: 0.5rem 0;
+            position: relative;
+            padding-left: 1.8rem;
+        }
+        .course-list li::before, .benefits-list li::before, .requirements-list li::before {
+            content: '✓';
+            color: #00D4B4;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        /* New styles for Booking.com/Agoda-inspired sidebar */
+        .sidebar-program .price-highlight {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #121212;
+            background-color: #FFD700;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        .sidebar-program .cta-button {
+            display: block;
+            text-align: center;
+            background-color: #0071C2; /* Booking.com blue */
+            color: #FFFFFF;
+            padding: 1rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .sidebar-program .cta-button:hover {
+            background-color: #005B99; /* Darker blue on hover */
+        }
+        .sidebar-program .cta-container {
+            border-top: 1px solid #CCCCCC;
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .profile-header-program h1 {
+                font-size: 2rem;
+            }
+            .profile-content-program {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+            .program-logo {
+                max-width: 100px;
+            }
+            .sidebar-program .price-highlight {
+                font-size: 1.4rem;
+            }
+            .sidebar-program .cta-button {
+                font-size: 1.1rem;
+                padding: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="logo">Studexplore</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="programs.html">Programs</a>
+            <a href="login.html" class="signin-button">Sign In</a>
+        </div>
+    </nav>
+
+    <section class="profile-header-program">
+        <img src="https://via.placeholder.com/120x120.png?text=AI+Logo" alt="AI Innovators Program Logo" class="program-logo">
+        <h1>AI Innovators Program</h1>
+        <p>Master AI programming and gain skills to thrive in the artificial intelligence industry through hands-on training and mentorship.</p>
+    </section>
+
+    <section class="profile-content-program">
+        <div class="main-content-program">
+            <h2>About AI Innovators Program</h2>
+            <p>Launched in 2025, the AI Innovators Program is a premium, paid training initiative designed for students passionate about artificial intelligence. Our program equips participants with cutting-edge AI programming skills, preparing them for careers in machine learning, data science, and AI development. Guided by industry experts, students work on real-world projects to build a strong portfolio.</p>
+            
+            <h3>Core Courses</h3>
+            <ul class="course-list">
+                <li><strong>Python for AI:</strong> Learn Python programming with a focus on AI libraries like NumPy, Pandas, and TensorFlow.</li>
+                <li><strong>Machine Learning Fundamentals:</strong> Explore supervised and unsupervised learning, including regression, classification, and clustering.</li>
+                <li><strong>Deep Learning:</strong> Dive into neural networks, CNNs, and RNNs using frameworks like PyTorch and Keras.</li>
+                <li><strong>AI Project Lab:</strong> Build and deploy AI models, such as chatbots or image recognition systems, in a capstone project.</li>
+            </ul>
+
+            <h3>Benefits of Joining</h3>
+            <ul class="benefits-list">
+                <li>Master in-demand AI skills through hands-on coding and real-world projects.</li>
+                <li>Receive mentorship from AI industry professionals and career guidance.</li>
+                <li>Earn a Certificate of Completion, recognized by leading tech companies.</li>
+                <li>Access internship opportunities with AI startups and tech firms.</li>
+                <li>Join a network of aspiring AI innovators and collaborate on cutting-edge ideas.</li>
+            </ul>
+        </div>
+        <div class="sidebar-program">
+            <h2>Join Now</h2>
+            <h3>Requirements to Enroll</h3>
+            <ul class="requirements-list">
+                <li><strong>Age:</strong> College students aged 18–25 or high school seniors with parental consent.</li>
+                <li><strong>Commitment:</strong> 6-month program, 10–15 hours per week (online or hybrid).</li>
+                <li><strong>Prerequisites:</strong> Basic knowledge of programming (Python preferred).</li>
+                <li><strong>Documents:</strong> Submit resume, transcript, and a 500-word motivation letter.</li>
+            </ul>
+            <div class="cta-container">
+                <div class="price-highlight">PHP 18,500 Tuition Fee</div>
+                <p>Financial aid available for eligible students.</p>
+                <a href="html/application-add.html" class="cta-button">Apply Now</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2025 Studexplore. All rights reserved.</p>
+        <div class="social-media-links">
+            <a href="#" aria-label="X">X</a>
+            <a href="#" aria-label="Instagram">Instagram</a>
+            <a href="#" aria-label="TikTok">TikTok</a>
+        </div>
+    </footer>
+</body>
+</html>
