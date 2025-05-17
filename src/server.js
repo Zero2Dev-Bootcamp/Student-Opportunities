@@ -2,10 +2,8 @@ import path from 'path';import { config } from 'dotenv';
 config(); // Load .env file
 const port = process.env.PORT || 8002; // Fallback to 8002 if PORT is not set
 const server = Bun.serve({
-  port: port,
-  fetch(req) {
-    return new Response("Hello, world!");
-  },
+
+
 });
 console.log(`Server running on port ${port}`);
 
