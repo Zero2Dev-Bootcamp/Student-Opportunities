@@ -31,7 +31,7 @@ const resources = {
   notificationResource,
 };
 
-export async function startServer(port = 8002) {
+export async function startServer(port = 3000) {
   if (serverInstance) {
     console.warn(`Server already running on port ${serverInstance.port}`);
     return serverInstance;
@@ -67,5 +67,5 @@ export async function stopServer() {
 // Optional: Automatically start server if run directly (e.g., `bun src/server.js`)
 // This checks if the module is the main module being run.
 if (import.meta.main) {
-  startServer(8002);
+  startServer(3000);
 }
