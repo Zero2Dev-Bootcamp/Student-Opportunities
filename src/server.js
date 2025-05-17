@@ -1,4 +1,14 @@
-import path from 'path';
+import path from 'path';import { config } from 'dotenv';
+config(); // Load .env file
+const port = process.env.PORT || 8003; // Fallback to 8003 if PORT is not set
+const server = Bun.serve({
+  port: port,
+  fetch(req) {
+    return new Response("Hello, world!");
+  },
+});
+console.log(`Server running on port ${port}`);
+
 // import fs from 'fs'; // fs might not be needed anymore if all file ops are in httphandlermethods
 import db from '../db/db.js'; // Import the database instance
 import User from './resources/user.js'; // Import the User resource
