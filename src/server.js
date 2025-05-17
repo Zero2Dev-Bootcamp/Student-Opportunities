@@ -1,10 +1,7 @@
 import path from 'path';import { config } from 'dotenv';
 config(); // Load .env file
 const port = process.env.PORT || 8002; // Fallback to 8002 if PORT is not set
-const server = Bun.serve({
 
-
-});
 console.log(`Server running on port ${port}`);
 
 // import fs from 'fs'; // fs might not be needed anymore if all file ops are in httphandlermethods
@@ -70,5 +67,5 @@ export async function stopServer() {
 // Optional: Automatically start server if run directly (e.g., `bun src/server.js`)
 // This checks if the module is the main module being run.
 if (import.meta.main) {
-  startServer(3000);
+  startServer(8002);
 }
