@@ -1,6 +1,6 @@
 import path from 'path';import { config } from 'dotenv';
 config(); // Load .env file
-const port = process.env.PORT || 8003; // Fallback to 8003 if PORT is not set
+const port = process.env.PORT || 8002; // Fallback to 8002 if PORT is not set
 const server = Bun.serve({
   port: port,
   fetch(req) {
