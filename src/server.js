@@ -31,7 +31,7 @@ const resources = {
   notificationResource,
 };
 
-export async function startServer(port = 3000) {
+export async function startServer(port = 8002) {
   if (serverInstance) {
     console.warn(`Server already running on port ${serverInstance.port}`);
     return serverInstance;
