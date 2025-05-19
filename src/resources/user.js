@@ -37,35 +37,40 @@ class User {
       const location = userData.location || null; // Get location from userData
       const description = userData.description || null;
 
-      // Use explicit BEGIN, COMMIT, and ROLLBACK for transaction
-      try {
-        this.db.run('BEGIN'); // Start transaction
+      // Try using db.run() instead of prepare().run()
+      const insertSql = `INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const insertValues = [userData.username, userData.email, passwordHash, userData.role, major, graduation_year, industry, location, description];
 
-        const userResult = this.db.prepare(`INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(userData.username, userData.email, passwordHash, userData.role, userData.major, userData.graduation_year, industry, location, description);
+      console.log("[User.createUser] Attempting INSERT with db.run(). SQL:", insertSql, "Values:", insertValues);
+      const userResult = this.db.run(insertSql, ...insertValues);
 
-        if (userResult.changes === 0) {
-          throw new Error("Failed to insert user.");
-        }
-        const userId = userResult.lastInsertRowId;
-
-        // Delegate role-specific data creation
-        if (userData.role === "student") {
-          await this.studentUser.createStudentSpecificData(userId, userData);
-        } else if (userData.role === "company") {
-          await this.companyUser.createCompanySpecificData(userId, userData);
-        }
-
-
-        this.db.run('COMMIT'); // Commit transaction
-        console.log(`[User.createUser] User created with ID: ${userId}`);
-        return this.getUserById(userId); // Return the newly created user object
-
-      } catch (error) {
-        this.db.run('ROLLBACK'); // Rollback transaction on error
-        console.error(`Error in User.createUser: ${error.message}`);
-        throw error; // Re-throw the error for the caller to handle
+      if (userResult.changes === 0) {
+        throw new Error("Failed to insert user.");
       }
+
+      // Get the last inserted row ID using a separate query
+      const userIdResult = this.db.query("SELECT last_insert_rowid() as lastId;").get();
+      const userId = userIdResult ? userIdResult.lastId : null;
+
+      if (typeof userId !== 'number' || userId <= 0) {
+          console.error('[User.createUser] Failed to retrieve valid user ID using last_insert_rowid():', userId);
+          throw new Error("Failed to retrieve valid user ID after insertion.");
+      }
+      console.log('[User.createUser] Obtained userId using last_insert_rowid():', userId);
+
+
+      // Delegate role-specific data creation
+      if (userData.role === "student") {
+        await this.studentUser.createStudentSpecificData(userId, userData);
+      } else if (userData.role === "company") {
+        await this.companyUser.createCompanySpecificData(userId, userData);
+      }
+
+
+      console.log(`[User.createUser] User created with ID: ${userId}`);
+      return this.getUserById(userId); // Return the newly created user object
+
     } catch (error) {
       console.error(`Error in User.createUser: ${error.message}`);
       throw error; // Re-throw the error for the caller to handle
@@ -430,7 +435,7 @@ class User {
           console.error(`Error in User.getAllUsers: ${error.message}`);
           throw error;
       }
+    }
   }
-}
 
 export default User;

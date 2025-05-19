@@ -146,6 +146,10 @@
                 <label for="companyName">Company Name</label>
                 <input type="text" id="companyName" name="companyName" placeholder="Your company name">
             </div>
+            <div class="form-group" id="institutionNameGroup" style="display: none;">
+                <label for="institutionName">Institution Name</label>
+                <input type="text" id="institutionName" name="institutionName" placeholder="Your institution name">
+            </div>
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" placeholder="Your email" required>
@@ -221,7 +225,8 @@
                         location: form.location.value || null,
                         description: form.message.value,
                         interests: form.userType.value === 'student' ? Array.from(form.querySelectorAll('input[name="interests"]:checked')).map(i => i.value) : [],
-                        company_name: form.userType.value === 'company' ? form.companyName.value : null
+                        company_name: form.userType.value === 'company' ? form.companyName.value : null,
+                        institution_name: form.userType.value === 'student' ? form.institutionName.value : null
                     };
                 try {
                     const response = await fetch('/api/users', {
@@ -250,12 +255,15 @@
             // Toggle form fields based on user type
             document.getElementById('userType').addEventListener('change', (e) => {
                 const companyNameGroup = document.getElementById('companyNameGroup');
+                const institutionNameGroup = document.getElementById('institutionNameGroup');
                 const interestsGroup = document.getElementById('interestsGroup');
                 if (e.target.value === 'company') {
                     companyNameGroup.style.display = 'block';
+                    institutionNameGroup.style.display = 'none';
                     interestsGroup.style.display = 'none';
                 } else {
                     companyNameGroup.style.display = 'none';
+                    institutionNameGroup.style.display = 'block';
                     interestsGroup.style.display = 'block';
                 }
             });
