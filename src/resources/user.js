@@ -82,14 +82,37 @@ class User {
     try {
       // Ensure userId is treated as a number if it's coming from a path parameter
       const id = parseInt(userId, 10);
+      console.log('[User.getUserById] Parsed user ID:', id); // Added log
       if (isNaN(id)) {
           // Depending on requirements, you might throw an error or return null for invalid ID format
           console.warn(`[User.getUserById] Invalid user ID format: ${userId}`);
           return null;
       }
-      const stmt = this.db.prepare("SELECT id, name, email, user_type, major, graduation_year, industry, location, description FROM User WHERE id = ?");
-      const user = stmt.get(id);
+      // Fetch user data from the User table
+      const userStmt = this.db.prepare("SELECT id, name, email, user_type, major, graduation_year, industry, location, description FROM User WHERE id = ?");
+      const user = userStmt.get(id);
+      console.log('[User.getUserById] Result from User table query:', user); // Added log
+
+      if (user) {
+          // Fetch user interests from the UserInterests table
+          // Prepare and execute in one step
+          const rawInterestsResult = this.db.prepare("SELECT interest FROM UserInterests WHERE user_id = ?").all(id);
+          console.log('[User.getUserById] Raw result from UserInterests table query (single step):', rawInterestsResult); // Added log
+          const interests = rawInterestsResult.map(row => row.interest); // Extract interests into an array
+          console.log('[User.getUserById] Mapped interests:', interests); // Added log
+
+          // Add interests to the user object
+          user.interests = interests;
+      }
+
       console.log('[User.getUserById] Query result:', user);
+
+      // Add a log to check total interests count
+      const totalInterestsStmt = this.db.prepare("SELECT COUNT(*) as count FROM UserInterests");
+      const totalInterestsCount = totalInterestsStmt.get().count;
+      console.log('[User.getUserById] Total interests in UserInterests table:', totalInterestsCount); // Added log
+
+
       return user || null;
     } catch (error) {
       console.error(`Error in User.getUserById: ${error.message}`);
@@ -112,7 +135,7 @@ class User {
   }
 
   async updateUser(userId, updateData) {
-    console.log('[User.updateUser] Called with userId:', userId, 'updateData:', updateData);
+    console.log('[User.updateUser] Called with userId:', userId, 'Received updateData:', JSON.stringify(updateData, null, 2)); // Added console log
     try {
       const id = parseInt(userId, 10);
       if (isNaN(id)) {
@@ -160,18 +183,26 @@ class User {
 
 
         // Handle interests separately
+        console.log('[User.updateUser] Checking for interests in updateData:', updateData.hasOwnProperty('interests'), Array.isArray(updateData.interests)); // Added log
         if (updateData.hasOwnProperty('interests') && Array.isArray(updateData.interests)) {
-            console.log(`[User.updateUser] Updating interests for user ID ${id}`);
+            console.log(`[User.updateUser] Updating interests for user ID ${id}. Interests received:`, updateData.interests); // Added log
             // 1. Remove existing interests
-            this.db.prepare("DELETE FROM UserInterests WHERE user_id = ?").run(id);
+            const deleteStmt = this.db.prepare("DELETE FROM UserInterests WHERE user_id = ?");
+            const deleteResult = deleteStmt.run(id);
+            console.log(`[User.updateUser] Deleted ${deleteResult.changes} existing interests for user ID ${id}.`);
 
             // 2. Insert new interests
             if (updateData.interests.length > 0) {
+                console.log(`[User.updateUser] Attempting to insert ${updateData.interests.length} new interests.`); // Added log
                 const interestStmt = this.db.prepare("INSERT INTO UserInterests (user_id, interest) VALUES (?, ?)");
+                let insertedCount = 0;
                 for (const interest of updateData.interests) {
-                    interestStmt.run(id, interest);
+                    const insertResult = interestStmt.run(id, interest);
+                    if (insertResult.changes > 0) {
+                        insertedCount++;
+                    }
                 }
-                 console.log(`[User.updateUser] Inserted ${updateData.interests.length} new interests for user ID ${id}.`);
+                 console.log(`[User.updateUser] Attempted to insert ${updateData.interests.length} new interests for user ID ${id}. Successfully inserted ${insertedCount}.`);
             } else {
                  console.log(`[User.updateUser] No new interests to insert for user ID ${id}.`);
             }
@@ -182,7 +213,11 @@ class User {
 
         this.db.run('COMMIT'); // Commit transaction
         console.log(`[User.updateUser] User ID ${id} update transaction committed.`);
-        return this.getUserById(id); // Return the updated user object
+
+        // Fetch the user data *after* the transaction is committed
+        const updatedUser = await this.getUserById(id);
+        console.log('[User.handlePatch] Returning updated user data:', updatedUser); // Added log
+        return updatedUser; // Return the updated user object
 
       } catch (error) {
         this.db.run('ROLLBACK'); // Rollback transaction on error
@@ -222,8 +257,47 @@ class User {
   // Authentication Methods (Stubs - Implement based on requirements)
   async loginUser(credentials) {
     console.log('[User.loginUser] Called with credentials:', credentials);
-    // TODO: Implement user authentication logic
-    throw new Error("loginUser method not fully implemented. Refer to prompts/user.txt for detailed logic.");
+    try {
+        const { email, password } = credentials; // Assuming email and password are provided
+
+        if (!email || !password) {
+            throw new Error("Email and password are required for login.");
+        }
+
+        // Basic lookup by email (replace with secure password verification)
+        const stmt = this.db.prepare("SELECT id, user_type, password_hash FROM User WHERE email = ?");
+        const user = stmt.get(email);
+
+        if (!user) {
+            console.warn(`[User.loginUser] Login failed: User not found for email ${email}`);
+            return null; // User not found
+        }
+
+        // TODO: Implement proper password verification using user.password_hash
+        // For now, a simple check (replace this!)
+        // if (`hashed_${password}` !== user.password_hash) {
+        //     console.warn(`[User.loginUser] Login failed: Incorrect password for email ${email}`);
+        //     return null; // Incorrect password
+        // }
+        // Skipping password check for now to enable basic login by email existence
+
+        console.log(`[User.loginUser] Login successful for user ID: ${user.id}, type: ${user.user_type}`);
+        // In a real app, generate and return a secure token here
+        const mockToken = user.user_type === 'admin' ? 'mock-admin' :
+                          user.user_type === 'company' ? 'mock-company' :
+                          'mock-student';
+
+        return {
+            userId: user.id,
+            userType: user.user_type,
+            token: mockToken, // Return a mock token
+            message: 'Login successful'
+        };
+
+    } catch (error) {
+        console.error(`Error in User.loginUser: ${error.message}`);
+        throw error; // Re-throw the error
+    }
   }
 
   async logoutUser(sessionToken) {
@@ -290,6 +364,7 @@ class User {
       if (user) {
         // For single user requests, return 200. For all users, also 200.
         const statusCode = (userId || username) && !Array.isArray(user) ? 200 : 200; // Adjust if getAllUsers should return 200 even if empty
+        console.log('[User.handleGet] Returning user data:', user); // Added log
         return new Response(JSON.stringify(user), {
           headers: { 'Content-Type': 'application/json' },
           status: statusCode
@@ -360,6 +435,7 @@ class User {
       const updatedUser = await this.updateUser(userId, updateData);
 
       if (updatedUser) {
+           console.log('[User.handlePatch] Returning updated user data:', updatedUser); // Added log
            return new Response(JSON.stringify(updatedUser), {
               headers: { 'Content-Type': 'application/json' },
               status: 200
@@ -374,8 +450,15 @@ class User {
 
     } catch (error) {
       console.error(`Error in User.handlePatch: ${error.message}`);
-       const statusCode = error.message.includes('not fully implemented') ? 501 :
-                          error.message.includes('Invalid user ID format') || error.message.includes('No valid fields provided') || error.message.includes('User not found, cannot update') || error.message.includes('DB update error') ? 400 : 500; // Assuming DB update error is a bad request
+       let statusCode = 500; // Default to Internal Server Error
+       if (error.message.includes('not fully implemented')) {
+           statusCode = 501; // Not Implemented
+       } else if (error.message.includes('Invalid user ID format') || error.message.includes('No valid fields provided') || error.message.includes('User not found, cannot update') || error.message.includes('UNIQUE constraint failed')) {
+           statusCode = 400; // Bad Request (includes unique constraint failures)
+       } else if (error.message.includes('DB update error')) {
+            statusCode = 500; // Still treat generic DB errors as 500 for now
+       }
+
       return new Response(JSON.stringify({ error: error.message }), {
         headers: { 'Content-Type': 'application/json' },
         status: statusCode

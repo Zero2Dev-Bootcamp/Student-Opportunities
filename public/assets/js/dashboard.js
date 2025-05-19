@@ -34,7 +34,7 @@ function setupEventListeners() {
 
     const editProfileBtn = document.getElementById('edit-profile-btn');
     const saveProfileBtn = document.getElementById('save-profile-btn');
-    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const cancelEditBtn = document.getElementById('cancel-button');
 
     if (editProfileBtn) {
         editProfileBtn.addEventListener('click', toggleEditMode);
@@ -71,29 +71,29 @@ function setupEventListeners() {
     }
 
     const applyNowButton = document.getElementById('apply-now');
-    if (applyNowButton) {
-        applyNowButton.addEventListener('click', handleApplyNowClick);
+    // Event delegation for "Apply Now" buttons
+    const dashboardContainer = document.querySelector('.dashboard-container');
+    if (dashboardContainer) {
+        dashboardContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('apply-now-button')) {
+                const opportunityId = event.target.dataset.opportunityId;
+                if (opportunityId) {
+                    handleApplyNowClick(opportunityId);
+                } else {
+                    console.error("Opportunity ID not found on the 'Apply Now' button.");
+                    alert("Error: Could not determine which opportunity to apply for.");
+                }
+            }
+        });
     }
 }
 
-function handleApplyNowClick() {
-    // Assuming the opportunity ID is stored somewhere accessible when the button is visible
-    // For now, let's assume we can get it from the URL hash or a data attribute
-    // A more robust solution would involve storing the current opportunity ID when details are loaded
-    const urlHash = window.location.hash;
-    const opportunityMatch = urlHash.match(/^#opportunity\/(\d+)$/);
-
-    if (opportunityMatch && opportunityMatch[1]) {
-        const opportunityId = opportunityMatch[1];
-        window.location.href = `application-add.html?opportunityId=${opportunityId}`;
+function handleApplyNowClick(opportunityId) {
+    if (opportunityId) {
+        window.location.href = `../html/application-add.html?opportunityId=${opportunityId}`;
     } else {
-        // If opportunity ID is not in the hash, perhaps it's stored elsewhere
-        // Or, if the button is only shown when viewing details loaded dynamically,
-        // the ID should be available in the scope where the button is made visible.
-        console.error("Could not determine Opportunity ID for application.");
+        console.error("Opportunity ID is required to apply.");
         alert("Error: Could not determine which opportunity to apply for.");
-        // Optionally, redirect to a generic application page or show an error message on the page
-        // window.location.href = 'application-add.html'; // Redirect without ID
     }
 }
 
@@ -163,14 +163,30 @@ async function saveProfile() {
             throw new Error(errorData.error || `Failed to save profile: ${response.status} ${response.statusText}`);
         }
 
-        // Profile saved successfully, switch back to view mode and reload data
+        const updatedUser = await response.json(); // Get the updated user data from the response
+
+        // Profile saved successfully, switch back to view mode
         toggleEditMode();
-        // loadProfileData(userId); // loadProfileData is called by toggleEditMode when switching back to view
+        // Update the display directly with the returned updated user data
+        updateProfileDisplay(updatedUser);
 
     } catch (error) {
         console.error('Error saving profile:', error);
         alert(`Could not save profile: ${error.message}`);
     }
+}
+
+// Helper function to update the profile display
+function updateProfileDisplay(user) {
+    console.log('[updateProfileDisplay] Updating display with user data:', user);
+    document.getElementById('profile-name').textContent = user.name || 'N/A';
+    document.getElementById('profile-email').textContent = user.email || 'N/A';
+    document.getElementById('profile-major').textContent = user.major || 'N/A';
+    document.getElementById('profile-graduation-year').textContent = user.graduation_year || 'N/A';
+
+    // Check if user.interests is an array before joining
+    const interestsToDisplay = Array.isArray(user.interests) ? user.interests.join(', ') : (user.interests || 'N/A');
+    document.getElementById('profile-interests').textContent = interestsToDisplay;
 }
 
 async function fetchWithAuth(url, options = {}) {
@@ -202,14 +218,7 @@ async function loadProfileData(userId) {
 
         console.log('[loadProfileData] Fetched user data:', user); // Log the fetched user data
 
-        document.getElementById('profile-name').textContent = user.name || 'N/A';
-        document.getElementById('profile-email').textContent = user.email || 'N/A';
-        document.getElementById('profile-major').textContent = user.major || 'N/A';
-        document.getElementById('profile-graduation-year').textContent = user.graduation_year || 'N/A';
-        
-        // Check if user.interests is an array before joining
-        const interestsToDisplay = Array.isArray(user.interests) ? user.interests.join(', ') : (user.interests || 'N/A');
-        document.getElementById('profile-interests').textContent = interestsToDisplay;
+        updateProfileDisplay(user); // Use the helper function to update display
 
         // The localStorage 'userInterests' might be from initial registration;
         // it might be better to rely solely on the fetched user.interests after updates.
@@ -225,52 +234,53 @@ async function loadProfileData(userId) {
 }
 
 async function loadOpportunities() {
+    console.log('[loadOpportunities] Attempting to load opportunities...'); // Log start
     const internshipGrid = document.getElementById('internship-grid');
     const clubGrid = document.getElementById('club-grid');
+    const programGrid = document.getElementById('program-grid'); // Get the new program grid element
+
     try {
         const response = await fetchWithAuth('/api/opportunities'); // Added /api prefix
+        console.log('[loadOpportunities] Fetch response:', response); // Log response
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
+            console.error('[loadOpportunities] Fetch error data:', errorData); // Log error data
             throw new Error(`Failed to fetch opportunities: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
         }
         const opportunities = await response.json();
+        console.log('[loadOpportunities] Fetched opportunities:', opportunities); // Log fetched data
         
-        const userInterestsRaw = localStorage.getItem('userInterests');
-        const userInterests = userInterestsRaw ? JSON.parse(userInterestsRaw).map(interest => interest.toLowerCase().trim()) : [];
-
-        // Filter opportunities based on user interests (if any)
-        // This assumes 'required_skills' field in opportunity data contains comma-separated interests/skills
-        const recommendedOpportunities = userInterests.length > 0
-            ? opportunities.filter(op => {
-                const skills = op.required_skills ? op.required_skills.toLowerCase().split(',').map(s => s.trim()) : [];
-                return skills.some(skill => userInterests.includes(skill));
-              })
-            : opportunities; // If no user interests, show all or a default set
-
-        renderOpportunities(recommendedOpportunities, internshipGrid, clubGrid);
+        // Display all opportunities regardless of user interests
+        renderOpportunities(opportunities, internshipGrid, clubGrid, programGrid); // Pass the new grid
 
     } catch (error) {
         console.error('Error loading opportunities:', error);
         if (internshipGrid) internshipGrid.innerHTML = `<p>Error loading internships: ${error.message}</p>`;
         if (clubGrid) clubGrid.innerHTML = `<p>Error loading clubs: ${error.message}</p>`;
+        if (programGrid) programGrid.innerHTML = `<p>Error loading programs: ${error.message}</p>`; // Add error handling for programs
     }
 }
 
-function renderOpportunities(opportunitiesToRender, internshipContainer, clubContainer) {
+function renderOpportunities(opportunitiesToRender, internshipContainer, clubContainer, programContainer) { // Add programContainer parameter
     if (internshipContainer) internshipContainer.innerHTML = ''; 
     if (clubContainer) clubContainer.innerHTML = ''; 
+    if (programContainer) programContainer.innerHTML = ''; // Clear program container
 
     let hasInternships = false;
     let hasClubs = false;
+    let hasPrograms = false; // Add flag for programs
 
     opportunitiesToRender.forEach(op => {
         const cardHTML = `
-            <div class="${op.type === 'Internship' ? 'internship-card' : 'club-card'}">
+            <div class="${op.type === 'Internship' ? 'internship-card' : op.type === 'Club' ? 'club-card' : 'program-card'}"> <!-- Add program-card class -->
                 <h3>${op.title || 'Untitled Opportunity'}</h3>
                 <div class="company">${op.company_name || (op.type === 'Club' ? op.club_name || 'N/A' : 'N/A')}</div>
                 <p>${op.description || 'No description available.'}</p>
                 <p class="target">Skills: ${op.required_skills || 'General'}</p>
-                <a href="opportunities.html#opportunity/${op.id}" class="apply-button">View Details</a>
+                <div class="opportunity-actions">
+                    <a href="opportunities.html#opportunity/${op.id}" class="view-details-button">View Details</a>
+                    <button class="apply-now-button" data-opportunity-id="${op.id}">Apply Now</button>
+                </div>
             </div>
         `;
         if (op.type === 'Internship' && internshipContainer) {
@@ -279,6 +289,9 @@ function renderOpportunities(opportunitiesToRender, internshipContainer, clubCon
         } else if (op.type === 'Club' && clubContainer) {
             clubContainer.innerHTML += cardHTML;
             hasClubs = true;
+        } else if (op.type === 'Program' && programContainer) { // Add condition for Program type
+            programContainer.innerHTML += cardHTML;
+            hasPrograms = true;
         }
     });
 
@@ -287,6 +300,9 @@ function renderOpportunities(opportunitiesToRender, internshipContainer, clubCon
     }
     if (clubContainer && !hasClubs) {
         clubContainer.innerHTML = '<p>No recommended clubs or activities found. Explore all <a href="opportunities.html">opportunities</a>.</p>';
+    }
+    if (programContainer && !hasPrograms) { // Add message if no programs found
+        programContainer.innerHTML = '<p>No recommended programs found. Explore all <a href="opportunities.html">opportunities</a>.</p>';
     }
 }
 

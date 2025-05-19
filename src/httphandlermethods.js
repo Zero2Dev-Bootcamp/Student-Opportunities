@@ -41,40 +41,29 @@ export async function handleHttpRequest(req, resources, publicDir) {
           });
         }
 
-        // Mock authentication logic: Check for a specific admin credential
-        if (email === 'admin@testapp.com' && body.password === 'adminpassword') {
-             console.log('[Login Mock] Admin login successful.');
-             return new Response(JSON.stringify({
-                 token: 'mock-admin', // Use a distinct token for admin
-                 userId: 999, // Mock admin user ID
-                 userType: 'admin',
-                 message: 'Admin login successful'
-             }), {
-                 status: 200,
-                 headers: { 'Content-Type': 'application/json' }
-             });
+        // Call the actual loginUser method in the User resource
+        const loginResult = await userResource.loginUser(body);
+
+        if (loginResult) {
+            // Login successful, return user data including ID, type, and token
+            return new Response(JSON.stringify(loginResult), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        } else {
+            // Login failed (user not found or incorrect password - currently only checks email existence)
+            return new Response(JSON.stringify({ message: 'Login failed: Invalid credentials' }), {
+                status: 401, // 401 Unauthorized
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
-        // Existing mock authentication logic for student/company
-        const mockToken = email.includes('company')
-          ? { token: 'mock-company', userId: 2, userType: 'company', message: 'Login successful' }
-          : { token: 'mock-student', userId: 1, userType: 'student', message: 'Login successful' };
-
-        return new Response(JSON.stringify(mockToken), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
       } catch (error) {
-        console.error("Error processing login request. Initial error:", error.message);
-        console.error("Request Headers:", JSON.stringify(Object.fromEntries(req.headers.entries())));
-        try {
-          const textBody = await req.text(); // Attempt to read body as text for logging
-          console.error("Request Body (as text):", textBody);
-        } catch (textError) {
-          console.error("Could not read request body as text:", textError.message);
-        }
-        return new Response(JSON.stringify({ message: "Invalid request body. Ensure Content-Type is application/json and body is valid JSON." }), {
-          status: 400,
+        console.error("Error processing login request:", error.message);
+        // Differentiate between client errors (e.g., missing fields) and server errors
+        const statusCode = error.message.includes('required') ? 400 : 500;
+        return new Response(JSON.stringify({ message: error.message }), {
+          status: statusCode,
           headers: { 'Content-Type': 'application/json' }
         });
       }

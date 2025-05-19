@@ -219,6 +219,49 @@ h3 { /* Dashboard specific h3 styling */
     transform: translateY(-2px);
 }
 
+/* Styles for the container holding action buttons */
+.opportunity-actions {
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    margin-top: 1rem; /* Space above the buttons */
+}
+
+/* Styles for the new Apply Now button */
+.apply-now-button {
+    background-color: #00D4B4; /* Tertiary accent color */
+    color: #121212; /* Dark text for contrast */
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 400;
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.apply-now-button:hover {
+    box-shadow: 0 0 10px #00D4B4, 0 0 20px #00D4B4;
+    transform: translateY(-2px);
+}
+
+/* Adjust view details button to match new button style */
+.view-details-button {
+    background-color: #FF2D55; /* Secondary accent color */
+    color: #E6E6E6;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 400;
+    display: inline-block;
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+
+.view-details-button:hover {
+    box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55;
+    transform: translateY(-2px);
+}
+
 
 /* Recent Applications List within Newsfeed */
 .applications-section h2 {
