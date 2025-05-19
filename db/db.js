@@ -32,5 +32,20 @@ db.run(`
   );
 `);
 
+// Create the Opportunity table if it doesn't exist
+db.run(`
+  CREATE TABLE IF NOT EXISTS Opportunity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    type TEXT NOT NULL,
+    location TEXT,
+    required_skills TEXT,
+    company_user_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_user_id) REFERENCES User(id) ON DELETE CASCADE
+  );
+`);
+
 // Export the database connection instance
 export default db;

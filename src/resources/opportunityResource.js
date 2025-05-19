@@ -50,7 +50,7 @@ class OpportunityResource {
   async handlePost(req) {
     try {
       const opportunityData = await req.json();
-      const { title, description, type, company_user_id, required_skills, location, deadline, link, stipend, duration } = opportunityData;
+      const { title, description, type, company_user_id, required_skills, location } = opportunityData;
 
       if (!title || !description || !type || !company_user_id) {
         return new Response(JSON.stringify({ message: 'Missing required fields' }), {
@@ -60,11 +60,11 @@ class OpportunityResource {
       }
 
       const stmt = this.db.prepare(`
-        INSERT INTO Opportunity (title, description, type, company_user_id, required_skills, location, deadline, link, stipend, duration)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO Opportunity (title, description, type, company_user_id, required_skills, location)
+        VALUES (?, ?, ?, ?, ?, ?)
       `);
 
-      const result = stmt.run(title, description, type, company_user_id, required_skills, location, deadline, link, stipend, duration);
+      const result = stmt.run(title, description, type, company_user_id, required_skills, location);
 
       return new Response(JSON.stringify({ id: result.lastInsertRowId, message: 'Opportunity created successfully' }), {
         headers: { 'Content-Type': 'application/json' },
