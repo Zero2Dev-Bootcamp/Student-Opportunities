@@ -57,22 +57,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        const notes = document.getElementById('notes').value;
+        const formData = new FormData(applicationForm);
 
-        const applicationData = {
-            opportunity_id: parseInt(opportunityId, 10),
-            student_user_id: parseInt(studentUserId, 10),
-            notes: notes
-        };
+        // Add opportunity_id and student_user_id to form data
+        formData.append('opportunity_id', parseInt(opportunityId, 10));
+        formData.append('student_user_id', parseInt(studentUserId, 10));
+
+        // The backend expects 'notes', but the form has 'whyChooseMe', 'skills', 'experienceSummary'.
+        // Let's combine these into a 'notes' field for the backend.
+        const whyChooseMe = formData.get('whyChooseMe') || '';
+        const skills = formData.get('skills') || '';
+        const experienceSummary = formData.get('experienceSummary') || '';
+        const portfolioLink = formData.get('portfolioLink') || '';
+        const linkedinProfile = formData.get('linkedinProfile') || '';
+
+        // Remove individual fields and add a combined 'notes' field
+        formData.delete('whyChooseMe');
+        formData.delete('skills');
+        formData.delete('experienceSummary');
+        formData.delete('portfolioLink');
+        formData.delete('linkedinProfile');
+
+        let combinedNotes = `Why Choose Me:\n${whyChooseMe}\n\n`;
+        if (skills) combinedNotes += `Skills:\n${skills}\n\n`;
+        if (experienceSummary) combinedNotes += `Experience Summary:\n${experienceSummary}\n\n`;
+        if (portfolioLink) combinedNotes += `Portfolio Link: ${portfolioLink}\n\n`;
+        if (linkedinProfile) combinedNotes += `LinkedIn Profile: ${linkedinProfile}\n\n`;
+
+        formData.append('notes', combinedNotes.trim()); // Add the combined notes
+
+        // File inputs are automatically added to FormData
 
         try {
             const response = await fetch('/api/applications', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    // When using FormData with file inputs, the browser automatically sets the Content-Type to multipart/form-data
+                    // and includes the boundary. Do NOT manually set Content-Type here.
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
                 },
-                body: JSON.stringify(applicationData)
+                body: formData // Send FormData directly
             });
 
             const result = await response.json();

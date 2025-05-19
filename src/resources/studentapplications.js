@@ -1,8 +1,14 @@
+import * as path from 'path'; // Import the path module
+import * as Bun from 'bun'; // Import the Bun module to access Bun.fs
+
 // src/resources/application.js
 
 /**
  * @file Application resource for managing student applications to opportunities.
  */
+
+// Define the upload directory path
+const UPLOAD_DIR = path.join(import.meta.dir, '..', '..', 'public', 'uploads', 'applications');
 
 // Helper function to get authentication context from request
 async function getAuthContext(req) {
@@ -384,6 +390,13 @@ class Application {
       const requestBody = await req.json();
       opportunity_id = requestBody.opportunity_id;
       notes = requestBody.notes || null;
+      }
+    } catch (parseError) {
+      console.error('[Application.handlePost] Error parsing request body:', parseError.message);
+      return new Response(JSON.stringify({ error: 'Invalid request body format.' }), {
+        status: 400, // Bad Request
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Basic input validation
@@ -497,6 +510,17 @@ class Application {
          }
          const applications = await this.getApplicationsByCompanyId(companyIdParam);
          return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else if (!applicationIdFromPath && !studentIdParam && !opportunityId && !companyIdParam) {
+        // Handle requests to /applications with no specific ID or parameter
+        let applications = [];
+        if (authContext.userType === 'student') {
+          applications = await this.getApplicationsByStudentId(authContext.userId);
+        } else if (authContext.userType === 'company') {
+          applications = await this.getApplicationsByCompanyId(authContext.userId);
+        } else {
+           return new Response(JSON.stringify({ error: 'Forbidden: Unknown user type cannot view applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        }
+        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
       }
       else {
         return new Response(JSON.stringify({ error: 'Please specify an application ID, studentId, opportunityId, or companyId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
@@ -592,3 +616,419 @@ class Application {
 }
 
 export default Application;
+      console.log(`[Application.handlePost] Saved ${uploadedFiles.length} file details to database for application ${newApplication.id}`);
+    }
+
+    return new Response(JSON.stringify(newApplication), {
+      status: 201, // Created
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in Application.handlePost:', error.message);
+    // Clean up uploaded files if application creation failed after files were saved
+    // (This is a simplification; robust error handling might require more sophisticated cleanup)
+    // For now, rely on manual cleanup or a separate process if needed.
+
+    let statusCode = 400; // Bad Request by default
+    if (error.message.startsWith('Forbidden:')) {
+      statusCode = 403;
+    } else if (error.message.includes('Invalid student_user_id or opportunity_id')) {
+       statusCode = 400; // Bad Request for foreign key constraint
+    } else {
+       statusCode = 500; // Internal Server Error for other issues
+    }
+
+    return new Response(JSON.stringify({ error: error.message || 'Failed to create application' }), {
+      status: statusCode,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+  /**
+   * Handles GET requests for applications.
+   * - /applications/:id
+   * - /applications?studentId=:studentUserId
+   * - /applications?opportunityId=:opportunityId
+   * @param {Request} req - The Bun Request object.
+   * @returns {Promise<Response>} A Bun Response object.
+   */
+  async handleGet(req) {
+    try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const url = new URL(req.url);
+      const pathname = url.pathname;
+      const studentIdParam = url.searchParams.get('studentId');
+      const opportunityId = url.searchParams.get('opportunityId');
+      const companyIdParam = url.searchParams.get('companyId'); // Added companyId parameter
+      
+      const idMatch = pathname.match(/^\/(application|applications)\/([^/]+)/i);
+      const applicationIdFromPath = (idMatch && idMatch[2]) ? idMatch[2] : null;
+
+      if (applicationIdFromPath) {
+        // TODO: Add ownership check for students (can only get their own app by ID)
+        // For now, any authenticated user can fetch by ID.
+        const application = await this.getApplicationById(applicationIdFromPath);
+        if (application) {
+          // Student check: can only get their own application by ID
+          if (authContext.userType === 'student' && application.student_user_id !== authContext.userId) {
+            return new Response(JSON.stringify({ error: 'Forbidden: You can only view your own applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+          }
+          // Company check: can only get applications for their opportunities
+          // This requires fetching the opportunity to check its company_user_id
+          // For now, a basic check if the user is a company is done in the else if (companyIdParam) block
+          return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        } else {
+          return new Response(JSON.stringify({ error: 'Application not found by ID' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+        }
+      } else if (studentIdParam) {
+        if (authContext.userType === 'student' && parseInt(studentIdParam, 10) !== authContext.userId) {
+          return new Response(JSON.stringify({ error: 'Forbidden: Students can only view their own applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        }
+        const applications = await this.getApplicationsByStudentId(studentIdParam);
+        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else if (opportunityId) {
+        // TODO: Add role-based access for companies (can only see apps for their opportunities)
+        const applications = await this.getApplicationsByOpportunityId(opportunityId);
+        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else if (companyIdParam) { // Added handling for companyId parameter
+         if (authContext.userType !== 'company' || parseInt(companyIdParam, 10) !== authContext.userId) {
+           return new Response(JSON.stringify({ error: 'Forbidden: Companies can only view applications for their own opportunities.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+         }
+         const applications = await this.getApplicationsByCompanyId(companyIdParam);
+         return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else if (!applicationIdFromPath && !studentIdParam && !opportunityId && !companyIdParam) {
+        // Handle requests to /applications with no specific ID or parameter
+        let applications = [];
+        if (authContext.userType === 'student') {
+          applications = await this.getApplicationsByStudentId(authContext.userId);
+        } else if (authContext.userType === 'company') {
+          applications = await this.getApplicationsByCompanyId(authContext.userId);
+        } else {
+           return new Response(JSON.stringify({ error: 'Forbidden: Unknown user type cannot view applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        }
+        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      else {
+        return new Response(JSON.stringify({ error: 'Please specify an application ID, studentId, opportunityId, or companyId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+    } catch (error) {
+      console.error('Error in Application.handleGet:', error.message);
+      const statusCode = error.message.startsWith('Forbidden:') ? 403 : 500;
+      return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
+  /**
+   * Handles PATCH requests for updating applications (e.g., status).
+   * URL: /applications/:id
+   * Expected body: { status?, notes? }
+   * @param {Request} req - The Bun Request object.
+   * @returns {Promise<Response>} A Bun Response object.
+   */
+  async handlePatch(req) {
+    try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const url = new URL(req.url);
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[pathParts.length - 1] : null;
+
+      if (!applicationId) {
+        return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const updateData = await req.json();
+      // Pass authContext to the core updateApplication method
+      const updatedApplication = await this.updateApplication(applicationId, updateData, authContext); 
+      
+      // updateApplication now throws specific errors for not found or forbidden
+      return new Response(JSON.stringify(updatedApplication), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in Application.handlePatch:', error.message);
+      let statusCode = 400; // Bad Request by default
+      if (error.message.includes('not found')) {
+        statusCode = 404;
+      } else if (error.message.startsWith('Forbidden:')) {
+        statusCode = 403;
+      }
+      return new Response(JSON.stringify({ error: error.message || 'Failed to update application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
+  /**
+   * Handles DELETE requests for applications.
+   * URL: /applications/:id
+   * @param {Request} req - The Bun Request object.
+   * @returns {Promise<Response>} A Bun Response object.
+   */
+  async handleDelete(req) {
+    try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const url = new URL(req.url);
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[pathParts.length - 1] : null;
+
+      if (!applicationId) {
+        return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      // Pass authContext to the core deleteApplication method
+      const result = await this.deleteApplication(applicationId, authContext); 
+      if (result) {
+        return new Response(JSON.stringify(result), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else {
+        // This case (null result) means application not found by deleteApplication's initial check
+        return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+      }
+    } catch (error) {
+      console.error('Error in Application.handleDelete:', error.message);
+      let statusCode = 500; // Internal Server Error by default
+      if (error.message.startsWith('Forbidden:')) {
+        statusCode = 403;
+      } else if (error.message.includes('not found')) { // Should be caught by the null check above, but as a fallback
+        statusCode = 404;
+      }
+      return new Response(JSON.stringify({ error: error.message || 'Failed to delete application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+}
+
+export default Application;
+      console.log(`[Application.handlePost] Saved ${uploadedFiles.length} file details to database for application ${newApplication.id}`);
+    }
+
+    return new Response(JSON.stringify(newApplication), {
+      status: 201, // Created
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in Application.handlePost:', error.message);
+    // Clean up uploaded files if application creation failed after files were saved
+    // (This is a simplification; robust error handling might require more sophisticated cleanup)
+    // For now, rely on manual cleanup or a separate process if needed.
+
+    let statusCode = 400; // Bad Request by default
+    if (error.message.startsWith('Forbidden:')) {
+      statusCode = 403;
+    } else if (error.message.includes('Invalid student_user_id or opportunity_id')) {
+       statusCode = 400; // Bad Request for foreign key constraint
+    } else {
+       statusCode = 500; // Internal Server Error for other issues
+    }
+
+    return new Response(JSON.stringify({ error: error.message || 'Failed to create application' }), {
+      status: statusCode,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+  /**
+   * Handles GET requests for applications.
+   * - /applications/:id
+   * - /applications?studentId=:studentUserId
+   * - /applications?opportunityId=:opportunityId
+   * @param {Request} req - The Bun Request object.
+   * @returns {Promise<Response>} A Bun Response object.
+   */
+  async handleGet(req) {
+    try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const url = new URL(req.url);
+      const pathname = url.pathname;
+      const studentIdParam = url.searchParams.get('studentId');
+      const opportunityId = url.searchParams.get('opportunityId');
+      const companyIdParam = url.searchParams.get('companyId'); // Added companyId parameter
+      
+      const idMatch = pathname.match(/^\/(application|applications)\/([^/]+)/i);
+      const applicationIdFromPath = (idMatch && idMatch[2]) ? idMatch[2] : null;
+
+      if (applicationIdFromPath) {
+        // TODO: Add ownership check for students (can only get their own app by ID)
+        // For now, any authenticated user can fetch by ID.
+        const application = await this.getApplicationById(applicationIdFromPath);
+        if (application) {
+          // Student check: can only get their own application by ID
+          if (authContext.userType === 'student' && application.student_user_id !== authContext.userId) {
+            return new Response(JSON.stringify({ error: 'Forbidden: You can only view your own applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+          }
+          // Company check: can only get applications for their opportunities
+          // This requires fetching the opportunity to check its company_user_id
+          // For now, a basic check if the user is a company is done in the else if (companyIdParam) block
+          return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        } else {
+          return new Response(JSON.stringify({ error: 'Application not found by ID' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+        }
+      } else if (studentIdParam) {
+        if (authContext.userType === 'student' && parseInt(studentIdParam, 10) !== authContext.userId) {
+          return new Response(JSON.stringify({ error: 'Forbidden: Students can only view their own applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        }
+        const applications = await this.getApplicationsByStudentId(studentIdParam);
+        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else if (opportunityId) {
+        // TODO: Add role-based access for companies (can only see apps for their opportunities)
+        const applications = await this.getApplicationsByOpportunityId(opportunityId);
+        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else if (companyIdParam) { // Added handling for companyId parameter
+         if (authContext.userType !== 'company' || parseInt(companyIdParam, 10) !== authContext.userId) {
+           return new Response(JSON.stringify({ error: 'Forbidden: Companies can only view applications for their own opportunities.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+         }
+         const applications = await this.getApplicationsByCompanyId(companyIdParam);
+         return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else if (!applicationIdFromPath && !studentIdParam && !opportunityId && !companyIdParam) {
+        // Handle requests to /applications with no specific ID or parameter
+        let applications = [];
+        if (authContext.userType === 'student') {
+          applications = await this.getApplicationsByStudentId(authContext.userId);
+        } else if (authContext.userType === 'company') {
+          applications = await this.getApplicationsByCompanyId(authContext.userId);
+        } else {
+           return new Response(JSON.stringify({ error: 'Forbidden: Unknown user type cannot view applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        }
+        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      else {
+        return new Response(JSON.stringify({ error: 'Please specify an application ID, studentId, opportunityId, or companyId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+    } catch (error) {
+      console.error('Error in Application.handleGet:', error.message);
+      const statusCode = error.message.startsWith('Forbidden:') ? 403 : 500;
+      return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
+  /**
+   * Handles PATCH requests for updating applications (e.g., status).
+   * URL: /applications/:id
+   * Expected body: { status?, notes? }
+   * @param {Request} req - The Bun Request object.
+   * @returns {Promise<Response>} A Bun Response object.
+   */
+  async handlePatch(req) {
+    try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const url = new URL(req.url);
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[pathParts.length - 1] : null;
+
+      if (!applicationId) {
+        return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const updateData = await req.json();
+      // Pass authContext to the core updateApplication method
+      const updatedApplication = await this.updateApplication(applicationId, updateData, authContext); 
+      
+      // updateApplication now throws specific errors for not found or forbidden
+      return new Response(JSON.stringify(updatedApplication), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+    } catch (error) {
+      console.error('Error in Application.handlePatch:', error.message);
+      let statusCode = 400; // Bad Request by default
+      if (error.message.includes('not found')) {
+        statusCode = 404;
+      } else if (error.message.startsWith('Forbidden:')) {
+        statusCode = 403;
+      }
+      return new Response(JSON.stringify({ error: error.message || 'Failed to update application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
+  /**
+   * Handles DELETE requests for applications.
+   * URL: /applications/:id
+   * @param {Request} req - The Bun Request object.
+   * @returns {Promise<Response>} A Bun Response object.
+   */
+  async handleDelete(req) {
+    try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const url = new URL(req.url);
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[pathParts.length - 1] : null;
+
+      if (!applicationId) {
+        return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      // Pass authContext to the core deleteApplication method
+      const result = await this.deleteApplication(applicationId, authContext); 
+      if (result) {
+        return new Response(JSON.stringify(result), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else {
+        // This case (null result) means application not found by deleteApplication's initial check
+        return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+      }
+    } catch (error) {
+      console.error('Error in Application.handleDelete:', error.message);
+      let statusCode = 500; // Internal Server Error by default
+      if (error.message.startsWith('Forbidden:')) {
+        statusCode = 403;
+      } else if (error.message.includes('not found')) { // Should be caught by the null check above, but as a fallback
+        statusCode = 404;
+      }
+      return new Response(JSON.stringify({ error: error.message || 'Failed to delete application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+}
+
+export default Application;
+      console.error('[Application.handlePost] Error parsing request body:', parseError.message);
+      return new Response(JSON.stringify({ error: 'Invalid request body format.' }), {
+        status: 400, // Bad Request
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Basic input validation
+    if (!student_user_id || !opportunity_id) {
+      throw new Error('student_user_id and opportunity_id are required.');
+    }
+
+    // Create the application in the database
+    const applicationData = {
+      student_user_id: student_user_id,
+      opportunity_id: opportunity_id,
+      notes: notes
+    };
+
+    const newApplication = await this.createApplication(applicationData);
+
+    // If application creation was successful and there are uploaded files, save file details to DB
+    if (newApplication && uploadedFiles.length > 0) {
+      const insertFileStmt = this.db.prepare(
+        `INSERT INTO ApplicationFile (application_id, file_name, file_path, mime_type)
+         VALUES (?, ?, ?, ?)`
+      );
+      this.db.transaction(() => {
+        for (const file of uploadedFiles) {
+          insertFileStmt.run(newApplication.id, file.file_name, file.file_path, file.mime_type);
+        }
+      })(); // Execute the transaction

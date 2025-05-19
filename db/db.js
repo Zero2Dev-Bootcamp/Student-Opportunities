@@ -47,5 +47,31 @@ db.run(`
   );
 `);
 
+// Create the Application table if it doesn't exist
+db.run(`
+  CREATE TABLE IF NOT EXISTS Application (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_user_id INTEGER NOT NULL,
+    opportunity_id INTEGER NOT NULL,
+    notes TEXT,
+    application_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'Submitted',
+    FOREIGN KEY (student_user_id) REFERENCES User(id) ON DELETE CASCADE,
+    FOREIGN KEY (opportunity_id) REFERENCES Opportunity(id) ON DELETE CASCADE
+  );
+`);
+
 // Export the database connection instance
+// Create the Notification table if it doesn't exist
+db.run(`
+  CREATE TABLE IF NOT EXISTS Notification (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
+  );
+`);
+
 export default db;
