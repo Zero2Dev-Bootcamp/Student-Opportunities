@@ -238,11 +238,14 @@ body {
     border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     color: #121212;
+    max-width: 500px; /* Added max-width for better form control */
+    margin: 2rem auto; /* Centered the form and added top/bottom margin */
 }
 .form-group {
     display: flex;
     flex-direction: column;
     text-align: left;
+    margin-bottom: 1rem; /* Added margin-bottom for spacing between form groups */
 }
 .form-group label {
     font-family: 'Source Code Pro', monospace;
@@ -256,6 +259,7 @@ body {
     font-size: 1rem;
     background-color: #E6E6E6;
     color: #121212;
+    width: 100%; /* Ensure form elements take full width of the container */
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
     border-color: #00D4B4;
