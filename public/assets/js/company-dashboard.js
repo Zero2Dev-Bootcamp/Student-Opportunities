@@ -109,4 +109,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load company profile on page load
     loadCompanyProfile();
+
+    // Load posted opportunities on page load
+    loadPostedOpportunities();
 });
+
+// Function to load posted opportunities
+async function loadPostedOpportunities() {
+    const opportunityListDiv = document.getElementById('opportunity-list');
+    const companyUserId = localStorage.getItem('userId'); // Assuming company user ID is stored
+
+    if (!companyUserId) {
+        opportunityListDiv.innerHTML = '<p>Error: Company user ID not found. Cannot load opportunities.</p>';
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/opportunities?companyId=${companyUserId}`, { // Replace with your API endpoint
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
+            }
+        });
+
+        if (response.ok) {
+            const opportunities = await response.json();
+            opportunityListDiv.innerHTML = ''; // Clear loading message
+
+            if (opportunities.length === 0) {
+                opportunityListDiv.innerHTML = '<p>No opportunities posted yet.</p>';
+            } else {
+                opportunities.forEach(opportunity => {
+                    const opportunityItem = document.createElement('div');
+                    opportunityItem.classList.add('opportunity-item');
+                    opportunityItem.innerHTML = `
+                        <h3>${opportunity.title}</h3>
+                        <p>Status: Active | Applications: ${opportunity.applications_count || 0}</p>
+                        <button>View Details</button>
+                        <button>Edit</button>
+                        <button>Close</button>
+                    `; // Basic structure, adjust as needed
+                    opportunityListDiv.appendChild(opportunityItem);
+                });
+            }
+        } else {
+            opportunityListDiv.innerHTML = '<p>Failed to load opportunities.</p>';
+            console.error('Failed to load opportunities.');
+        }
+    } catch (error) {
+        opportunityListDiv.innerHTML = '<p>An error occurred while loading opportunities.</p>';
+        console.error('Error loading opportunities:', error);
+    }
+}
