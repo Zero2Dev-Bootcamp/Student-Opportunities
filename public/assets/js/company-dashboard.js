@@ -267,6 +267,16 @@ function renderApplications(applicationsToRender, opportunityMap) {
                 <p><strong>Status:</strong> ${app.status}</p>
                 ${app.notes ? `<p><strong>Notes:</strong> ${app.notes}</p>` : ''}
                 <p><strong>Applied on:</strong> ${new Date(app.application_date).toLocaleDateString()}</p>
+                ${app.files && app.files.length > 0 ? `
+                    <div class="application-files">
+                        <p><strong>Files:</strong></p>
+                        <ul>
+                            ${app.files.map(file => `
+                                <li><a href="/uploads/${file.file_name}" target="_blank">${file.file_name}</a></li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
                 <!-- Add buttons for View Application, Change Status, etc. as needed -->
                 <button class="view-application-btn" data-application-id="${app.id}">View Application</button>
                 <button class="change-status-btn" data-application-id="${app.id}">Change Status</button>

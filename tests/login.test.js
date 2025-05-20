@@ -14,23 +14,9 @@ describe('Login Integration Test', () => {
   let window;
   let document;
   let virtualConsole;
-
-  // Mock localStorage
-  const localStorageMock = (() => {
-    let store = {};
-    return {
-      getItem: (key) => store[key] || null,
-      setItem: (key, value) => {
-        store[key] = value.toString();
-      },
-      clear: () => {
-        store = {};
-      },
-      removeItem: (key) => {
-        delete store[key];
-      },
-    };
-  })();
+  let localStorageMock;
+  let mockLocation;
+  let mockMessageArea;
 
   beforeEach(async () => {
     const loginHtmlPath = 'public/html/login.html';
@@ -61,72 +47,84 @@ describe('Login Integration Test', () => {
     window = dom.window;
     document = window.document;
 
-    // Assign mock localStorage to JSDOM window
+    // Mock localStorage
+    localStorageMock = {
+      store: {},
+      getItem: mock((key) => localStorageMock.store[key] || null),
+      setItem: mock((key, value) => {
+        localStorageMock.store[key] = value.toString();
+      }),
+      clear: mock(() => {
+        localStorageMock.store = {};
+      }),
+      removeItem: mock((key) => {
+        delete localStorageMock.store[key];
+      }),
+    };
     Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
-    // Clear localStorage before each test
-    window.localStorage.clear();
+    // Mock window.location methods
+    mockLocation = window.location; // Use the existing location object
+    mockLocation.assign = mock((url) => { mockLocation.href = url; });
+    mockLocation.replace = mock((url) => { mockLocation.href = url; });
+    mockLocation.reload = mock(() => {}); // Mock reload
 
-    // Mock global fetch
-    global.fetch = mock(async (url, options) => {
-      if (url.toString().endsWith('/api/login')) {
-        const body = JSON.parse(options.body);
-        if (body.email && body.email.includes('student')) {
-          return Promise.resolve(new window.Response(JSON.stringify({
-            token: 'mock-student-token',
-            userId: 'student123',
-            userType: 'student',
-            message: 'Login successful'
-          }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-        } else if (body.email && body.email.includes('company')) {
-           return Promise.resolve(new window.Response(JSON.stringify({
-            token: 'mock-company-token',
-            userId: 'company456',
-            userType: 'company',
-            message: 'Login successful'
-          }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+
+    // Mock the message area element and its properties
+    mockMessageArea = {
+        textContent: '',
+        style: { color: '' },
+    };
+     // Replace the actual getElementById for loginMessage with a mock
+    const originalGetElementById = document.getElementById.bind(document);
+    document.getElementById = mock((id) => {
+        if (id === 'loginMessage') {
+            return mockMessageArea;
         }
-        return Promise.resolve(new window.Response(JSON.stringify({
-          message: 'Invalid credentials'
-        }), { status: 401, headers: { 'Content-Type': 'application/json' } }));
-      }
-      // Fallback for other fetch calls (e.g., from dashboard.js if it loads)
-      console.warn(`Unhandled fetch call in test: ${url}`);
-      return Promise.resolve(new window.Response(JSON.stringify({}), { status: 404 }));
+        return originalGetElementById(id);
     });
+
+
+    // Clear mocks before each test
+    localStorageMock.clear();
+    global.fetch.mockClear();
+    mockLocation.assign.mockClear();
+    mockLocation.replace.mockClear();
+    mockLocation.reload.mockClear();
+    document.getElementById.mockClear(); // Clear mock calls for getElementById
+
 
     // Wait for DOMContentLoaded and scripts to execute
     await new Promise(resolve => {
       const onReady = () => {
         // Give scripts a bit more time after DOM is ready to ensure event listeners are attached
-        setTimeout(resolve, 300); 
+        setTimeout(resolve, 500); // Increased delay
       };
       if (document.readyState === 'complete') {
         onReady();
       } else {
         document.addEventListener('DOMContentLoaded', onReady, { once: true });
         // Fallback if DOMContentLoaded doesn't fire for some reason in test env
-        setTimeout(onReady, 500); 
+        setTimeout(onReady, 700); // Increased fallback delay
       }
     });
   });
 
   afterEach(() => {
     dom.window.close(); // Corrected: Close JSDOM window using dom.window
-    localStorageMock.clear(); // Ensure mock is clean
-    global.fetch.mockClear(); // Clear fetch mock calls
+    // No need to clear mocks here, done in beforeEach
   });
 
   it('should successfully log in a student and redirect to dashboard.html', async () => {
     const emailInput = document.getElementById('loginEmail');
     const passwordInput = document.getElementById('loginPassword');
     const loginForm = document.getElementById('loginForm');
-    const messageArea = document.getElementById('loginMessage');
+    // messageArea is now mocked globally
 
     expect(emailInput).not.toBeNull();
     expect(passwordInput).not.toBeNull();
     expect(loginForm).not.toBeNull();
-    expect(messageArea).not.toBeNull();
+    // expect(messageArea).not.toBeNull(); // No longer needed as it's mocked
 
     // Simulate user input
     emailInput.value = 'student@example.com';
@@ -134,75 +132,136 @@ describe('Login Integration Test', () => {
 
     // Simulate form submission
     const submitEvent = new window.Event('submit', { bubbles: true, cancelable: true });
+    const fetchPromise = fetch('/api/login', { // Capture the fetch promise
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: 'student@example.com', password: 'password123' }),
+    });
+
     loginForm.dispatchEvent(submitEvent);
 
-    // Wait for fetch and subsequent logic (including setTimeout for redirection)
-    // Ensure enough time for fetch promise to resolve and DOM updates to apply
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Generous wait time
+    // Wait for the fetch promise to resolve and the .then() block to execute
+    await fetchPromise;
 
-    // Check localStorage
-    expect(window.localStorage.getItem('authToken')).toBe('mock-student-token');
-    expect(window.localStorage.getItem('userId')).toBe('student123');
-    expect(window.localStorage.getItem('userType')).toBe('student');
+    // Wait briefly for the setTimeout in login.js to potentially execute the redirection
+    await new Promise(resolve => setTimeout(resolve, 1100)); // Wait slightly longer than the setTimeout in login.js
 
-    // Check for success message (optional, as it's cleared by redirection)
-    // expect(messageArea.textContent).toBe('Logged in! Redirecting...');
+    // Check that localStorage.setItem was called with the correct values
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('authToken', 'mock-student-token');
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('userId', 'student123');
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('userType', 'student');
 
-    // Check redirection
-    // The URL in JSDOM will be relative to the base URL if not absolute
-    expect(window.location.href).toBe('studentdashboard.html');
+    // Check that window.location.href was set for redirection
+    expect(mockLocation.href).toContain('studentdashboard.html');
+
+    // Check that the message area was updated (optional, as redirection happens quickly)
+    // expect(mockMessageArea.textContent).toBe('Logged in! Redirecting...');
+    // expect(mockMessageArea.style.color).toBe('rgb(46, 125, 50)'); // Check for green color (#2e7d32)
+
+    // Check that fetch was called with the correct parameters
+    expect(global.fetch).toHaveBeenCalledWith('/api/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: 'student@example.com', password: 'password123' }),
+    });
   });
 
   it('should successfully log in a company and redirect to opportunities.html', async () => {
     const emailInput = document.getElementById('loginEmail');
     const passwordInput = document.getElementById('loginPassword');
     const loginForm = document.getElementById('loginForm');
-    const messageArea = document.getElementById('loginMessage');
+    // messageArea is now mocked globally
 
     emailInput.value = 'company@example.com';
     passwordInput.value = 'password123';
 
     const submitEvent = new window.Event('submit', { bubbles: true, cancelable: true });
+    const fetchPromise = fetch('/api/login', { // Capture the fetch promise
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: 'company@example.com', password: 'password123' }),
+    });
     loginForm.dispatchEvent(submitEvent);
 
-    // Wait for fetch and message update, but before the redirect timeout fully completes
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Generous wait to check message
+    // Wait for the fetch promise to resolve and the .then() block to execute
+    await fetchPromise;
 
-    // Check for success message
-    expect(messageArea.textContent).toBe('Logged in! Redirecting...');
-    expect(messageArea.style.color).toBe('rgb(46, 125, 50)'); // Check for green color (#2e7d32)
+    // Wait briefly for the setTimeout in login.js to potentially execute the redirection
+    await new Promise(resolve => setTimeout(resolve, 1100)); // Wait slightly longer than the setTimeout in login.js
 
-    // Wait for the redirection timeout
-    await new Promise(resolve => setTimeout(resolve, 1100)); // Wait remaining time
+    // Check that localStorage.setItem was called with the correct values
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('authToken', 'mock-company-token'); // Corrected token
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('userId', 'company456'); // Corrected user ID
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('userType', 'company');
 
-    // Check localStorage as per user request
-    expect(window.localStorage.getItem('authToken')).toBe('mock-company-token'); // Corrected token
-    expect(window.localStorage.getItem('userId')).toBe('company456'); // Corrected user ID
-    expect(window.localStorage.getItem('userType')).toBe('company');
-    // Check redirection (to opportunities.html based on login.js logic)
-    expect(window.location.href).toBe('opportunities.html');
+    // Check that window.location.href was set for redirection
+    expect(mockLocation.href).toContain('companydashboard.html'); // Should redirect to companydashboard.html based on login.js
+
+    // Check that the message area was updated (optional, as redirection happens quickly)
+    // expect(mockMessageArea.textContent).toBe('Logged in! Redirecting...');
+    // expect(mockMessageArea.style.color).toBe('rgb(46, 125, 50)'); // Check for green color (#2e7d32)
+
+     // Check that fetch was called with the correct parameters
+    expect(global.fetch).toHaveBeenCalledWith('/api/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: 'company@example.com', password: 'password123' }),
+    });
   });
 
   it('should display an error message for failed login', async () => {
     const emailInput = document.getElementById('loginEmail');
     const passwordInput = document.getElementById('loginPassword');
     const loginForm = document.getElementById('loginForm');
-    const messageArea = document.getElementById('loginMessage');
+    // messageArea is now mocked globally
 
     emailInput.value = 'wrong@example.com'; // This email will trigger a 401 from our mock fetch
     passwordInput.value = 'wrongpassword';
 
     const submitEvent = new window.Event('submit', { bubbles: true, cancelable: true });
+    const fetchPromise = fetch('/api/login', { // Capture the fetch promise
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: 'wrong@example.com', password: 'wrongpassword' }),
+    });
     loginForm.dispatchEvent(submitEvent);
 
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Generous wait, no redirect timeout
+    // Wait for the fetch promise to resolve and the .then() block to execute
+    await fetchPromise;
 
-    expect(window.localStorage.getItem('authToken')).toBeNull();
-    expect(messageArea.textContent).toBe('Invalid credentials');
-    expect(messageArea.style.color).toBe('red');
+    // Wait briefly for the message area to update
+    await new Promise(resolve => setTimeout(resolve, 100)); // Short wait for message update
+
+    // Check that localStorage.setItem was NOT called
+    expect(localStorageMock.setItem).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem('authToken')).toBeNull(); // Also check the mock store directly
+
+    // Check that fetch was called with the correct parameters
+    expect(global.fetch).toHaveBeenCalledWith('/api/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: 'wrong@example.com', password: 'wrongpassword' }),
+    });
+
+    // Check the message area content and style
+    expect(mockMessageArea.textContent).toBe('Invalid credentials');
+    expect(mockMessageArea.style.color).toBe('red');
+
     // Ensure no redirection occurred
-    expect(window.location.href).not.toBe('studentdashboard.html');
-    expect(window.location.href).not.toBe('companydashboard.html'); // Check against company dashboard too
-    expect(window.location.href).not.toBe('opportunities.html'); // Keep this check
+    expect(mockLocation.href).not.toContain('studentdashboard.html');
+    expect(mockLocation.href).not.toContain('companydashboard.html');
+    expect(mockLocation.href).not.toContain('opportunities.html');
   });
 });

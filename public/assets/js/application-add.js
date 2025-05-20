@@ -63,23 +63,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         formData.append('opportunity_id', parseInt(opportunityId, 10));
         formData.append('student_user_id', parseInt(studentUserId, 10));
 
-        // The backend expects 'notes', but the form has 'whyChooseMe', 'skills', 'experienceSummary'.
-        // Let's combine these into a 'notes' field for the backend.
-        const whyChooseMe = formData.get('whyChooseMe') || '';
-        const skills = formData.get('skills') || '';
-        const experienceSummary = formData.get('experienceSummary') || '';
-
-        // Remove individual fields and add a combined 'notes' field
-        formData.delete('whyChooseMe');
-        formData.delete('skills');
-        formData.delete('experienceSummary');
-
-        let combinedNotes = `Why Choose Me:\n${whyChooseMe}\n\n`;
-        if (skills) combinedNotes += `Skills:\n${skills}\n\n`;
-        if (experienceSummary) combinedNotes += `Experience Summary:\n${experienceSummary}\n\n`;
-
-        formData.append('notes', combinedNotes.trim()); // Add the combined notes
-
         try {
             const response = await fetch('/api/applications', {
                 method: 'POST',

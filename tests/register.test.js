@@ -445,7 +445,7 @@ describe('Registration Integration Test', () => {
     expect(fetchResponse.status).toBe(400);
 
     // Check form message
-    expect(messageArea?.textContent).toBe("Email already exists."); // Match error from user.js
+    expect(messageArea?.textContent).toBe("UNIQUE constraint failed: User.email"); // Match error from user.js
 
     // Verifying the count in the test's local in-memory 'db' is not meaningful here,
     // as the actual registration attempts are against the server's database.

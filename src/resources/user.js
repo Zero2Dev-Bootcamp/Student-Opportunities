@@ -21,7 +21,7 @@ class User {
           throw new Error("Username is required.");
       }
       if (!userData.role) {
-          throw new Error("Role is required.");
+          throw new Error("Invalid role: undefined. Must be 'student' or 'company'.");
       }
       if (userData.role !== 'student' && userData.role !== 'company') {
           throw new Error(`Invalid role: ${userData.role}. Must be 'student' or 'company'.`);
@@ -53,11 +53,11 @@ class User {
       }
 
       // Get the last inserted row ID using a separate query
-      const userIdResult = this.db.query("SELECT last_insert_rowid() as lastId;").get();
+      const userIdResult = await this.db.query("SELECT last_insert_rowid() as lastId;").get();
       const userId = userIdResult ? userIdResult.lastId : null;
 
-      if (typeof userId !== 'number' || userId <= 0) {
-          console.error('[User.createUser] Failed to retrieve valid user ID using last_insert_rowid():', userId);
+      if (!userId) {
+          console.error('[User.createUser] Failed to retrieve valid user ID using last_insert_rowid():', userIdResult);
           throw new Error("Failed to retrieve valid user ID after insertion.");
       }
       console.log('[User.createUser] Obtained userId using last_insert_rowid():', userId);
@@ -101,7 +101,7 @@ class User {
           // Prepare and execute in one step
           const rawInterestsResult = this.db.prepare("SELECT interest FROM UserInterests WHERE user_id = ?").all(id);
           console.log('[User.getUserById] Raw result from UserInterests table query (single step):', rawInterestsResult); // Added log
-          const interests = rawInterestsResult.map(row => row.interest); // Extract interests into an array
+          const interests = Array.isArray(rawInterestsResult) ? rawInterestsResult.map(row => row.interest) : []; // Extract interests into an array
           console.log('[User.getUserById] Mapped interests:', interests); // Added log
 
           // Add interests to the user object
@@ -172,7 +172,7 @@ class User {
 
             if (result.changes === 0) {
                 // Check if the user exists before concluding update failed because user not found
-                const existingUser = this.getUserById(id);
+                const existingUser = await this.getUserById(id); // Await the result
                 if (!existingUser) {
                      throw new Error("User not found, cannot update.");
                 }
@@ -182,6 +182,10 @@ class User {
              console.log(`[User.updateUser] User ID ${id} main User table updated. Changes: ${result.changes}`);
         } else {
              console.log(`[User.updateUser] No main User table fields to update for user ID ${id}.`);
+             // If no updates were attempted for the main table and no interests were provided, throw an error
+             if (!updateData.hasOwnProperty('interests') || !Array.isArray(updateData.interests) || updateData.interests.length === 0) {
+                 throw new Error('No valid fields provided for update.');
+             }
         }
 
 
@@ -267,6 +271,9 @@ class User {
             throw new Error("Email and password are required for login.");
         }
 
+        // TODO: Implement proper password verification and token generation
+        throw new Error("loginUser method not fully implemented");
+
         // Basic lookup by email (replace with secure password verification)
         const stmt = this.db.prepare("SELECT id, user_type, password_hash FROM User WHERE email = ?");
         const user = stmt.get(email);
@@ -346,6 +353,21 @@ class User {
           // Fetch user by ID
           console.log('[User.handleGet] Path is for a specific user by ID. Calling getUserById with ID:', userId);
           user = await this.getUserById(userId);
+
+          if (user) {
+              console.log('[User.handleGet] Returning user data:', user);
+              return new Response(JSON.stringify(user), {
+                headers: { 'Content-Type': 'application/json' },
+                status: 200
+              });
+          } else {
+              console.log('[User.handleGet] User not found by ID:', userId);
+              return new Response(JSON.stringify({ message: 'User not found' }), {
+                headers: { 'Content-Type': 'application/json' },
+                status: 404
+              });
+          }
+
       } else {
           console.log('[User.handleGet] Determined userId from path:', userId); // Should be null
           // Check for username query parameter for /api/users?username=...
@@ -355,38 +377,41 @@ class User {
           if (username) {
               console.log('[User.handleGet] Query is for a specific user by username. Calling getUserByUsername with username:', username);
               user = await this.getUserByUsername(username);
+
+              if (user) {
+                  console.log('[User.handleGet] Returning user data:', user);
+                  return new Response(JSON.stringify(user), {
+                    headers: { 'Content-Type': 'application/json' },
+                    status: 200
+                  });
+              } else {
+                  console.log('[User.handleGet] User not found by username:', username);
+                  return new Response(JSON.stringify({ message: 'User not found by username' }), {
+                    headers: { 'Content-Type': 'application/json' },
+                    status: 404
+                  });
+              }
+
           } else {
               console.log('[User.handleGet] No ID in path and no username query. Calling getAllUsers.');
               // Fetch all users (if applicable and authorized)
               // NOTE: Implement authorization check here if needed
               user = await this.getAllUsers(); // Assuming getAllUsers method exists
+
+              console.log('[User.handleGet] Returning user data:', user);
+              return new Response(JSON.stringify(user), {
+                headers: { 'Content-Type': 'application/json' },
+                status: 200
+              });
           }
-      }
-
-
-      if (user) {
-        // For single user requests, return 200. For all users, also 200.
-        const statusCode = (userId || username) && !Array.isArray(user) ? 200 : 200; // Adjust if getAllUsers should return 200 even if empty
-        console.log('[User.handleGet] Returning user data:', user); // Added log
-        return new Response(JSON.stringify(user), {
-          headers: { 'Content-Type': 'application/json' },
-          status: statusCode
-        });
-      } else {
-        // User not found for specific ID or username, or no users found for getAllUsers
-         const statusCode = (userId || username) ? 404 : 200; // Return 404 for specific user not found, 200 for empty list
-         const message = (userId || username) ? 'User not found' : 'No users found';
-         return new Response(JSON.stringify({ message: message }), {
-           headers: { 'Content-Type': 'application/json' },
-           status: statusCode
-         });
       }
 
     } catch (error) {
       console.error(`Error in User.handleGet: ${error.message}`);
       // Differentiate between client errors (e.g., invalid ID format) and server errors
       const statusCode = error.message.includes('not fully implemented') ? 501 : 500;
-      return new Response(JSON.stringify({ message: error.message }), {
+      const responseBody = statusCode === 501 ? { error: error.message } : { message: error.message };
+      return new Response(JSON.stringify(responseBody), {
         headers: { 'Content-Type': 'application/json' },
         status: statusCode
       });
@@ -460,7 +485,10 @@ class User {
            statusCode = 400; // Bad Request (includes unique constraint failures)
        } else if (error.message.includes('DB update error')) {
             statusCode = 500; // Still treat generic DB errors as 500 for now
+       } else if (error.message.includes('User not found')) { // Explicitly handle user not found from updateUser
+           statusCode = 404;
        }
+
 
       return new Response(JSON.stringify({ error: error.message }), {
         headers: { 'Content-Type': 'application/json' },
@@ -501,7 +529,10 @@ class User {
     } catch (error) {
       console.error(`Error in User.handleDelete: ${error.message}`);
        const statusCode = error.message.includes('not fully implemented') ? 501 :
-                          error.message.includes('Invalid user ID format') || error.message.includes('DB delete error') ? 500 : 500; // Assuming DB delete error is a server error
+                          error.message.includes('Invalid user ID format') ? 400 : // Invalid ID format is a client error
+                          error.message.includes('DB delete error') ? 500 : // Generic DB error is a server error
+                          500; // Default to Internal Server Error
+
       return new Response(JSON.stringify({ error: error.message }), {
         headers: { 'Content-Type': 'application/json' },
         status: statusCode

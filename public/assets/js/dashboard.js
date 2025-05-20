@@ -201,7 +201,7 @@ async function fetchWithAuth(url, options = {}) {
     return fetch(url, { ...options, headers });
 }
 
-async function loadProfileData(userId) {
+export async function loadProfileData(userId) {
     if (!userId) {
         document.getElementById('profile-summary').innerHTML = '<p>Could not load profile. User not identified.</p>';
         return;

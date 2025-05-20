@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 import { JSDOM, VirtualConsole } from 'jsdom'; // Import VirtualConsole
 import fs from 'fs';
 import path from 'path';
+import { setupEventListeners, loadProfileData, loadOpportunities, loadApplications, loadNotifications } from '../public/assets/js/dashboard.js'; // Import functions
 
 // Helper function to load HTML file content
 const loadHTML = (filePath) => {
@@ -153,7 +154,12 @@ describe('Dashboard Test', () => {
         setTimeout(resolve, 400); // Increased fallback
       }
     });
-    // The dashboard.js script should run its initial loads now.
+    // Explicitly call the initialization functions from dashboard.js
+    setupEventListeners();
+    loadProfileData(window.localStorage.getItem('userId')); // Pass userId from localStorage
+    loadOpportunities();
+    loadApplications(window.localStorage.getItem('userId')); // Pass userId from localStorage
+    loadNotifications();
   });
 
   afterEach(() => {

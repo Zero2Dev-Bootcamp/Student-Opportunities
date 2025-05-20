@@ -1,6 +1,7 @@
 async function loadApplications() {
     try {
-        const response = await fetch('/applications', {
+        const studentId = localStorage.getItem('userId');
+        const response = await fetch(`/applications?studentId=${studentId}`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}` }
         });
         const applications = await response.json();
@@ -17,6 +18,7 @@ async function loadApplications() {
 }
 
 function renderApplications(applications) {
+    console.log('[renderApplications] Received applications:', applications); // Added logging
     const applicationsList = document.getElementById('applications-list');
     applicationsList.innerHTML = '';
     if (applications.length === 0) {

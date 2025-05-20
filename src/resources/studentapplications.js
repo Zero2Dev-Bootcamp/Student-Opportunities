@@ -1,4 +1,5 @@
 import * as path from 'path'; // Import the path module
+import * as fs from 'fs/promises'; // Import the file system module with promises
 import db from '../../db/db.js'; // Import the database connection
 
 // src/resources/application.js
@@ -38,8 +39,8 @@ class Application {
   // --- Core Service Methods ---
 
   /**
-   * Creates a new application.
-   * @param {object} applicationData - Object containing student_user_id (from auth), opportunity_id, and optionally notes.
+   * Creates a new application and handles file uploads.
+   * @param {object} applicationData - Object containing student_user_id (from auth), opportunity_id, notes, and uploaded files.
    * @returns {Promise<object|null>} The created application object or null/error.
    */
   async createApplication(applicationData) {
@@ -49,23 +50,52 @@ class Application {
         throw new Error('Database connection not available in Application resource.');
       }
 
-      const { student_user_id, opportunity_id, notes } = applicationData;
+      const { student_user_id, opportunity_id, notes, files } = applicationData; // Expecting 'files' array
 
       // Basic input validation
       if (!student_user_id || !opportunity_id) {
         throw new Error('student_user_id and opportunity_id are required.');
       }
 
-      // application_date and status will use database defaults
-      const stmt = this.db.prepare(
-        `INSERT INTO Application (student_user_id, opportunity_id, notes) 
-         VALUES (?, ?, ?)`
-      );
-      
-      const result = stmt.run(student_user_id, opportunity_id, notes);
+      // Start a transaction for atomicity
+      this.db.run('BEGIN TRANSACTION');
 
-      if (result.changes > 0) {
-        const newApplicationId = result.lastInsertRowid;
+      try {
+        // Insert the application record
+        const insertApplicationStmt = this.db.prepare(
+          `INSERT INTO Application (student_user_id, opportunity_id, notes) 
+           VALUES (?, ?, ?)`
+        );
+        
+        const applicationResult = insertApplicationStmt.run(student_user_id, opportunity_id, notes);
+
+        if (applicationResult.changes === 0) {
+          throw new Error('Failed to create application (no rows affected).');
+        }
+        const newApplicationId = applicationResult.lastInsertRowid;
+
+        // Handle file uploads if files are provided
+        if (files && Array.isArray(files)) {
+          const uploadDir = path.join(__dirname, '..', '..', 'uploads', 'applications');
+          await fs.mkdir(uploadDir, { recursive: true }); // Ensure upload directory exists
+
+          const insertFileStmt = this.db.prepare(
+            `INSERT INTO ApplicationFile (application_id, file_name, file_path, mime_type)
+             VALUES (?, ?, ?, ?)`
+          );
+
+          for (const file of files) {
+            const uniqueFileName = `${Date.now()}-${file.name}`;
+            const filePath = path.join(uploadDir, uniqueFileName);
+
+            // Save the file to the server
+            await fs.writeFile(filePath, file.stream()); // Use file.stream() for Bun.File
+
+            // Insert file record into the database
+            insertFileStmt.run(newApplicationId, file.name, filePath, file.type);
+            console.log(`[Application.createApplication] Saved file: ${file.name} to ${filePath}`);
+          }
+        }
 
         // Fetch the opportunity details to get the company_user_id and title
         const opportunityStmt = this.db.prepare("SELECT company_user_id, title FROM Opportunity WHERE id = ?");
@@ -84,11 +114,19 @@ class Application {
           console.warn(`[Application.createApplication] Opportunity with ID ${opportunity_id} not found. Cannot create notification.`);
         }
 
+        // Commit the transaction
+        this.db.run('COMMIT');
+
         // Fetch the newly created application to get all fields including defaults
         return this.getApplicationById(newApplicationId);
-      } else {
-        throw new Error('Failed to create application (no rows affected).');
+
+      } catch (transactionError) {
+        // Rollback the transaction in case of any error
+        this.db.run('ROLLBACK');
+        console.error('Transaction failed, rolling back:', transactionError.message);
+        throw transactionError; // Re-throw the error
       }
+
     } catch (error) {
       console.error('Error in Application.createApplication:', error.message);
       // Consider specific DB errors, e.g., foreign key constraint violations
@@ -100,9 +138,9 @@ class Application {
   }
 
   /**
-   * Retrieves a specific application by its ID.
+   * Retrieves a specific application by its ID, including associated files.
    * @param {string|number} applicationId - The ID of the application.
-   * @returns {Promise<object|null>} The application object or null if not found.
+   * @returns {Promise<object|null>} The application object with a 'files' array, or null if not found.
    */
   async getApplicationById(applicationId) {
     try {
@@ -110,8 +148,16 @@ class Application {
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
-      const stmt = this.db.prepare("SELECT * FROM Application WHERE id = ?");
-      return stmt.get(applicationId) || null;
+      const applicationStmt = this.db.prepare("SELECT * FROM Application WHERE id = ?");
+      const application = applicationStmt.get(applicationId);
+
+      if (application) {
+        // Fetch associated files
+        const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
+        application.files = filesStmt.all(applicationId);
+      }
+
+      return application || null;
     } catch (error) {
       console.error('Error in Application.getApplicationById:', error.message);
       throw error;
@@ -119,9 +165,9 @@ class Application {
   }
 
   /**
-   * Retrieves all applications submitted by a specific student.
+   * Retrieves all applications submitted by a specific student, including associated files.
    * @param {string|number} studentUserId - The ID of the student user.
-   * @returns {Promise<Array<object>>} An array of application objects.
+   * @returns {Promise<Array<object>>} An array of application objects, each with a 'files' array.
    */
   async getApplicationsByStudentId(studentUserId) {
     try {
@@ -129,8 +175,16 @@ class Application {
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
-      const stmt = this.db.prepare("SELECT * FROM Application WHERE student_user_id = ? ORDER BY application_date DESC");
-      return stmt.all(studentUserId);
+      const applicationsStmt = this.db.prepare("SELECT * FROM Application WHERE student_user_id = ? ORDER BY application_date DESC");
+      const applications = applicationsStmt.all(studentUserId);
+
+      // For each application, fetch associated files
+      for (const app of applications) {
+        const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
+        app.files = filesStmt.all(app.id);
+      }
+
+      return applications;
     } catch (error) {
       console.error('Error in Application.getApplicationsByStudentId:', error.message);
       throw error;
@@ -138,9 +192,9 @@ class Application {
   }
 
   /**
-   * Retrieves all applications for a specific opportunity.
+   * Retrieves all applications for a specific opportunity, including associated files.
    * @param {string|number} opportunityId - The ID of the opportunity.
-   * @returns {Promise<Array<object>>} An array of application objects.
+   * @returns {Promise<Array<object>>} An array of application objects, each with a 'files' array.
    */
   async getApplicationsByOpportunityId(opportunityId) {
     try {
@@ -148,8 +202,16 @@ class Application {
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
-      const stmt = this.db.prepare("SELECT * FROM Application WHERE opportunity_id = ? ORDER BY application_date DESC");
-      return stmt.all(opportunityId);
+      const applicationsStmt = this.db.prepare("SELECT * FROM Application WHERE opportunity_id = ? ORDER BY application_date DESC");
+      const applications = applicationsStmt.all(opportunityId);
+
+      // For each application, fetch associated files
+      for (const app of applications) {
+        const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
+        app.files = filesStmt.all(app.id);
+      }
+
+      return applications;
     } catch (error) {
       console.error('Error in Application.getApplicationsByOpportunityId:', error.message);
       throw error;
@@ -157,9 +219,9 @@ class Application {
   }
 
   /**
-   * Retrieves all applications for opportunities posted by a specific company.
+   * Retrieves all applications for opportunities posted by a specific company, including associated files.
    * @param {string|number} companyUserId - The ID of the company user.
-   * @returns {Promise<Array<object>>} An array of application objects.
+   * @returns {Promise<Array<object>>} An array of application objects, each with a 'files' array.
    */
   async getApplicationsByCompanyId(companyUserId) {
     try {
@@ -179,12 +241,17 @@ class Application {
          ORDER BY A.application_date DESC`;
       
       console.log('[Application.getApplicationsByCompanyId] Executing SQL:', sql, 'with companyUserId:', companyUserId);
-      const stmt = this.db.prepare(sql);
+      const applicationsStmt = this.db.prepare(sql);
 
-      const applications = stmt.all(companyUserId);
+      const applications = applicationsStmt.all(companyUserId);
       console.log('[Application.getApplicationsByCompanyId] Query result:', applications);
 
-      // No file parsing needed as files are no longer joined
+      // For each application, fetch associated files
+      for (const app of applications) {
+        const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
+        app.files = filesStmt.all(app.id);
+      }
+
       return applications;
 
     } catch (error) {
@@ -295,256 +362,6 @@ class Application {
    * @param {string|number} applicationId - The ID of the application to delete.
    * @param {object} authContext - The authentication context of the user performing the deletion.
    * @returns {Promise<object|null>} Confirmation object or null if not found/not allowed.
-   */
-  async deleteApplication(applicationId, authContext) {
-    try {
-      console.log('[Application.deleteApplication] Called for ID:', applicationId, 'by user:', authContext.userId, authContext.userType);
-      if (!this.db) {
-        throw new Error('Database connection not available.');
-      }
-      if (!applicationId) {
-        throw new Error('Application ID is required for deletion.');
-      }
-
-      const applicationToDelete = await this.getApplicationById(applicationId);
-      if (!applicationToDelete) {
-        return null; // Application not found
-      }
-
-      // Authorization: Only student owner can delete
-      if (authContext.userType === 'student' && applicationToDelete.student_user_id === authContext.userId) {
-        // Allowed
-      } else {
-        console.warn(`[Auth] Forbidden: User ${authContext.userId} (${authContext.userType}) attempted to delete application ${applicationId} owned by ${applicationToDelete.student_user_id}`);
-        throw new Error('Forbidden: You do not have permission to delete this application.');
-      }
-
-      const stmt = this.db.prepare("DELETE FROM Application WHERE id = ?");
-      const result = stmt.run(applicationId);
-
-      if (result.changes > 0) {
-        return { id: applicationId, message: 'Application deleted successfully.' };
-      } else {
-        return null; // Application not found
-      }
-    } catch (error) {
-      console.error('Error in Application.handleDelete:', error.message);
-      throw error;
-    }
-  }
-
-  // --- HTTP Handler Methods ---
-
-  /**
-   * Handles POST requests for creating applications.
-   * Expected body: { student_user_id, opportunity_id, notes? }
-   * @param {Request} req - The Bun Request object.
-   * @returns {Promise<Response>} A Bun Response object.
-   */
-  async handlePost(req) {
-    let opportunity_id;
-    let notes = null;
-    let student_user_id; // Declare outside try
-
-    try {
-      const authContext = await getAuthContext(req);
-      if (!authContext) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
-      }
-
-      if (authContext.userType !== 'student') {
-      return new Response(JSON.stringify({ error: 'Forbidden: Only students can create applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-    }
-
-      const contentType = req.headers.get('Content-Type');
-
-    if (contentType && contentType.includes('multipart/form-data')) {
-      console.log('[Application.handlePost] Handling multipart/form-data');
-      const formData = await req.formData();
-
-      opportunity_id = parseInt(formData.get('opportunity_id'), 10);
-      notes = formData.get('notes') || null;
-      student_user_id = parseInt(formData.get('student_user_id'), 10); // Get student_user_id from formData
-
-    } else {
-      console.log('[Application.handlePost] Handling application/json');
-      const requestBody = await req.json();
-      opportunity_id = requestBody.opportunity_id;
-      notes = requestBody.notes || null;
-      student_user_id = requestBody.student_user_id; // Get student_user_id from requestBody
-      }
-    } catch (parseError) {
-      console.error('[Application.handlePost] Error parsing request body:', parseError.message);
-      return new Response(JSON.stringify({ error: 'Invalid request body format.' }), {
-        status: 400, // Bad Request
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Basic input validation
-    if (!student_user_id || !opportunity_id) {
-      throw new Error('student_user_id and opportunity_id are required.');
-    }
-
-    // Create the application in the database
-    const applicationData = {
-      student_user_id: student_user_id,
-      opportunity_id: opportunity_id,
-      notes: notes
-    };
-
-    const newApplication = await this.createApplication(applicationData);
-
-    return new Response(JSON.stringify(newApplication), {
-      status: 201, // Created
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-  } catch (error) {
-    console.error('Error in Application.handlePost:', error.message);
-    // Clean up uploaded files if application creation failed after files were saved
-    // (This is a simplification; robust error handling might require more sophisticated cleanup)
-    // For now, rely on manual cleanup or a separate process if needed.
-
-    let statusCode = 400; // Bad Request by default
-    if (error.message.startsWith('Forbidden:')) {
-      statusCode = 403;
-    } else if (error.message.includes('Invalid student_user_id or opportunity_id')) {
-       statusCode = 400; // Bad Request for foreign key constraint
-    } else {
-       statusCode = 500; // Internal Server Error for other issues
-    }
-
-    return new Response(JSON.stringify({ error: error.message || 'Failed to create application' }), {
-      status: statusCode,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }; // Added semicolon
-  /**
-   * Handles GET requests for applications.
-   * - /applications/:id
-   * - /applications?studentId=:studentUserId
-   * - /applications?opportunityId=:opportunityId
-   * @param {Request} req - The Bun Request object.
-   * @returns {Promise<Response>} A Bun Response object.
-   */
-  async handleGet(req) {
-    try {
-      const authContext = await getAuthContext(req);
-      if (!authContext) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
-      }
-
-      const url = new URL(req.url);
-      const pathname = url.pathname;
-      const studentIdParam = url.searchParams.get('studentId');
-      const opportunityId = url.searchParams.get('opportunityId');
-      const companyIdParam = url.searchParams.get('companyId'); // Added companyId parameter
-      
-      const idMatch = pathname.match(/^\/(application|applications)\/([^/]+)/i);
-      const applicationIdFromPath = (idMatch && idMatch[2]) ? idMatch[2] : null;
-
-      if (applicationIdFromPath) {
-        // TODO: Add ownership check for students (can only get their own app by ID)
-        // For now, any authenticated user can fetch by ID.
-        const application = await this.getApplicationById(applicationIdFromPath);
-        if (application) {
-          // Student check: can only get their own application by ID
-          if (authContext.userType === 'student' && application.student_user_id !== authContext.userId) {
-            return new Response(JSON.stringify({ error: 'Forbidden: You can only view your own applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-          }
-          // Company check: can only get applications for their opportunities
-          // This requires fetching the opportunity to check its company_user_id
-          // For now, a basic check if the user is a company is done in the else if (companyIdParam) block
-          return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
-        } else {
-          return new Response(JSON.stringify({ error: 'Application not found by ID' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
-        }
-      } else if (studentIdParam) {
-        if (authContext.userType === 'student' && parseInt(studentIdParam, 10) !== authContext.userId) {
-          return new Response(JSON.stringify({ error: 'Forbidden: Students can only view their own applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-        }
-        const applications = await this.getApplicationsByStudentId(studentIdParam);
-        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      } else if (opportunityId) {
-        // TODO: Add role-based access for companies (can only see apps for their opportunities)
-        const applications = await this.getApplicationsByOpportunityId(opportunityId);
-        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      } else if (companyIdParam) { // Added handling for companyId parameter
-         if (authContext.userType !== 'company' || parseInt(companyIdParam, 10) !== authContext.userId) {
-           return new Response(JSON.stringify({ error: 'Forbidden: Companies can only view applications for their own opportunities.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-         }
-         const applications = await this.getApplicationsByCompanyId(companyIdParam);
-         return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      } else if (!applicationIdFromPath && !studentIdParam && !opportunityId && !companyIdParam) {
-        // Handle requests to /applications with no specific ID or parameter (e.g., from company dashboard)
-        let applications = [];
-        if (authContext.userType === 'student') {
-          applications = await this.getApplicationsByStudentId(authContext.userId);
-        } else if (authContext.userType === 'company') {
-          // For logged-in company users requesting their own applications, use authContext.userId
-          applications = await this.getApplicationsByCompanyId(authContext.userId);
-        } else {
-           return new Response(JSON.stringify({ error: 'Forbidden: Unknown user type cannot view applications.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-        }
-        return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      }
-      else {
-        return new Response(JSON.stringify({ error: 'Please specify an application ID, studentId, opportunityId, or companyId' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-      }
-    } catch (error) {
-      console.error('Error in Application.handleGet:', error.message);
-      const statusCode = error.message.startsWith('Forbidden:') ? 403 : 500;
-      return new Response(JSON.stringify({ error: error.message || 'Internal Server Error' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
-    }
-  }; // Added semicolon
-
-  /**
-   * Handles PATCH requests for updating applications (e.g., status).
-   * URL: /applications/:id
-   * Expected body: { status?, notes? }
-   * @param {Request} req - The Bun Request object.
-   * @returns {Promise<Response>} A Bun Response object.
-   */
-  async handlePatch(req) {
-    try {
-      const authContext = await getAuthContext(req);
-      if (!authContext) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
-      }
-
-      const url = new URL(req.url);
-      const pathParts = url.pathname.split('/').filter(Boolean);
-      const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[pathParts.length - 1] : null;
-
-      if (!applicationId) {
-        return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-      }
-
-      const updateData = await req.json();
-      // Pass authContext to the core updateApplication method
-      const updatedApplication = await this.updateApplication(applicationId, updateData, authContext); 
-      
-      // updateApplication now throws specific errors for not found or forbidden
-      return new Response(JSON.stringify(updatedApplication), { status: 200, headers: { 'Content-Type': 'application/json' } });
-
-    } catch (error) {
-      console.error('Error in Application.handlePatch:', error.message);
-      let statusCode = 400; // Bad Request by default
-      if (error.message.includes('not found')) {
-        statusCode = 404;
-      } else if (error.message.startsWith('Forbidden:')) {
-        statusCode = 403;
-      }
-      return new Response(JSON.stringify({ error: error.message || 'Failed to update application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
-    }
-  }; // Added semicolon
-
-  /**
-   * Handles DELETE requests for applications.
-   * URL: /applications/:id
-   * @param {Request} req - The Bun Request object.
-   * @returns {Promise<Response>} A Bun Response object.
    */
   async handleDelete(req) {
     try {
