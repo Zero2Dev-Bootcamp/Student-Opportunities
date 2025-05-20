@@ -36,11 +36,14 @@ class User {
       const industry = userData.industry || null;
       const location = userData.location || null; // Get location from userData
       const description = userData.description || null;
+      // Use institution_name for company name if user_type is 'company'
+      const institution_name = userData.role === 'company' ? userData.companyName || null : userData.institution_name || null;
+
 
       // Try using db.run() instead of prepare().run()
-      const insertSql = `INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-      const insertValues = [userData.username, userData.email, passwordHash, userData.role, major, graduation_year, industry, location, description];
+      const insertSql = `INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description, institution_name)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const insertValues = [userData.username, userData.email, passwordHash, userData.role, major, graduation_year, industry, location, description, institution_name];
 
       console.log("[User.createUser] Attempting INSERT with db.run(). SQL:", insertSql, "Values:", insertValues);
       const userResult = this.db.run(insertSql, ...insertValues);

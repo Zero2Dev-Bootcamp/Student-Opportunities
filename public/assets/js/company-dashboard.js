@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const companyIndustrySpan = document.getElementById('company-industry');
     const companyLocationSpan = document.getElementById('company-location');
     const companyDescriptionSpan = document.getElementById('company-description');
+    const companyLoginEmailSpan = document.getElementById('company-login-email');
 
     const editCompanyNameInput = document.getElementById('edit-company-name');
     const editCompanyEmailInput = document.getElementById('edit-company-email');
@@ -83,8 +84,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to load company profile data
     async function loadCompanyProfile() {
+        const companyUserId = localStorage.getItem('userId'); // Get user ID from localStorage
+
+        if (!companyUserId) {
+            console.error('Error: Company user ID not found in localStorage.');
+            // Optionally update UI to show error or redirect to login
+            return;
+        }
+
         try {
-            const response = await fetch('/api/company/profile', { // Replace with your API endpoint
+            // Include userId as a query parameter
+            const response = await fetch(`/api/company/profile?userId=${companyUserId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -94,11 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 const profile = await response.json();
-                companyNameSpan.textContent = profile.name;
+                companyNameSpan.textContent = profile.company_name; // Use company_name from the API response
                 companyEmailSpan.textContent = profile.email;
                 companyIndustrySpan.textContent = profile.industry;
                 companyLocationSpan.textContent = profile.location;
                 companyDescriptionSpan.textContent = profile.description;
+                companyLoginEmailSpan.textContent = profile.login_email; // Assuming the API returns login_email
             } else {
                 console.error('Failed to load company profile.');
             }
