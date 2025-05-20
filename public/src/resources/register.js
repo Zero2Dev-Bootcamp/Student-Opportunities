@@ -2,20 +2,33 @@ export function initRegistration() {
     const form = document.querySelector('.register-form');
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-            const data = {
-                username: form.name.value,
-                email: form.email.value,
-                password: form.password.value,
-                role: form.userType.value,
-                location: form.location.value || null,
-                description: form.message.value,
-                interests: form.userType.value === 'student' ? Array.from(form.querySelectorAll('input[name="interests"]:checked')).map(i => i.value) : []
-            };
+
+        // Use FormData to easily collect all form data
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Manually handle interests as FormData doesn't handle multiple checkboxes with the same name well
+        const interests = form.userType.value === 'student' ? Array.from(form.querySelectorAll('input[name="interests"]:checked')).map(i => i.value) : [];
+        data.interests = interests;
+
+        // Ensure companyName is included only for company users, and use null if empty
+        if (data.role !== 'company') {
+            delete data.companyName; // Remove companyName if not a company user
+        } else {
+             // Ensure companyName is null if the input was empty
+             data.companyName = data.companyName || null;
+        }
+
+        // Ensure other nullable fields are null if empty strings
+        data.location = data.location || null;
+        data.description = data.description || null;
+
+
         try {
             const response = await fetch('/api/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data) // Send as JSON
             });
             const result = await response.json();
             const message = form.querySelector('.form-message');

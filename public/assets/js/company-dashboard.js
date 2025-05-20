@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 const profile = await response.json();
-                companyNameSpan.textContent = profile.company_name; // Use company_name from the API response
+                companyNameSpan.textContent = profile.institution_name; // Use institution_name from the API response
                 companyEmailSpan.textContent = profile.email;
                 companyIndustrySpan.textContent = profile.industry;
                 companyLocationSpan.textContent = profile.location;
@@ -126,6 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load received applications on page load
     loadReceivedApplications();
+
+    // Poll for new applications every 10 seconds (adjust as needed)
+    setInterval(loadReceivedApplications, 10000);
 });
 
 // Function to load posted opportunities
@@ -189,8 +192,8 @@ async function loadReceivedApplications() {
 
     try {
         // Fetch applications for the logged-in company user.
-        // The server will determine the user ID from the authentication token.
-        const response = await fetch('/api/applications', { 
+        // Assuming the /api/applications endpoint filters by the authenticated company user.
+        const response = await fetch('/api/applications', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -209,24 +212,37 @@ async function loadReceivedApplications() {
         if (applications.length === 0) {
             applicationListDiv.innerHTML = '<p>No applications received yet.</p>';
         } else {
-            // Fetch all opportunities to get their titles for display
-            const oppsResponse = await fetch('/api/opportunities', {
-                 method: 'GET',
-                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
-                 }
-            });
+            // Fetch opportunities related to the fetched applications to get their titles
+            const opportunityIds = [...new Set(applications.map(app => app.opportunity_id))];
+            let opportunityMap = new Map();
 
-            if (!oppsResponse.ok) {
-                 console.error('Failed to fetch opportunities for application display.');
-                 // Continue displaying applications without opportunity titles if fetch fails
-                 renderApplications(applications, null); // Pass null for opportunity map
-            } else {
-                const allOpportunities = await oppsResponse.json();
-                const opportunityMap = new Map(allOpportunities.map(op => [op.id, op.title]));
-                renderApplications(applications, opportunityMap);
+            if (opportunityIds.length > 0) {
+                 try {
+                     // Assuming an endpoint to fetch opportunities by IDs or a way to get titles with applications
+                     // For now, fetching all opportunities and filtering in the client (less efficient for many opps)
+                     // A better API would return opportunity titles with applications or have a dedicated endpoint
+                     const oppsResponse = await fetch('/api/opportunities', {
+                          method: 'GET',
+                          headers: {
+                             'Content-Type': 'application/json',
+                             'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
+                          }
+                     });
+
+                     if (oppsResponse.ok) {
+                         const allOpportunities = await oppsResponse.json();
+                         opportunityMap = new Map(allOpportunities
+                             .filter(op => opportunityIds.includes(op.id))
+                             .map(op => [op.id, op.title]));
+                     } else {
+                          console.error('Failed to fetch opportunities for application display.');
+                     }
+                 } catch (oppsError) {
+                     console.error('Error fetching opportunities for application display:', oppsError);
+                 }
             }
+
+            renderApplications(applications, opportunityMap);
         }
     } catch (error) {
         console.error('Error loading received applications:', error);
@@ -238,18 +254,41 @@ async function loadReceivedApplications() {
 function renderApplications(applicationsToRender, opportunityMap) {
     const applicationListDiv = document.getElementById('application-list');
     applicationListDiv.innerHTML = applicationsToRender.map(app => {
-        const opportunityTitle = opportunityMap ? opportunityMap.get(app.opportunity_id) || `ID ${app.opportunity_id}` : `ID ${app.opportunity_id}`;
+        const opportunityTitle = opportunityMap ? opportunityMap.get(app.opportunity_id) || `Opportunity ID ${app.opportunity_id}` : `Opportunity ID ${app.opportunity_id}`;
+        // Assuming application object includes student_name and student_email
+        const applicantInfo = app.student_name && app.student_email ?
+                              `${app.student_name} (${app.student_email})` :
+                              `User ID ${app.student_user_id}`;
+
         return `
             <div class="application-item">
-                <p><strong>Applicant User ID:</strong> ${app.student_user_id}</p>
+                <p><strong>Applicant:</strong> ${applicantInfo}</p>
                 <p><strong>For:</strong> ${opportunityTitle}</p>
                 <p><strong>Status:</strong> ${app.status}</p>
                 ${app.notes ? `<p><strong>Notes:</strong> ${app.notes}</p>` : ''}
                 <p><strong>Applied on:</strong> ${new Date(app.application_date).toLocaleDateString()}</p>
                 <!-- Add buttons for View Application, Change Status, etc. as needed -->
+                <button class="view-application-btn" data-application-id="${app.id}">View Application</button>
+                <button class="change-status-btn" data-application-id="${app.id}">Change Status</button>
             </div>
         `;
     }).join('');
-}
 
-// Function to load received applications
+    // Add event listeners for buttons (example)
+    applicationListDiv.querySelectorAll('.view-application-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const appId = e.target.dataset.applicationId;
+            console.log(`View application with ID: ${appId}`);
+            // Implement logic to view application details (e.g., redirect to application.html)
+            // window.location.href = `application.html?id=${appId}`;
+        });
+    });
+
+    applicationListDiv.querySelectorAll('.change-status-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const appId = e.target.dataset.applicationId;
+            console.log(`Change status for application with ID: ${appId}`);
+            // Implement logic to change application status
+        });
+    });
+}

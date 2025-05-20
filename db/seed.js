@@ -3,18 +3,18 @@ import db from './db.js';
 // Function to seed the User table
 const seedUsers = () => {
   const insert = db.prepare(`
-    INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO User (name, email, password_hash, user_type, major, graduation_year, industry, location, description, institution_name) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const users = [
     // Students
-    { name: 'Alice Wonderland', email: 'alice@example.com', password_hash: 'pass123', user_type: 'student', major: 'Computer Science', graduation_year: 2025, industry: null, location: 'Tech City', description: 'Eager to learn and contribute.' },
-    { name: 'Bob The Builder', email: 'bob@example.com', password_hash: 'pass123', user_type: 'student', major: 'Engineering', graduation_year: 2026, industry: null, location: 'Constructville', description: 'Passionate about building things.' },
-    { name: 'Charlie Brown', email: 'charlie@example.com', password_hash: 'pass123', user_type: 'student', major: 'Arts', graduation_year: 2024, industry: null, location: 'Art Town', description: 'Creative and imaginative.' },
+    { name: 'Alice Wonderland', email: 'alice@example.com', password_hash: 'pass123', user_type: 'student', major: 'Computer Science', graduation_year: 2025, industry: null, location: 'Tech City', description: 'Eager to learn and contribute.', institution_name: null },
+    { name: 'Bob The Builder', email: 'bob@example.com', password_hash: 'pass123', user_type: 'student', major: 'Engineering', graduation_year: 2026, industry: null, location: 'Constructville', description: 'Passionate about building things.', institution_name: null },
+    { name: 'Charlie Brown', email: 'charlie@example.com', password_hash: 'pass123', user_type: 'student', major: 'Arts', graduation_year: 2024, industry: null, location: 'Art Town', description: 'Creative and imaginative.', institution_name: null },
     // Companies
-    { name: 'Innovate Corp', email: 'contact@innovate.com', password_hash: 'companypass', user_type: 'company', major: null, graduation_year: null, industry: 'Technology', location: 'Silicon Valley', description: 'Leading the charge in innovation.' },
-    { name: 'BuildIt Ltd', email: 'hr@buildit.com', password_hash: 'companypass', user_type: 'company', major: null, graduation_year: null, industry: 'Construction', location: 'Metro City', description: 'Building the future, one project at a time.' }
+    { name: 'Innovate Corp', email: 'contact@innovate.com', password_hash: 'companypass', user_type: 'company', major: null, graduation_year: null, industry: 'Technology', location: 'Silicon Valley', description: 'Leading the charge in innovation.', institution_name: 'Innovate University' },
+    { name: 'BuildIt Ltd', email: 'hr@buildit.com', password_hash: 'companypass', user_type: 'company', major: null, graduation_year: null, industry: 'Construction', location: 'Metro City', description: 'Building the future, one project at a time.', institution_name: 'BuildIt Technical Institute' }
   ];
 
   db.transaction(() => {
@@ -28,7 +28,8 @@ const seedUsers = () => {
         user.graduation_year,
         user.industry,
         user.location,
-        user.description
+        user.description,
+        user.institution_name
       );
     }
   })();
@@ -44,16 +45,16 @@ const seedOpportunities = () => {
   }
 
   const insert = db.prepare(`
-    INSERT INTO Opportunity (title, description, type, company_user_id, location, deadline, link, required_skills, stipend, duration) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO Opportunity (title, description, type, company_user_id, location) 
+    VALUES (?, ?, ?, ?, ?)
   `);
 
   const opportunities = [
-    { title: 'Software Engineer Intern', description: 'Join our dynamic team to work on cutting-edge projects.', type: 'Internship', company_user_id: companyUsers[0]?.id, location: 'Silicon Valley', deadline: '2025-12-31', link: 'http://innovate.com/internship', required_skills: 'JavaScript, React, Node.js', stipend: 3000, duration: '3 months' },
-    { title: 'Construction Project Manager', description: 'Oversee exciting construction projects.', type: 'Job', company_user_id: companyUsers[1]?.id, location: 'Metro City', deadline: '2025-11-30', link: 'http://buildit.com/job', required_skills: 'Project Management, Civil Engineering', stipend: 6000, duration: 'Permanent' },
-    { title: 'Tech Scholarship', description: 'Scholarship for aspiring tech students.', type: 'Scholarship', company_user_id: companyUsers[0]?.id, location: 'Remote', deadline: '2026-01-15', link: 'http://innovate.com/scholarship', required_skills: 'Passion for tech', stipend: null, duration: null },
-    { title: 'Community Volunteer', description: 'Help organize local tech meetups.', type: 'Volunteer', company_user_id: companyUsers[0]?.id, location: 'Tech City', deadline: null, link: 'http://innovate.com/volunteer', required_skills: 'Communication, Organization', stipend: null, duration: 'Ongoing' },
-    { title: 'Marketing Intern', description: 'Support our marketing campaigns.', type: 'Internship', company_user_id: companyUsers[1]?.id, location: 'Metro City', deadline: '2025-10-31', link: 'http://buildit.com/marketing_intern', required_skills: 'Social Media, Content Creation', stipend: 1500, duration: '6 months' }
+    { title: 'Software Engineer Intern', description: 'Join our dynamic team to work on cutting-edge projects.', type: 'Internship', company_user_id: companyUsers[0]?.id, location: 'Silicon Valley' },
+    { title: 'Construction Project Manager', description: 'Oversee exciting construction projects.', type: 'Job', company_user_id: companyUsers[1]?.id, location: 'Metro City' },
+    { title: 'Tech Scholarship', description: 'Scholarship for aspiring tech students.', type: 'Scholarship', company_user_id: companyUsers[0]?.id, location: 'Remote' },
+    { title: 'Community Volunteer', description: 'Help organize local tech meetups.', type: 'Volunteer', company_user_id: companyUsers[0]?.id, location: 'Tech City' },
+    { title: 'Marketing Intern', description: 'Support our marketing campaigns.', type: 'Internship', company_user_id: companyUsers[1]?.id, location: 'Metro City' }
   ];
 
   db.transaction(() => {
@@ -65,12 +66,7 @@ const seedOpportunities = () => {
           opp.description,
           opp.type,
           opp.company_user_id,
-          opp.location,
-          opp.deadline,
-          opp.link,
-          opp.required_skills,
-          opp.stipend,
-          opp.duration
+          opp.location
         );
       }
     }
@@ -129,31 +125,26 @@ const seedNotifications = () => {
 
 
   const insert = db.prepare(`
-    INSERT INTO Notification (user_id, message, type, is_read, related_entity_type, related_entity_id) 
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO Notification (user_id, message, is_read) 
+    VALUES (?, ?, ?)
   `);
 
   const notifications = [
-    { user_id: users[0]?.id, message: 'Your application for Software Engineer Intern was updated.', type: 'application_update', is_read: 0, related_entity_type: 'Application', related_entity_id: applications[0]?.id },
-    { user_id: users[1]?.id, message: 'A new job: Construction Project Manager has been posted.', type: 'new_opportunity', is_read: 1, related_entity_type: 'Opportunity', related_entity_id: opportunities[1]?.id },
-    { user_id: users[3]?.id, message: 'Welcome to Student Opportunities!', type: 'message', is_read: 0, related_entity_type: null, related_entity_id: null },
-    { user_id: users[0]?.id, message: 'Reminder: Your interview for Marketing Intern is tomorrow.', type: 'application_update', is_read: 0, related_entity_type: 'Application', related_entity_id: applications[2]?.id },
-    { user_id: users[4]?.id, message: 'New scholarship available: Tech Scholarship', type: 'new_opportunity', is_read: 0, related_entity_type: 'Opportunity', related_entity_id: opportunities[2]?.id }
+    { user_id: users[0]?.id, message: 'Your application for Software Engineer Intern was updated.', is_read: 0 },
+    { user_id: users[1]?.id, message: 'A new job: Construction Project Manager has been posted.', is_read: 1 },
+    { user_id: users[3]?.id, message: 'Welcome to Student Opportunities!', is_read: 0 },
+    { user_id: users[0]?.id, message: 'Reminder: Your interview for Marketing Intern is tomorrow.', is_read: 0 },
+    { user_id: users[4]?.id, message: 'New scholarship available: Tech Scholarship', is_read: 0 }
   ];
 
   db.transaction(() => {
     for (const notif of notifications) {
-      // Ensure user_id is valid, and related_entity_id is valid if type requires it
-      if (notif.user_id && 
-          (!(notif.related_entity_type === 'Application' && !notif.related_entity_id) &&
-           !(notif.related_entity_type === 'Opportunity' && !notif.related_entity_id))) {
+      // Ensure user_id is valid
+      if (notif.user_id) {
         insert.run(
           notif.user_id,
           notif.message,
-          notif.type,
-          notif.is_read,
-          notif.related_entity_type,
-          notif.related_entity_id
+          notif.is_read
         );
       }
     }
