@@ -68,25 +68,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const whyChooseMe = formData.get('whyChooseMe') || '';
         const skills = formData.get('skills') || '';
         const experienceSummary = formData.get('experienceSummary') || '';
-        const portfolioLink = formData.get('portfolioLink') || '';
-        const linkedinProfile = formData.get('linkedinProfile') || '';
 
         // Remove individual fields and add a combined 'notes' field
         formData.delete('whyChooseMe');
         formData.delete('skills');
         formData.delete('experienceSummary');
-        formData.delete('portfolioLink');
-        formData.delete('linkedinProfile');
 
         let combinedNotes = `Why Choose Me:\n${whyChooseMe}\n\n`;
         if (skills) combinedNotes += `Skills:\n${skills}\n\n`;
         if (experienceSummary) combinedNotes += `Experience Summary:\n${experienceSummary}\n\n`;
-        if (portfolioLink) combinedNotes += `Portfolio Link: ${portfolioLink}\n\n`;
-        if (linkedinProfile) combinedNotes += `LinkedIn Profile: ${linkedinProfile}\n\n`;
 
         formData.append('notes', combinedNotes.trim()); // Add the combined notes
-
-        // File inputs are automatically added to FormData
 
         try {
             const response = await fetch('/api/applications', {

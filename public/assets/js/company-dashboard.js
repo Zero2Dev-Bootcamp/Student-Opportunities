@@ -112,6 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load posted opportunities on page load
     loadPostedOpportunities();
+
+    // Load received applications on page load
+    loadReceivedApplications();
 });
 
 // Function to load posted opportunities
@@ -162,3 +165,80 @@ async function loadPostedOpportunities() {
         console.error('Error loading opportunities:', error);
     }
 }
+
+// Function to load received applications
+async function loadReceivedApplications() {
+    const applicationListDiv = document.getElementById('application-list');
+    const companyUserId = localStorage.getItem('userId'); // Assuming company user ID is stored
+
+    if (!companyUserId) {
+        applicationListDiv.innerHTML = '<p>Error: Company user ID not found. Cannot load applications.</p>';
+        return;
+    }
+
+    try {
+        // Fetch applications for the logged-in company user.
+        // The server will determine the user ID from the authentication token.
+        const response = await fetch('/api/applications', { 
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Failed to fetch applications: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
+        }
+
+        const applications = await response.json();
+        applicationListDiv.innerHTML = ''; // Clear loading message
+
+        if (applications.length === 0) {
+            applicationListDiv.innerHTML = '<p>No applications received yet.</p>';
+        } else {
+            // Fetch all opportunities to get their titles for display
+            const oppsResponse = await fetch('/api/opportunities', {
+                 method: 'GET',
+                 headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
+                 }
+            });
+
+            if (!oppsResponse.ok) {
+                 console.error('Failed to fetch opportunities for application display.');
+                 // Continue displaying applications without opportunity titles if fetch fails
+                 renderApplications(applications, null); // Pass null for opportunity map
+            } else {
+                const allOpportunities = await oppsResponse.json();
+                const opportunityMap = new Map(allOpportunities.map(op => [op.id, op.title]));
+                renderApplications(applications, opportunityMap);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading received applications:', error);
+        applicationListDiv.innerHTML = `<p>An error occurred while loading applications: ${error.message}</p>`;
+    }
+}
+
+// Helper function to render applications
+function renderApplications(applicationsToRender, opportunityMap) {
+    const applicationListDiv = document.getElementById('application-list');
+    applicationListDiv.innerHTML = applicationsToRender.map(app => {
+        const opportunityTitle = opportunityMap ? opportunityMap.get(app.opportunity_id) || `ID ${app.opportunity_id}` : `ID ${app.opportunity_id}`;
+        return `
+            <div class="application-item">
+                <p><strong>Applicant User ID:</strong> ${app.student_user_id}</p>
+                <p><strong>For:</strong> ${opportunityTitle}</p>
+                <p><strong>Status:</strong> ${app.status}</p>
+                ${app.notes ? `<p><strong>Notes:</strong> ${app.notes}</p>` : ''}
+                <p><strong>Applied on:</strong> ${new Date(app.application_date).toLocaleDateString()}</p>
+                <!-- Add buttons for View Application, Change Status, etc. as needed -->
+            </div>
+        `;
+    }).join('');
+}
+
+// Function to load received applications
