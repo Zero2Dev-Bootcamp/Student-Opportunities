@@ -271,10 +271,7 @@ class User {
             throw new Error("Email and password are required for login.");
         }
 
-        // TODO: Implement proper password verification and token generation
-        throw new Error("loginUser method not fully implemented");
-
-        // Basic lookup by email (replace with secure password verification)
+        // Basic lookup by email
         const stmt = this.db.prepare("SELECT id, user_type, password_hash FROM User WHERE email = ?");
         const user = stmt.get(email);
 
@@ -283,13 +280,11 @@ class User {
             return null; // User not found
         }
 
-        // TODO: Implement proper password verification using user.password_hash
-        // For now, a simple check (replace this!)
-        // if (`hashed_${password}` !== user.password_hash) {
-        //     console.warn(`[User.loginUser] Login failed: Incorrect password for email ${email}`);
-        //     return null; // Incorrect password
-        // }
-        // Skipping password check for now to enable basic login by email existence
+        // Basic password verification (replace with secure hashing and comparison)
+        if (`hashed_${password}` !== user.password_hash) { // Assuming password_hash is stored as 'hashed_' + password
+            console.warn(`[User.loginUser] Login failed: Incorrect password for email ${email}`);
+            return null; // Incorrect password
+        }
 
         console.log(`[User.loginUser] Login successful for user ID: ${user.id}, type: ${user.user_type}`);
         // In a real app, generate and return a secure token here

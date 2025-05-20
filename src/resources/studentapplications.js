@@ -9,22 +9,38 @@ import db from '../../db/db.js'; // Import the database connection
  */
 
 // Helper function to get authentication context from request
-async function getAuthContext(req) {
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.log('[Auth] No Authorization header or incorrect format.');
+export async function getAuthContext(req) {
+  // In this alternative approach without JWT, we'll try to get user ID and type
+  // directly from custom headers or query parameters. This is less secure than JWT.
+  // A more robust solution would involve session management or a different token strategy.
+
+  const userId = req.headers.get('X-User-Id') || new URL(req.url).searchParams.get('userId');
+  const userType = req.headers.get('X-User-Type') || new URL(req.url).searchParams.get('userType');
+
+  console.log(`[Auth] Attempting to authenticate with userId: ${userId}, userType: ${userType}`);
+
+
+  if (!userId || !userType) {
+    console.log('[Auth] User ID or User Type missing in request.');
     return null;
   }
-  const token = authHeader.substring(7); // Remove 'Bearer '
 
-  // Mock token decoding based on login.js
-  if (token === 'mock-student') {
-    return { userId: 1, userType: 'student', token }; // student userId from login.js
-  } else if (token === 'mock-company') {
-    return { userId: 2, userType: 'company', token }; // company userId from login.js
+  try {
+    // Verify if a user with this ID and type exists in the database
+    const userStmt = db.prepare("SELECT id, user_type FROM User WHERE id = ? AND user_type = ?");
+    const user = userStmt.get(userId, userType);
+
+    if (user) {
+      console.log(`[Auth] Authentication successful for user ID: ${user.id}, type: ${user.user_type}`);
+      return { userId: user.id, userType: user.user_type };
+    } else {
+      console.log('[Auth] Authentication failed: User not found or type mismatch.');
+      return null;
+    }
+  } catch (error) {
+    console.error('[Auth] Error during authentication verification:', error.message);
+    return null;
   }
-  console.log('[Auth] Invalid token:', token);
-  return null; // Invalid or unknown token
 }
 
 class Application {
@@ -50,7 +66,7 @@ class Application {
         throw new Error('Database connection not available in Application resource.');
       }
 
-      const { student_user_id, opportunity_id, notes, files } = applicationData; // Expecting 'files' array
+      const { student_user_id, opportunity_id, why_choose_me, skills, experiences } = applicationData;
 
       // Basic input validation
       if (!student_user_id || !opportunity_id) {
@@ -61,41 +77,18 @@ class Application {
       this.db.run('BEGIN TRANSACTION');
 
       try {
-        // Insert the application record
+        // Insert the application record with new fields
         const insertApplicationStmt = this.db.prepare(
-          `INSERT INTO Application (student_user_id, opportunity_id, notes) 
-           VALUES (?, ?, ?)`
+          `INSERT INTO Application (student_user_id, opportunity_id, why_choose_me, skills, experiences)
+           VALUES (?, ?, ?, ?, ?)`
         );
-        
-        const applicationResult = insertApplicationStmt.run(student_user_id, opportunity_id, notes);
+
+        const applicationResult = insertApplicationStmt.run(student_user_id, opportunity_id, why_choose_me, skills, experiences);
 
         if (applicationResult.changes === 0) {
           throw new Error('Failed to create application (no rows affected).');
         }
         const newApplicationId = applicationResult.lastInsertRowid;
-
-        // Handle file uploads if files are provided
-        if (files && Array.isArray(files)) {
-          const uploadDir = path.join(__dirname, '..', '..', 'uploads', 'applications');
-          await fs.mkdir(uploadDir, { recursive: true }); // Ensure upload directory exists
-
-          const insertFileStmt = this.db.prepare(
-            `INSERT INTO ApplicationFile (application_id, file_name, file_path, mime_type)
-             VALUES (?, ?, ?, ?)`
-          );
-
-          for (const file of files) {
-            const uniqueFileName = `${Date.now()}-${file.name}`;
-            const filePath = path.join(uploadDir, uniqueFileName);
-
-            // Save the file to the server
-            await fs.writeFile(filePath, file.stream()); // Use file.stream() for Bun.File
-
-            // Insert file record into the database
-            insertFileStmt.run(newApplicationId, file.name, filePath, file.type);
-            console.log(`[Application.createApplication] Saved file: ${file.name} to ${filePath}`);
-          }
-        }
 
         // Fetch the opportunity details to get the company_user_id and title
         const opportunityStmt = this.db.prepare("SELECT company_user_id, title FROM Opportunity WHERE id = ?");
@@ -105,7 +98,7 @@ class Application {
           // Create a notification for the company
           const notificationMessage = `New application for your opportunity: ${opportunity.title}`;
           const notificationStmt = this.db.prepare(
-            `INSERT INTO Notification (user_id, message, is_read) 
+            `INSERT INTO Notification (user_id, message, is_read)
              VALUES (?, ?, ?)`
           );
           notificationStmt.run(opportunity.company_user_id, notificationMessage, 0);
@@ -229,20 +222,21 @@ class Application {
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
-      // Join Application and Opportunity tables to filter by company_user_id
+      // Join Application and Opportunity tables to filter by the company's user_id
       const sql = `
         SELECT
            A.*,
            O.title AS opportunity_title,
-           O.company_user_id AS opportunity_company_id
+           O.user_ID AS opportunity_company_id -- Updated column name based on user feedback
          FROM Application AS A
          JOIN Opportunity AS O ON A.opportunity_id = O.id
-         WHERE O.company_user_id = ? 
+         WHERE O.user_ID = ? -- Updated column name based on user feedback
          ORDER BY A.application_date DESC`;
-      
+
       console.log('[Application.getApplicationsByCompanyId] Executing SQL:', sql, 'with companyUserId:', companyUserId);
       const applicationsStmt = this.db.prepare(sql);
 
+      // Use the companyUserId parameter from the authentication context
       const applications = applicationsStmt.all(companyUserId);
       console.log('[Application.getApplicationsByCompanyId] Query result:', applications);
 
@@ -397,6 +391,41 @@ class Application {
       return new Response(JSON.stringify({ error: error.message || 'Failed to delete application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
     }
   }; // Added semicolon
+
+  /**
+   * Handles POST requests to /api/applications to create a new application.
+   * @param {Request} req - The incoming request object.
+   * @returns {Promise<Response>} - The response to send back to the client.
+   */
+  async handlePost(req) {
+    try {
+      const authContext = await getAuthContext(req);
+      if (!authContext || authContext.userType !== 'student') {
+        return new Response(JSON.stringify({ error: 'Unauthorized or not a student user' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const applicationData = await req.json();
+      // Add student_user_id from auth context to application data
+      applicationData.student_user_id = authContext.userId;
+
+      const newApplication = await this.createApplication(applicationData);
+
+      if (newApplication) {
+        return new Response(JSON.stringify(newApplication), { status: 201, headers: { 'Content-Type': 'application/json' } });
+      } else {
+        // This case should ideally not be reached if createApplication throws on error
+        return new Response(JSON.stringify({ error: 'Failed to create application' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      }
+
+    } catch (error) {
+      console.error('Error in Application.handlePost:', error.message);
+      let statusCode = 500; // Internal Server Error by default
+      if (error.message.includes('Unauthorized')) statusCode = 401;
+      if (error.message.includes('required') || error.message.includes('Invalid')) statusCode = 400; // Bad Request for validation errors
+      if (error.message.includes('Forbidden')) statusCode = 403;
+      return new Response(JSON.stringify({ error: error.message || 'Failed to create application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
 }
 
 export default Application;

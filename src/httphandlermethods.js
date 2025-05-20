@@ -1,5 +1,6 @@
 import path from 'path';
 import Bun from 'bun'; // Import Bun for Bun.file
+import { getAuthContext } from './resources/studentapplications.js'; // Import getAuthContext
 
 /**
  * Handles incoming HTTP requests, routing them to the appropriate resource or serving static files.
@@ -96,7 +97,44 @@ export async function handleHttpRequest(req, resources, publicDir) {
   // /api/applications (GET: list applications, POST: create application, PATCH: update application, DELETE: delete application)
   else if (url.pathname.startsWith('/api/applications')) {
     if (req.method === 'GET') { // Handles /api/applications and /api/applications/:id
-      return studentapplicationsResource.handleGet(req);
+        const pathParts = url.pathname.split('/').filter(Boolean);
+        const applicationId = (pathParts.length > 1 && pathParts[1].toLowerCase() === 'applications' && pathParts.length > 2) ? pathParts[pathParts.length - 1] : null;
+
+        try {
+            if (applicationId) {
+                // Get a specific application by ID
+                const application = await studentapplicationsResource.getApplicationById(applicationId);
+                if (application) {
+                    return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
+                } else {
+                    return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+                }
+            } else {
+                // Get applications for the logged-in user (student or company)
+                const authContext = await getAuthContext(req);
+                if (!authContext) {
+                    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+                }
+
+                let applications = [];
+                if (authContext.userType === 'student') {
+                    applications = await studentapplicationsResource.getApplicationsByStudentId(authContext.userId);
+                } else if (authContext.userType === 'company') {
+                    applications = await studentapplicationsResource.getApplicationsByCompanyId(authContext.userId);
+                } else {
+                    return new Response(JSON.stringify({ error: 'Forbidden: User type cannot access applications' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+                }
+
+                return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            }
+        } catch (error) {
+            console.error('Error handling GET /api/applications:', error.message);
+            let statusCode = 500;
+            if (error.message.includes('Unauthorized')) statusCode = 401;
+            if (error.message.includes('Forbidden')) statusCode = 403;
+            if (error.message.includes('not found')) statusCode = 404;
+            return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve applications' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+        }
     }
     if (req.method === 'POST') { // Handles /api/applications for creation
       return studentapplicationsResource.handlePost(req);

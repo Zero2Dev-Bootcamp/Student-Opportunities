@@ -4,22 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application Details</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .logo-img {
-            height: 45px;
-        }
-    </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="logo"><img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore</div>
-        <div class="nav-links">
-            <!-- Add navigation links here if needed -->
-        </div>
-    </nav>
     <h1>Application Details</h1>
-    <p>Opportunity: Software Engineer Intern</p>
-    <p>Applicant: John Doe</p>
+    <form id="application-form">
+        <div>
+            <label for="why-choose-me">Why Choose me?</label><br>
+            <textarea id="why-choose-me" name="why-choose-me" rows="4" cols="50"></textarea>
+        </div>
+        <div>
+            <label for="skills">Skills</label><br>
+            <textarea id="skills" name="skills" rows="4" cols="50"></textarea>
+        </div>
+        <div>
+            <label for="experiences">Experiences</label><br>
+            <textarea id="experiences" name="experiences" rows="4" cols="50"></textarea>
+        </div>
+        <button type="submit">Submit Application</button>
+    </form>
 </body>
 </html>

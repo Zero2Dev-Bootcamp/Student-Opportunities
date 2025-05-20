@@ -238,6 +238,7 @@ async function loadOpportunities() {
     const internshipGrid = document.getElementById('internship-grid');
     const clubGrid = document.getElementById('club-grid');
     const programGrid = document.getElementById('program-grid'); // Get the new program grid element
+    const otherGrid = document.getElementById('other-grid'); // Get the new other grid element
 
     try {
         const response = await fetchWithAuth('/api/opportunities'); // Added /api prefix
@@ -251,28 +252,31 @@ async function loadOpportunities() {
         console.log('[loadOpportunities] Fetched opportunities:', opportunities); // Log fetched data
         
         // Display all opportunities regardless of user interests
-        renderOpportunities(opportunities, internshipGrid, clubGrid, programGrid); // Pass the new grid
+        renderOpportunities(opportunities, internshipGrid, clubGrid, programGrid, otherGrid); // Pass the new grid
 
     } catch (error) {
         console.error('Error loading opportunities:', error);
         if (internshipGrid) internshipGrid.innerHTML = `<p>Error loading internships: ${error.message}</p>`;
         if (clubGrid) clubGrid.innerHTML = `<p>Error loading clubs: ${error.message}</p>`;
         if (programGrid) programGrid.innerHTML = `<p>Error loading programs: ${error.message}</p>`; // Add error handling for programs
+        if (otherGrid) otherGrid.innerHTML = `<p>Error loading other opportunities: ${error.message}</p>`; // Add error handling for other
     }
 }
 
-function renderOpportunities(opportunitiesToRender, internshipContainer, clubContainer, programContainer) { // Add programContainer parameter
+function renderOpportunities(opportunitiesToRender, internshipContainer, clubContainer, programContainer, otherContainer) { // Add programContainer and otherContainer parameters
     if (internshipContainer) internshipContainer.innerHTML = ''; 
     if (clubContainer) clubContainer.innerHTML = ''; 
     if (programContainer) programContainer.innerHTML = ''; // Clear program container
+    if (otherContainer) otherContainer.innerHTML = ''; // Clear other container
 
     let hasInternships = false;
     let hasClubs = false;
     let hasPrograms = false; // Add flag for programs
+    let hasOthers = false; // Add flag for others
 
     opportunitiesToRender.forEach(op => {
         const cardHTML = `
-            <div class="${op.type === 'Internship' ? 'internship-card' : op.type === 'Club' ? 'club-card' : 'program-card'}"> <!-- Add program-card class -->
+            <div class="${op.type === 'Internship' ? 'internship-card' : op.type === 'Club' ? 'club-card' : op.type === 'Program' ? 'program-card' : 'other-card'}"> <!-- Add program-card and other-card class -->
                 <h3>${op.title || 'Untitled Opportunity'}</h3>
                 <div class="company">${op.company_name || (op.type === 'Club' ? op.club_name || 'N/A' : 'N/A')}</div>
                 <p>${op.description || 'No description available.'}</p>
@@ -292,6 +296,9 @@ function renderOpportunities(opportunitiesToRender, internshipContainer, clubCon
         } else if (op.type === 'Program' && programContainer) { // Add condition for Program type
             programContainer.innerHTML += cardHTML;
             hasPrograms = true;
+        } else if (op.type === 'Other' && otherContainer) { // Add condition for Other type
+            otherContainer.innerHTML += cardHTML;
+            hasOthers = true;
         }
     });
 
@@ -303,6 +310,9 @@ function renderOpportunities(opportunitiesToRender, internshipContainer, clubCon
     }
     if (programContainer && !hasPrograms) { // Add message if no programs found
         programContainer.innerHTML = '<p>No recommended programs found. Explore all <a href="opportunities.html">opportunities</a>.</p>';
+    }
+    if (otherContainer && !hasOthers) { // Add message if no other opportunities found
+        otherContainer.innerHTML = '<p>No other opportunities found. Explore all <a href="opportunities.html">opportunities</a>.</p>';
     }
 }
 

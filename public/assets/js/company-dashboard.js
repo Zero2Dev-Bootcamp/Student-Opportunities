@@ -197,7 +197,9 @@ async function loadReceivedApplications() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
+                'X-User-Id': companyUserId, // Add user ID header
+                'X-User-Type': localStorage.getItem('userType') // Add user type header
+                // 'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth - remove or keep if needed for other auth layers
             }
         });
 
@@ -242,7 +244,7 @@ async function loadReceivedApplications() {
                  }
             }
 
-            renderApplications(applications, opportunityMap);
+            renderApplications(applications); // Pass only applications data
         }
     } catch (error) {
         console.error('Error loading received applications:', error);
@@ -251,35 +253,28 @@ async function loadReceivedApplications() {
 }
 
 // Helper function to render applications
-function renderApplications(applicationsToRender, opportunityMap) {
+function renderApplications(applicationsToRender) {
     const applicationListDiv = document.getElementById('application-list');
     applicationListDiv.innerHTML = applicationsToRender.map(app => {
-        const opportunityTitle = opportunityMap ? opportunityMap.get(app.opportunity_id) || `Opportunity ID ${app.opportunity_id}` : `Opportunity ID ${app.opportunity_id}`;
-        // Assuming application object includes student_name and student_email
+        // Assuming application object includes student_name, student_email, and opportunity_title
         const applicantInfo = app.student_name && app.student_email ?
                               `${app.student_name} (${app.student_email})` :
-                              `User ID ${app.student_user_id}`;
+                              `User ID ${app.student_user_id || 'N/A'}`; // Fallback if student info is missing
+
+        const opportunityTitle = app.opportunity_title || `Opportunity ID ${app.opportunity_id || 'N/A'}`; // Fallback if title is missing
 
         return `
             <div class="application-item">
                 <p><strong>Applicant:</strong> ${applicantInfo}</p>
                 <p><strong>For:</strong> ${opportunityTitle}</p>
-                <p><strong>Status:</strong> ${app.status}</p>
-                ${app.notes ? `<p><strong>Notes:</strong> ${app.notes}</p>` : ''}
-                <p><strong>Applied on:</strong> ${new Date(app.application_date).toLocaleDateString()}</p>
-                ${app.files && app.files.length > 0 ? `
-                    <div class="application-files">
-                        <p><strong>Files:</strong></p>
-                        <ul>
-                            ${app.files.map(file => `
-                                <li><a href="/uploads/${file.file_name}" target="_blank">${file.file_name}</a></li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                ` : ''}
+                <p><strong>Status:</strong> ${app.status || 'N/A'}</p>
+                <p><strong>Applied on:</strong> ${app.application_date ? new Date(app.application_date).toLocaleDateString() : 'N/A'}</p>
+                ${app.why_choose_me ? `<p><strong>Why Choose Me:</strong> ${app.why_choose_me}</p>` : ''}
+                ${app.skills ? `<p><strong>Skills:</strong> ${app.skills}</p>` : ''}
+                ${app.experiences ? `<p><strong>Experiences:</strong> ${app.experiences}</p>` : ''}
                 <!-- Add buttons for View Application, Change Status, etc. as needed -->
-                <button class="view-application-btn" data-application-id="${app.id}">View Application</button>
-                <button class="change-status-btn" data-application-id="${app.id}">Change Status</button>
+                <button class="view-application-btn" data-application-id="${app.id || ''}">View Application</button>
+                <button class="change-status-btn" data-application-id="${app.id || ''}">Change Status</button>
             </div>
         `;
     }).join('');
