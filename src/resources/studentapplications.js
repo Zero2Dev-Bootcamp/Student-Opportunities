@@ -167,26 +167,15 @@ class Application {
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
-      // Join Application and Opportunity tables and LEFT JOIN ApplicationFile to filter by company_user_id
+      // Join Application and Opportunity tables to filter by company_user_id
       const sql = `
         SELECT
            A.*,
            O.title AS opportunity_title,
-           O.company_user_id AS opportunity_company_id,
-           -- Aggregate file details into a JSON array
-           json_group_array(
-             json_object(
-               'id', AF.id, 
-               'file_name', AF.file_name, 
-               'file_path', AF.file_path, 
-               'mime_type', AF.mime_type
-             )
-           ) FILTER (WHERE AF.id IS NOT NULL) AS files -- Use FILTER to exclude rows with no files
+           O.company_user_id AS opportunity_company_id
          FROM Application AS A
          JOIN Opportunity AS O ON A.opportunity_id = O.id
-         LEFT JOIN ApplicationFile AS AF ON AF.application_id = A.id
          WHERE O.company_user_id = ? 
-         GROUP BY A.id -- Group by application to get one row per application
          ORDER BY A.application_date DESC`;
       
       console.log('[Application.getApplicationsByCompanyId] Executing SQL:', sql, 'with companyUserId:', companyUserId);
@@ -195,11 +184,8 @@ class Application {
       const applications = stmt.all(companyUserId);
       console.log('[Application.getApplicationsByCompanyId] Query result:', applications);
 
-      // Parse the JSON string back into an array of objects for each application
-      return applications.map(app => ({
-          ...app,
-          files: app.files ? JSON.parse(app.files) : [] // Parse the JSON string or set to empty array if no files
-      }));
+      // No file parsing needed as files are no longer joined
+      return applications;
 
     } catch (error) {
       console.error('Error in Application.getApplicationsByCompanyId:', error.message);

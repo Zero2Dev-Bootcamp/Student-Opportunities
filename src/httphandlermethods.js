@@ -109,6 +109,63 @@ export async function handleHttpRequest(req, resources, publicDir) {
     }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/applications` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
+  // /api/company/profile (GET: retrieve company profile for logged-in user)
+  else if (url.pathname === '/api/company/profile') {
+    if (req.method === 'GET') {
+      const { companyUserResource } = resources; // Access companyUserResource
+
+      // Extract userId from query parameter
+      const userId = url.searchParams.get('userId');
+
+      if (!userId) {
+          return new Response(JSON.stringify({ message: 'User ID not provided in query parameters' }), {
+              status: 400, // Bad Request
+              headers: { 'Content-Type': 'application/json' }
+          });
+      }
+
+      // Optional: Add a check here to verify the user ID from the token matches the requested userId
+      // This adds an extra layer of security to prevent users from fetching other users' profiles
+      // const authenticatedUserId = getUserIdFromAuthToken(req); // Implement this securely
+      // if (authenticatedUserId && authenticatedUserId.toString() !== userId) {
+      //     return new Response(JSON.stringify({ message: 'Forbidden: Cannot access other user\'s profile' }), {
+      //         status: 403, // Forbidden
+      //         headers: { 'Content-Type': 'application/json' }
+      //     });
+      // }
+
+      try {
+        const companyProfile = await companyUserResource.getCompanyUserById(userId);
+
+        if (companyProfile) {
+          // Include login email in the response
+          const profileWithLoginEmail = {
+            ...companyProfile,
+            login_email: companyProfile.email // Assuming 'email' is the login email
+          };
+          return new Response(JSON.stringify(profileWithLoginEmail), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } else {
+          return new Response(JSON.stringify({ message: 'Company profile not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching company profile:', error);
+        return new Response(JSON.stringify({ message: 'Failed to retrieve company profile' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+    return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/company/profile. Please use GET.` }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
   // Admin Routes
   // /admin/users (GET: retrieve all users)
   else if (url.pathname === '/admin/users') {
