@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - Studexplore</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css"> <!-- General styles -->
-    <link rel="stylesheet" href="../assets/css/dashboard.css"> <!-- Dashboard specific styles, overrides general if needed -->
+    <link rel="stylesheet" href="../assets/css/studentdashboard.css">
     <script src="../src/resources/login.js" type="module"></script> <!-- For logout() - path might need adjustment if login.js is moved/bundled -->
     <style>
         .logo-img {
@@ -17,7 +16,9 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo"><img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore</div>
+        <div class="logo">
+            <img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore
+        </div>
         <div class="nav-links">
             <a href="opportunities.html">Opportunities</a>
             <a href="#profile">Profile</a>
@@ -26,12 +27,12 @@
         </div>
     </nav>
 
-    <main>
-        <div class="dashboard-container">
+    <div class="dashboard-container">
+        <aside class="sidebar">
             <section id="profile" class="profile-section">
                 <h2>My Profile</h2>
                 <div id="profile-summary">
-                    <img id="profile-picture" src="placeholder.jpg" alt="Profile Picture" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;"><br><br>
+                    <img id="profile-picture" src="placeholder.jpg" alt="Profile Picture">
                     <p><strong>Name:</strong> <span id="profile-name">Loading...</span></p>
                     <p><strong>Email:</strong> <span id="profile-email">Loading...</span></p>
                     <p><strong>Interests:</strong> <span id="profile-interests">Loading...</span></p>
@@ -39,94 +40,101 @@
                     <p><strong>Graduation Year:</strong> <span id="profile-graduation-year">Loading...</span></p>
                 </div>
                 <button id="edit-profile-btn" class="edit-button">Edit Profile</button>
-
-                <div id="profile-edit-form" style="display: none;">
+                <div id="profile-edit-form" class="form-container" style="display: none;">
                     <h3>Edit Profile</h3>
                     <div class="form-group">
                         <label for="profile-picture-upload">Upload Profile Picture:</label>
                         <input type="file" id="profile-picture-upload" accept="image/*">
                     </div>
-                    <label for="edit-name">Name:</label>
-                    <input type="text" id="edit-name"><br><br>
-
-                    <label for="edit-email">Email:</label>
-                    <input type="email" id="edit-email"><br><br>
-
-                    <label for="edit-interests">Interests (comma-separated):</label>
-                    <input type="text" id="edit-interests"><br><br>
-
-                    <label for="edit-major">Major:</label>
-                    <input type="text" id="edit-major"><br><br>
-
-                    <label for="edit-graduation-year">Graduation Year:</label>
-                    <input type="text" id="edit-graduation-year"><br><br>
-
+                    <div class="form-group">
+                        <label for="edit-name">Name:</label>
+                        <input type="text" id="edit-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-email">Email:</label>
+                        <input type="email" id="edit-email">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-interests">Interests (comma-separated):</label>
+                        <input type="text" id="edit-interests">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-major">Major:</label>
+                        <input type="text" id="edit-major">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-graduation-year">Graduation Year:</label>
+                        <input type="text" id="edit-graduation-year">
+                    </div>
                     <button id="save-profile-btn" class="save-button">Save Changes</button>
                     <button id="cancel-edit-btn" class="cancel-button">Cancel</button>
                 </div>
             </section>
+        </aside>
 
+        <main class="main-content">
             <section id="recommended-opportunities" class="opportunities">
                 <h2>Recommended Opportunities</h2>
-                <h3>Internships</h3>
-                <div class="internship-grid" id="internship-grid">
-                    <!-- Internship cards will be loaded here by dashboard.js -->
-                    <p>Loading internships...</p>
-                </div>
-                <h3>Clubs & Activities</h3>
-                <div class="club-grid" id="club-grid">
-                    <!-- Club cards will be loaded here by dashboard.js -->
-                    <p>Loading clubs...</p>
-                </div>
-
-                <h3>Events</h3>
-                <div class="event-grid" id="event-grid">
-                    <!-- Event opportunities will be loaded here by JavaScript -->
-                    <p>Loading events...</p>
-                </div>
-                <h3>Programs</h3>
-                <div class="program-grid" id="program-grid">
-                    <!-- Program opportunities will be loaded here by JavaScript -->
-                    <p>Loading programs...</p>
-                </div>
-
-                <h3>Other Opportunities</h3>
-                <div class="other-grid" id="other-grid">
-                    <!-- Other opportunities will be loaded here by JavaScript -->
-                    <p>Loading other opportunities...</p>
-                </div>
+                <details class="opportunity-category">
+                    <summary>Internships</summary>
+                    <div class="internship-grid" id="internship-grid">
+                        <p>Loading internships...</p>
+                    </div>
+                </details>
+                <details class="opportunity-category">
+                    <summary>Clubs & Activities</summary>
+                    <div class="club-grid" id="club-grid">
+                        <p>Loading clubs...</p>
+                    </div>
+                </details>
+                <details class="opportunity-category">
+                    <summary>Events</summary>
+                    <div class="event-grid" id="event-grid">
+                        <p>Loading events...</p>
+                    </div>
+                </details>
+                <details class="opportunity-category">
+                    <summary>Programs</summary>
+                    <div class="program-grid" id="program-grid">
+                        <p>Loading programs...</p>
+                    </div>
+                </details>
+                <details class="opportunity-category">
+                    <summary>Other Opportunities</summary>
+                    <div class="other-grid" id="other-grid">
+                        <p>Loading other opportunities...</p>
+                    </div>
+                </details>
             </section>
 
-            <div class="newsfeed-container">
-                <section id="recent-applications" class="applications-section">
-                    <h2>My Recent Applications</h2>
-                    <ul id="application-list">
-                        <!-- Application items will be loaded here by dashboard.js -->
-                        <li>Loading applications...</li>
-                    </ul>
-                </section>
-            </div>
+            <section id="opportunity" class="opportunity-section" style="display: none;">
+                <h2>Opportunity Details</h2>
+                <div id="opportunity-content">
+                    <!-- Opportunity details will be loaded here -->
+                </div>
+                <button id="apply-now" style="display: none;">Apply Now</button>
+                <div class="form-message"></div>
+            </section>
+        </main>
+
+        <div class="newsfeed-applications">
+            <section id="recent-applications" class="applications-section">
+                <h2>My Recent Applications</h2>
+                <ul id="application-list">
+                    <li>Loading applications...</li>
+                </ul>
+            </section>
+
+            <section id="notifications" class="notifications">
+                <h2>Notifications</h2>
+                <div class="notification-list" id="notification-list">
+                    <p>Loading notifications...</p>
+                </div>
+            </section>
         </div>
+    </div>
 
-        <section id="notifications" class="notifications">
-            <h2>Notifications</h2>
-            <div class="notification-list" id="notification-list">
-                <!-- Notifications will be loaded here by dashboard.js -->
-            <p>Loading notifications...</p>
-        </div>
-    </section>
-
-        <section id="opportunity" class="opportunity-section" style="display: none;">
-            <h2>Opportunity Details</h2>
-            <div id="opportunity-content">
-                <!-- Opportunity details will be loaded here -->
-            </div>
-            <button id="apply-now" style="display: none;">Apply Now</button>
-            <div class="form-message"></div>
-        </section>
-    </main>
-
-<footer>
+    <footer>
         <p>© 2025 Studexplore. All rights reserved.</p>
         <div class="social-media-links">
             <a href="#" aria-label="X">X</a>
@@ -135,5 +143,17 @@
         </div>
     </footer>
 
+    <script type="module">
+        import { logout } from '../src/resources/login.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutLink = document.getElementById('logout-link');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', (e) => {
+                    logout();
+                    window.location.href = 'index.html';
+                });
+            }
+        });
+    </script>
 </body>
 </html>

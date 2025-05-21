@@ -1,0 +1,455 @@
+/* Reset default styles for consistency */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap');
+
+/* Root variables for colors and spacing */
+:root {
+  --primary-blue: #0077B5;
+  --light-gray: #F3F2EF;
+  --white: #FFFFFF;
+  --teal-accent: #00A0DC;
+  --text-dark: #333333;
+  --text-muted: #666666;
+  --border-gray: #E0E0E0;
+  --error-red: #D32F2F;
+  --success-green: #2E7D32;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+/* Global styles */
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--light-gray);
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+  padding: 20px;
+  display: grid;
+  grid-template-areas: "sidebar opportunities newsfeed";
+  grid-template-columns: 0.75fr 2.25fr 1fr; /* Profile | Opportunities | Newsfeed */
+  gap: 20px; /* Space between columns */
+  align-items: flex-start; /* Align items to the top */
+}
+
+/* Navbar */
+.navbar {
+  background-color: var(--white);
+  box-shadow: var(--shadow);
+  padding: 15px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar .logo {
+  display: flex;
+  align-items: center;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--primary-blue);
+}
+
+.navbar .logo-img {
+  height: 40px;
+  margin-right: 10px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--text-muted);
+  font-weight: 400;
+  transition: var(--transition);
+}
+
+.nav-links a:hover {
+  color: var(--primary-blue);
+  text-decoration: underline;
+}
+
+/* Sidebar */
+.sidebar {
+  position: sticky;
+  top: 80px;
+  height: fit-content;
+  grid-area: sidebar; /* Assign to sidebar grid area */
+}
+
+.profile-section {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+  transition: var(--transition);
+}
+
+.profile-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.profile-section h2 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--primary-blue);
+  margin-bottom: 15px;
+}
+
+#profile-summary, #company-profile-summary {
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+#profile-summary p, #company-profile-summary p {
+  margin-bottom: 10px;
+}
+
+#profile-summary strong, #company-profile-summary strong {
+  color: var(--text-dark);
+}
+
+#profile-picture {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+  border: 2px solid var(--border-gray);
+}
+
+/* Main Content */
+.main-content {
+  grid-area: opportunities; /* Assign to opportunities grid area */
+  padding: 0; /* Remove padding as it's on the container */
+}
+
+main h1 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--primary-blue);
+  margin-bottom: 20px;
+}
+
+/* Buttons */
+.edit-button, .submit-button, .cancel-button, .save-button, .cta-button, #apply-now {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 400;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-right: 10px;
+  margin-top: 10px;
+  transform: scale(1);
+}
+
+.edit-button:hover, .submit-button:hover, .save-button:hover, .cta-button:hover, #apply-now:hover {
+  background-color: var(--teal-accent);
+  transform: scale(1.05);
+}
+
+.cancel-button {
+  background-color: var(--text-muted);
+}
+
+.cancel-button:hover {
+  background-color: #555555;
+  transform: scale(1.05);
+}
+
+/* Form Styles */
+.form-container, #profile-edit-form, #postOpportunityForm {
+  margin-top: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 400;
+  color: var(--text-dark);
+  margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-gray);
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 5px rgba(0, 119, 181, 0.3);
+}
+
+.form-message {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.form-message[style*="color: green"] {
+  color: var(--success-green);
+}
+
+.form-message[style*="color: red"] {
+  color: var(--error-red);
+}
+
+/* Opportunities Section */
+.opportunities, #posted-opportunities, .opportunity-section {
+  margin: 0; /* Remove margin as gap is on the container */
+}
+
+/* Newsfeed and Applications Container */
+.newsfeed-applications {
+  grid-area: newsfeed; /* Assign to newsfeed grid area */
+}
+
+/* Applications Section */
+#recent-applications {
+  margin: 0; /* Remove margin as gap is on the container */
+}
+
+.opportunities h2, #posted-opportunities h2, #recent-applications h2, .opportunity-section h2 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--primary-blue);
+  margin-bottom: 15px;
+}
+
+.opportunity-category {
+  margin-bottom: 15px;
+}
+
+.opportunity-category summary {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-dark);
+  padding: 10px;
+  cursor: pointer;
+  background-color: var(--white);
+  border-radius: 5px;
+  transition: var(--transition);
+}
+
+.opportunity-category summary:hover {
+  background-color: var(--border-gray);
+}
+
+.internship-grid, .club-grid, .event-grid, .program-grid, .other-grid, #opportunity-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 10px;
+}
+
+.opportunity-item, .internship-grid p, .club-grid p, .event-grid p, .program-grid p, .other-grid p {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 15px;
+  transition: var(--transition);
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.opportunity-item:hover, .internship-grid p:hover, .club-grid p:hover, .event-grid p:hover, .program-grid p:hover, .other-grid p:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.opportunity-item h3 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--primary-blue);
+  margin-bottom: 10px;
+}
+
+.opportunity-item p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Applications Section */
+.applications-section, #applications {
+  margin: 20px 0;
+}
+
+#application-list, .application-item {
+  list-style: none;
+}
+
+.application-item, #application-list li {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 15px;
+  margin-bottom: 15px;
+  transition: var(--transition);
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.application-item:hover, #application-list li:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.application-item p, #application-list li p {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Notifications Section */
+.notifications {
+  margin: 20px 0;
+}
+
+.notifications h2 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--primary-blue);
+  margin-bottom: 15px;
+}
+
+.notification-list, .notification-list p {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 15px;
+  transition: var(--transition);
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.notification-list:hover, .notification-list p:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Opportunity Details Section */
+.opportunity-section {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+#opportunity-content {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Footer */
+footer {
+  background-color: var(--white);
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 40px;
+}
+
+footer p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.social-media-links {
+  margin-top: 10px;
+}
+
+.social-media-links a {
+  margin: 0 15px;
+  text-decoration: none;
+  color: var(--primary-blue);
+  font-size: 18px;
+  transition: var(--transition);
+}
+
+.social-media-links a:hover {
+  color: var(--teal-accent);
+  transform: scale(1.2);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .sidebar {
+    width: 100%;
+    position: static;
+  }
+
+  .navbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .internship-grid, .club-grid, .event-grid, .program-grid, .other-grid, #opportunity-list {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group input, .form-group textarea, .form-group select {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 769px) {
+  .opportunity-item, .application-item, #application-list li, .notification-list p {
+    animation-delay: calc(var(--index, 0) * 0.1s);
+  }
+}
