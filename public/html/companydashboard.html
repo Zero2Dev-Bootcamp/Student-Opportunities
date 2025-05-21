@@ -5,145 +5,135 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Company Dashboard - Studexplore</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/newdashboard.css">
-    <style>
-        .logo-img {
-            height: 45px;
-        }
-    </style>
-    <script src="../src/resources/login.js" type="module"></script> <!-- For logout() -->
-    <!-- Consider creating a company-dashboard.js for specific logic -->
+    <link rel="stylesheet" href="../assets/css/companydashboard.css">
+    <script src="../src/resources/login.js" type="module"></script>
     <script src="../assets/js/company-dashboard.js" type="module" defer></script>
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo"><img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore (Company)</div>
+        <div class="logo">
+            <img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore (Company)
+        </div>
         <div class="nav-links">
             <a href="index.html#home">Home</a>
             <a href="opportunities.html">Manage Opportunities</a>
-            <a href="#post-opportunity">Post New Opportunity</a>
-            <a href="#company-profile">Company Profile</a>
-            <a href="#applications">View Applications</a>
-            <a href="index.html" id="logout-link">Logout</a>
+            <a href="#post-opportunity">Post Opportunity</a>
+            <a href="#company-profile">Profile</a>
+            <a href="#notifications">Notifications</a>
+            <a href="#" id="logout-link">Logout</a>
         </div>
     </nav>
 
-    <main>
-        <h1>Company Dashboard</h1>
-        <p>Welcome, Company User!</p>
-
-        <section id="company-profile" class="profile-section">
-            <h2>Company Profile</h2>
-            <div id="company-profile-summary">
-                <p><strong>Company Name:</strong> <span id="company-name">Loading...</span></p>
-                <p><strong>Email:</strong> <span id="company-email">Loading...</span></p>
-                <p><strong>Industry:</strong> <span id="company-industry">Loading...</span></p>
-                <p><strong>Location:</strong> <span id="company-location">Loading...</span></p>
-                <p><strong>Description:</strong> <span id="company-description">Loading...</span></p>
-                <p><strong>Login Email:</strong> <span id="company-login-email">Loading...</span></p>
-            </div>
-            <button id="edit-profile-btn" class="edit-button">Edit Profile</button>
-
-            <div id="profile-edit-form" class="form-container" style="display: none;">
-                <h3>Edit Company Profile</h3>
-                <div class="form-group">
-                    <label for="edit-company-name">Company Name:</label>
-                    <input type="text" id="edit-company-name">
+    <div class="dashboard-container">
+        <aside class="left-sidebar">
+            <section id="applications" class="applications-section">
+                <h2>Received Applications</h2>
+                <div id="application-list">
+                    <p>Loading applications...</p>
                 </div>
-                <div class="form-group">
-                    <label for="edit-company-email">Email:</label>
-                    <input type="email" id="edit-company-email">
-                </div>
-                <div class="form-group">
-                    <label for="edit-company-industry">Industry:</label>
-                    <input type="text" id="edit-company-industry">
-                </div>
-                 <div class="form-group">
-                    <label for="edit-company-location">Location:</label>
-                    <input type="text" id="edit-company-location">
-                </div>
-                <div class="form-group">
-                    <label for="edit-company-description">Description:</label>
-                    <textarea id="edit-company-description"></textarea>
-                </div>
+            </section>
+        </aside>
 
-                <button id="save-profile-btn" class="submit-button">Save Changes</button>
-                <button id="cancel-edit-btn" class="cancel-button">Cancel</button>
-            </div>
-        </section>
+        <main class="main-content">
+            <h1>Company Dashboard</h1>
+            <p>Welcome, Company User!</p>
 
-        <section id="posted-opportunities">
-            <h2>Posted Opportunities</h2>
-            <div id="opportunity-list">
-                <!-- List of opportunities posted by the company -->
-                <p>Loading opportunities...</p>
-                <!-- Example item:
-                <div class="opportunity-item">
-                    <h3>Software Intern</h3>
-                    <p>Status: Active | Applications: 5</p>
-                    <button>View Details</button>
-                    <button>Edit</button>
-                    <button>Close</button>
+            <section id="posted-opportunities" class="opportunities">
+                <h2>Posted Opportunities</h2>
+                <div id="opportunity-list">
+                    <p>Loading opportunities...</p>
                 </div>
-                 -->
-            </div>
-            <a href="#post-opportunity" class="cta-button">Post New Opportunity</a>
-        </section>
+                <a href="#post-opportunity" class="cta-button">Post New Opportunity</a>
+            </section>
 
-        <section id="applications">
-            <h2>Received Applications</h2>
-            <div id="application-list">
-                <!-- List of applications received for the company's opportunities -->
-                <p>Loading applications...</p>
-                 <!-- Example item:
-                <div class="application-item">
-                    <p><strong>Applicant:</strong> Student Name (student@email.com)</p>
-                    <p><strong>For:</strong> Software Intern</p>
-                    <p><strong>Status:</strong> Submitted</p>
-                    <button>View Application</button>
-                    <button>Change Status</button>
+            <section id="post-opportunity" class="opportunity-section">
+                <h2>Post New Opportunity</h2>
+                <form id="postOpportunityForm">
+                    <div class="form-group">
+                        <label for="oppTitle">Title:</label>
+                        <input type="text" id="oppTitle" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="oppDescription">Description:</label>
+                        <textarea id="oppDescription" name="description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="oppType">Type:</label>
+                        <select id="oppType" name="type" required>
+                            <option value="Internship">Internship</option>
+                            <option value="Job">Job</option>
+                            <option value="Volunteer">Volunteer</option>
+                            <option value="Scholarship">Scholarship</option>
+                            <option value="Other">Other</option>
+                            <option value="Event">Event</option>
+                            <option value="Program">Program</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="oppLocation">Location:</label>
+                        <input type="text" id="oppLocation" name="location">
+                    </div>
+                    <div class="form-group">
+                        <label for="oppSkills">Required Skills (comma-separated):</label>
+                        <input type="text" id="oppSkills" name="required_skills">
+                    </div>
+                    <button type="submit" class="submit-button">Post Opportunity</button>
+                    <div id="postOppMessage" class="form-message"></div>
+                </form>
+            </section>
+        </main>
+
+        <aside class="right-sidebar">
+            <section id="company-profile" class="profile-section">
+                <h2>Company Profile</h2>
+                <div id="company-profile-summary">
+                    <img id="company-logo" src="placeholder.jpg" alt="Company Logo">
+                    <p><strong>Company Name:</strong> <span id="company-name">Loading...</span></p>
+                    <p><strong>Email:</strong> <span id="company-email">Loading...</span></p>
+                    <p><strong>Industry:</strong> <span id="company-industry">Loading...</span></p>
+                    <p><strong>Location:</strong> <span id="company-location">Loading...</span></p>
+                    <p><strong>Description:</strong> <span id="company-description">Loading...</span></p>
+                    <p><strong>Login Email:</strong> <span id="company-login-email">Loading...</span></p>
                 </div>
-                 -->
-            </div>
-        </section>
-
-         <section id="post-opportunity" style="margin-top: 2em; padding: 1em; border: 1px solid #ccc;">
-             <h2>Post New Opportunity</h2>
-             <form id="postOpportunityForm">
-                 <div class="form-group">
-                     <label for="oppTitle">Title:</label>
-                     <input type="text" id="oppTitle" name="title" required>
-                 </div>
-                 <div class="form-group">
-                     <label for="oppDescription">Description:</label>
-                     <textarea id="oppDescription" name="description" required></textarea>
-                 </div>
-                 <div class="form-group">
-                     <label for="oppType">Type:</label>
-                     <select id="oppType" name="type" required>
-                         <option value="Internship">Internship</option>
-                         <option value="Job">Job</option>
-                         <option value="Volunteer">Volunteer</option>
-                         <option value="Scholarship">Scholarship</option>
-                         <option value="Other">Other</option>
-                         <option value="Event">Event</option>
-                         <option value="Program">Program</option>
-                     </select>
-                 </div>
-                 <div class="form-group">
-                     <label for="oppLocation">Location:</label>
-                     <input type="text" id="oppLocation" name="location">
-                 </div>
-                 <div class="form-group">
-                     <label for="oppSkills">Required Skills (comma-separated):</label>
-                     <input type="text" id="oppSkills" name="required_skills">
-                 </div>
-                 <button type="submit" class="submit-button">Post Opportunity</button>
-                 <div id="postOppMessage" class="form-message"></div>
-             </form>
-         </section>
-
-    </main>
+                <button id="edit-profile-btn" class="edit-button">Edit Profile</button>
+                <div id="profile-edit-form" class="form-container" style="display: none;">
+                    <h3>Edit Company Profile</h3>
+                    <div class="form-group">
+                        <label for="company-logo-upload">Upload Company Logo:</label>
+                        <input type="file" id="company-logo-upload" accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-company-name">Company Name:</label>
+                        <input type="text" id="edit-company-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-company-email">Email:</label>
+                        <input type="email" id="edit-company-email">
+                    </div>
+                    <div class="form-group">
+                            <label for="edit-company-industry">Industry:</label>
+                            <input type="text" id="edit-company-industry">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-company-location">Location:</label>
+                            <input type="text" id="edit-company-location">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-company-description">Description:</label>
+                            <textarea id="edit-company-description"></textarea>
+                        </div>
+                        <button id="save-profile-btn" class="save-button">Save Changes</button>
+                        <button id="cancel-edit-btn" class="cancel-button">Cancel</button>
+                    </div>
+                </section>
+                <section id="notifications" class="notifications">
+                    <h2>Notifications</h2>
+                    <div class="notification-list" id="notification-list">
+                        <p>Loading notifications...</p>
+                    </div>
+                </section>
+            </aside>
+        </div>
 
     <footer>
         <p>© 2025 Studexplore. All rights reserved.</p>
@@ -155,9 +145,7 @@
     </footer>
 
     <script type="module">
-        // Basic setup - ideally move to company-dashboard.js
         import { logout } from '../src/resources/login.js';
-
         document.addEventListener('DOMContentLoaded', () => {
             const logoutLink = document.getElementById('logout-link');
             if (logoutLink) {
@@ -166,12 +154,8 @@
                     window.location.href = 'index.html';
                 });
             }
-
-            // Add logic to load company profile, opportunities, applications
-            // Example: loadCompanyProfile(); loadPostedOpportunities(); loadReceivedApplications();
-
             const postOppForm = document.getElementById('postOpportunityForm');
-            if(postOppForm) {
+            if (postOppForm) {
                 postOppForm.addEventListener('submit', handlePostOpportunity);
             }
         });
@@ -180,7 +164,7 @@
             event.preventDefault();
             const form = event.target;
             const messageArea = document.getElementById('postOppMessage');
-            const companyUserId = localStorage.getItem('userId'); // Assuming company user ID is stored
+            const companyUserId = localStorage.getItem('userId');
 
             if (!companyUserId) {
                 messageArea.textContent = 'Error: Company user ID not found. Please log in again.';
@@ -194,8 +178,7 @@
                 type: form.elements.type.value,
                 location: form.elements.location.value,
                 required_skills: form.elements.required_skills.value,
-                company_user_id: parseInt(companyUserId, 10) // Ensure it's an integer
-                // Add other fields like deadline, link, stipend, duration if needed
+                company_user_id: parseInt(companyUserId, 10)
             };
 
             try {
@@ -203,7 +186,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Assuming token auth
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                     },
                     body: JSON.stringify(formData)
                 });
@@ -214,8 +197,6 @@
                     messageArea.textContent = 'Opportunity posted successfully!';
                     messageArea.style.color = 'green';
                     form.reset();
-                    // Optionally reload the posted opportunities list
-                    // loadPostedOpportunities();
                 } else {
                     messageArea.textContent = `Error: ${result.error || 'Failed to post opportunity'}`;
                     messageArea.style.color = 'red';
@@ -226,13 +207,6 @@
                 messageArea.style.color = 'red';
             }
         }
-
-        // Placeholder functions for loading data - implement these
-        // async function loadCompanyProfile() { /* Fetch /api/users/:id */ }
-        // async function loadPostedOpportunities() { /* Fetch /api/opportunities?companyId=... */ }
-        // async function loadReceivedApplications() { /* Fetch /api/applications?companyId=... */ }
-
     </script>
-
 </body>
 </html>

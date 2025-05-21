@@ -227,10 +227,10 @@ class Application {
         SELECT
            A.*,
            O.title AS opportunity_title,
-           O.user_ID AS opportunity_company_id -- Updated column name based on user feedback
+           O.company_user_id AS opportunity_company_id
          FROM Application AS A
          JOIN Opportunity AS O ON A.opportunity_id = O.id
-         WHERE O.user_ID = ? -- Updated column name based on user feedback
+         WHERE O.company_user_id = ?
          ORDER BY A.application_date DESC`;
 
       console.log('[Application.getApplicationsByCompanyId] Executing SQL:', sql, 'with companyUserId:', companyUserId);
