@@ -417,7 +417,7 @@ describe('Application and Company Dashboard Tests', () => {
   });
 
 
-  test('Student can submit application with notes and files', async () => {
+  test('Student can submit application with why_choose_me, skills, and experiences', async () => {
     // Simulate student login and store token/userId
     const student = testStudentUsers[0];
     global.localStorage.setItem('authToken', `mock-student-${student.id}`);
@@ -449,58 +449,23 @@ describe('Application and Company Dashboard Tests', () => {
 
     // Get form elements
     const applicationForm = document.getElementById('applicationForm');
-    const notesTextarea = document.getElementById('notes');
-    const transcriptInput = document.getElementById('transcript');
-    const enrollmentProofInput = document.getElementById('enrollmentProof');
-    const otherFilesInput = document.getElementById('otherFiles');
+    const whyChooseMeTextarea = document.getElementById('why-choose-me');
+    const skillsInput = document.getElementById('skills');
+    const experiencesInput = document.getElementById('experiences');
     const applicationMessageDiv = document.getElementById('applicationMessage');
     const opportunityTitleSpan = document.getElementById('opportunity-title');
 
     expect(applicationForm).not.toBeNull();
-    expect(notesTextarea).not.toBeNull();
-    expect(transcriptInput).not.toBeNull();
-    expect(enrollmentProofInput).not.toBeNull();
-    expect(otherFilesInput).not.toBeNull();
+    expect(whyChooseMeTextarea).not.toBeNull();
+    expect(skillsInput).not.toBeNull();
+    expect(experiencesInput).not.toBeNull();
     expect(applicationMessageDiv).not.toBeNull();
     expect(opportunityTitleSpan).not.toBeNull();
 
     // Simulate filling the form
-    notesTextarea.value = 'Applying with great interest!';
-
-    // Simulate file selection
-    // JSDOM requires creating File objects and assigning them to the input's files property
-    const transcriptFile = new dom.window.File(['transcript content'], 'transcript.pdf', { type: 'application/pdf' });
-    const enrollmentProofFile = new dom.window.File(['enrollment content'], 'enrollment.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    const otherFile1 = new dom.window.File(['other file 1 content'], 'resume.txt', { type: 'text/plain' });
-    const otherFile2 = new dom.window.File(['other file 2 content'], 'portfolio.jpg', { type: 'image/jpeg' });
-
-    // Assign files to input elements
-    Object.defineProperty(transcriptInput, 'files', {
-        value: {
-            length: 1,
-            item: (index) => index === 0 ? transcriptFile : null,
-            0: transcriptFile,
-            // Add other properties if needed by the frontend script
-        },
-        writable: false, // Make it read-only like a real FileList
-    });
-     Object.defineProperty(enrollmentProofInput, 'files', {
-        value: {
-            length: 1,
-            item: (index) => index === 0 ? enrollmentProofFile : null,
-            0: enrollmentProofFile,
-        },
-        writable: false,
-    });
-     Object.defineProperty(otherFilesInput, 'files', {
-        value: {
-            length: 2,
-            item: (index) => index === 0 ? otherFile1 : (index === 1 ? otherFile2 : null),
-            0: otherFile1,
-            1: otherFile2,
-        },
-        writable: false,
-    });
+    whyChooseMeTextarea.value = 'I am a great fit because...';
+    skillsInput.value = 'JavaScript, Bun, Testing';
+    experiencesInput.value = 'Worked on project X, contributed to Y';
 
 
     // Mock the fetch calls for application submission and opportunity details
@@ -518,50 +483,26 @@ describe('Application and Company Dashboard Tests', () => {
         }
         // Mock fetching application submission
         if (parsedUrl.pathname === '/api/applications' && options?.method === 'POST') {
-            // Verify the request body is FormData and contains expected fields/files
-            expect(options.body).toBeInstanceOf(dom.window.FormData);
-            const formData = options.body;
+            // Verify the request body is JSON and contains expected fields
+            expect(options.headers['Content-Type']).toBe('application/json');
+            const requestBody = JSON.parse(options.body);
 
-            expect(formData.get('opportunity_id')).toBe(String(testOpportunities[0].id)); // FormData values are strings
-            expect(formData.get('student_user_id')).toBe(String(student.id));
-            expect(formData.get('notes')).toBe('Applying with great interest!');
+            expect(requestBody.opportunity_id).toBe(String(testOpportunities[0].id)); // Values from frontend are strings
+            expect(requestBody.student_id).toBe(String(student.id));
+            expect(requestBody.why_choose_me).toBe('I am a great fit because...');
+            expect(requestBody.skills).toBe('JavaScript, Bun, Testing');
+            expect(requestBody.experiences).toBe('Worked on project X, contributed to Y');
 
-            // Verify files are present (checking by name and type is a good start)
-            const transcriptEntry = formData.get('transcript');
-            expect(transcriptEntry).toBeInstanceOf(dom.window.File);
-            expect(transcriptEntry.name).toBe('transcript.pdf');
-            expect(transcriptEntry.type).toBe('application/pdf');
-
-            const enrollmentProofEntry = formData.get('enrollmentProof');
-            expect(enrollmentProofEntry).toBeInstanceOf(dom.window.File);
-            expect(enrollmentProofEntry.name).toBe('enrollment.docx');
-            expect(enrollmentProofEntry.type).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-
-            // Check multiple files for 'otherFiles'
-            const otherFilesEntries = formData.getAll('otherFiles'); // Use getAll for multiple files with the same name
-            expect(otherFilesEntries.length).toBe(2);
-            expect(otherFilesEntries[0]).toBeInstanceOf(dom.window.File);
-            expect(otherFilesEntries[0].name).toBe('resume.txt');
-            expect(otherFilesEntries[0].type).toBe('text/plain');
-            expect(otherFilesEntries[1]).toBeInstanceOf(dom.window.File);
-            expect(otherFilesEntries[1].name).toBe('portfolio.jpg');
-            expect(otherFilesEntries[1].type).toBe('image/jpeg');
-
-
-            // Simulate a successful backend response, including mock file data
+            // Simulate a successful backend response
             return Promise.resolve(new dom.window.Response(JSON.stringify({
                 id: 101, // Mock application ID
                 opportunity_id: testOpportunities[0].id,
                 student_user_id: student.id,
-                notes: notesTextarea.value,
+                why_choose_me: requestBody.why_choose_me,
+                skills: requestBody.skills,
+                experiences: requestBody.experiences,
                 status: 'Submitted',
                 application_date: new Date().toISOString(),
-                files: [ // Include mock file data
-                    { id: 1, application_id: 101, file_name: 'transcript.pdf', file_path: '/mock/path/transcript.pdf', mime_type: 'application/pdf' },
-                    { id: 2, application_id: 101, file_name: 'enrollment.docx', file_path: '/mock/path/enrollment.docx', mime_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
-                    { id: 3, application_id: 101, file_name: 'resume.txt', file_path: '/mock/path/resume.txt', mime_type: 'text/plain' },
-                    { id: 4, application_id: 101, file_name: 'portfolio.jpg', file_path: '/mock/path/portfolio.jpg', mime_type: 'image/jpeg' },
-                ]
             }), { status: 201, headers: { 'Content-Type': 'application/json' } }));
         }
         // Fallback to original fetch for any other calls
@@ -577,15 +518,31 @@ describe('Application and Company Dashboard Tests', () => {
     await new Promise(resolve => setTimeout(resolve, 500)); // Increased wait time
 
     // Assertions
-    expect(applicationFetchMock).toHaveBeenCalledTimes(1); // Verify the POST request was made
+    expect(applicationFetchMock).toHaveBeenCalledTimes(2); // One for opportunity details, one for application POST
 
-    // Verify success message is displayed
-    expect(applicationMessageDiv.textContent).toBe('Application submitted successfully!');
-    expect(applicationMessageDiv.style.color).toBe('green');
-
-    // Verify form is reset (check notes textarea value)
-    expect(notesTextarea.value).toBe('');
-    // Checking file inputs reset is harder in JSDOM, but form.reset() should handle it.
+    // Verify success message is displayed (based on applications.js logic)
+    // applications.js uses alert, which is hard to test directly in JSDOM.
+    // We can check if the fetch was called correctly and assume the alert happens.
+    // If we were testing the UI rendering after submission, we'd check for a message div update.
+    // The current applications.js redirects on success, so we can't check for a message div.
+    // Let's add a check for the fetch call to the correct endpoint with correct data.
+    expect(applicationFetchMock).toHaveBeenCalledWith(
+        '/api/applications',
+        expect.objectContaining({
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer mock-student-${student.id}`
+            },
+            body: JSON.stringify({
+                opportunity_id: String(testOpportunities[0].id),
+                student_id: String(student.id),
+                why_choose_me: 'I am a great fit because...',
+                skills: 'JavaScript, Bun, Testing',
+                experiences: 'Worked on project X, contributed to Y'
+            })
+        })
+    );
 
     // Restore original fetch
     global.fetch = originalFetch;
@@ -652,13 +609,13 @@ describe('Application and Company Dashboard Tests', () => {
             // Need to fetch from the actual server DB to get the created application
             const actualServerDb = new Database('opportunities.sqlite');
             const applications = actualServerDb.prepare(
-                 `SELECT 
-                    Application.*, 
+                 `SELECT
+                    Application.*,
                     Opportunity.title AS opportunity_title,
                     Opportunity.company_user_id AS opportunity_company_id
                   FROM Application
                   JOIN Opportunity ON Application.opportunity_id = Opportunity.id
-                  WHERE Opportunity.company_user_id = ? 
+                  WHERE Opportunity.company_user_id = ?
                   ORDER BY Application.application_date DESC`
             ).all(company.id);
             actualServerDb.close();
