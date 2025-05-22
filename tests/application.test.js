@@ -548,35 +548,33 @@ describe('Application and Company Dashboard Tests', () => {
     global.fetch = originalFetch;
   });
 
-   test('Company user can view applications and file links', async () => {
+   test('Company user can view applications with why_choose_me, skills, and experiences', async () => {
     // Simulate company login and store token/userId
     const company = testCompanyUsers[0];
     global.localStorage.setItem('authToken', `mock-company-${company.id}`);
     global.localStorage.setItem('userId', company.id);
     global.localStorage.setItem('userType', 'company');
 
-    // Create a test application with files directly in the database
-    // This bypasses the student submission frontend for this test,
-    // focusing on the company viewing part.
+    // Create a test application directly in the database
     const serverDb = new Database('opportunities.sqlite');
     const student = testStudentUsers[0];
     const opportunity = testOpportunities[0];
 
     const insertApplicationStmt = serverDb.prepare(
-        `INSERT INTO Application (student_user_id, opportunity_id, notes, status)
-         VALUES (?, ?, ?, ?)`
+        `INSERT INTO Application (student_user_id, opportunity_id, why_choose_me, skills, experiences, status)
+         VALUES (?, ?, ?, ?, ?, ?)`
     );
-    const appResult = insertApplicationStmt.run(student.id, opportunity.id, 'Test notes for company view', 'Submitted');
+    const appResult = insertApplicationStmt.run(
+        student.id,
+        opportunity.id,
+        'Because I am a perfect fit!',
+        'JavaScript, CSS, HTML',
+        'Built several web applications',
+        'Submitted'
+    );
     const newApplicationId = appResult.lastInsertRowid;
-
-    const insertFileStmt = serverDb.prepare(
-        `INSERT INTO ApplicationFile (application_id, file_name, file_path, mime_type)
-         VALUES (?, ?, ?, ?)`
-    );
-    insertFileStmt.run(newApplicationId, 'test_transcript.pdf', '/path/to/uploads/test_transcript.pdf', 'application/pdf');
-    insertFileStmt.run(newApplicationId, 'test_resume.docx', '/path/to/uploads/test_resume.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     serverDb.close();
-    console.log(`[tests/application.test.js] Created test application ${newApplicationId} with files directly in DB.`);
+    console.log(`[tests/application.test.js] Created test application ${newApplicationId} directly in DB.`);
 
 
     // Load the companydashboard.html page in JSDOM
@@ -620,28 +618,10 @@ describe('Application and Company Dashboard Tests', () => {
             ).all(company.id);
             actualServerDb.close();
 
-            // For each application, fetch its files
-            for (const app of applications) {
-                 const files = new Database('opportunities.sqlite').prepare(
-                     `SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?`
-                 ).all(app.id);
-                 app.files = files; // Add files array to the application object
-                 new Database('opportunities.sqlite').close(); // Close DB connection
-            }
+            // Note: Files are no longer part of the application data for this test
 
             return Promise.resolve(new dom.window.Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } }));
         }
-         // Mock fetching application files by application ID (if implemented)
-        if (parsedUrl.pathname.startsWith('/api/applications/') && parsedUrl.pathname.endsWith('/files')) {
-             const appId = parsedUrl.pathname.split('/')[3]; // e.g., /api/applications/101/files -> 101
-             const actualServerDb = new Database('opportunities.sqlite');
-             const files = actualServerDb.prepare(
-                 `SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?`
-             ).all(appId);
-             actualServerDb.close();
-             return Promise.resolve(new dom.window.Response(JSON.stringify(files), { status: 200, headers: { 'Content-Type': 'application/json' } }));
-        }
-
         // Fallback to original fetch for other calls
         return originalFetch(url, options);
     });
@@ -662,21 +642,30 @@ describe('Application and Company Dashboard Tests', () => {
     const applicationListDiv = document.getElementById('application-list');
     expect(applicationListDiv).not.toBeNull();
 
-    // Verify that the test application is rendered
+    // Verify that the test application is rendered and includes the new fields
     const applicationItems = applicationListDiv.querySelectorAll('.application-item');
     expect(applicationItems.length).toBeGreaterThan(0); // Should find at least the one we created
 
     const testApplicationItem = Array.from(applicationItems).find(item =>
-        item.textContent.includes(`Applicant ID: ${student.id}`) &&
-        item.textContent.includes(`For: ${opportunity.title}`)
+        item.textContent.includes(`Applicant: User ID ${student.id}`) && // Assuming student name/email might not be joined in this view
+        item.textContent.includes(`For: ${opportunity.title}`) &&
+        item.textContent.includes(`Why Choose Me: Because I am a perfect fit!`) &&
+        item.textContent.includes(`Skills: JavaScript, CSS, HTML`) &&
+        item.textContent.includes(`Experiences: Built several web applications`)
     );
     expect(testApplicationItem).not.toBeNull();
 
 
     // Check if the fetch mock for applications was called with the correct company ID
     expect(companyDashboardFetchMock).toHaveBeenCalledWith(
-        `${SERVER_URL}/api/applications?companyId=${company.id}`,
-        expect.any(Object)
+        `${SERVER_URL}/api/applications`, // The JS fetches without companyId query param, relying on headers
+        expect.objectContaining({
+             method: 'GET',
+             headers: expect.objectContaining({
+                 'X-User-Id': String(company.id),
+                 'X-User-Type': 'company'
+             })
+        })
     );
 
     // Restore original fetch
