@@ -11,6 +11,7 @@ class User {
 
   // Core Methods
   async createUser(userData) {
+    console.log('[User.createUser] Received userData:', userData); // Added logging
     console.log('[User.createUser] Called with userData:', JSON.stringify(userData, null, 2));
     try {
       // Basic validation

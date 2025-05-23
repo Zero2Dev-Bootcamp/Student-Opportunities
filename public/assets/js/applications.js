@@ -48,7 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+                        // Use the actual userId from localStorage, assuming it's stored there
+                        // If the login process stores the actual ID under 'authToken',
+                        // you can revert this to localStorage.getItem('authToken')
+                        'Authorization': `Bearer ${localStorage.getItem('userId') || ''}`
                     },
                     body: JSON.stringify(applicationData)
                 });

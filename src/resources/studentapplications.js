@@ -11,30 +11,59 @@ import db from '../../db/db.js'; // Import the database connection
 // Helper function to get authentication context from request
 export async function getAuthContext(req) {
   // In this alternative approach without JWT, we'll try to get user ID and type
-  // directly from custom headers or query parameters. This is less secure than JWT.
-  // A more robust solution would involve session management or a different token strategy.
+  // directly from custom headers or query parameters. This is less secure.
+  // A more robust solution would involve proper token validation (e.g., JWT).
 
-  const userId = req.headers.get('X-User-Id') || new URL(req.url).searchParams.get('userId');
-  const userType = req.headers.get('X-User-Type') || new URL(req.url).searchParams.get('userType');
+  let userId = null;
+  let userType = null;
 
-  console.log(`[Auth] Attempting to authenticate with userId: ${userId}, userType: ${userType}`);
+  // Attempt to get token from Authorization header (assuming Bearer token)
+  const authHeader = req.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    // IMPORTANT: In a real application, you would validate this token (e.g., JWT)
+    // and extract the user ID and type securely.
+    // For this temporary fix, we'll assume the token *is* the userId and fetch userType from DB.
+    userId = token;
+    console.log(`[Auth] Attempting to authenticate with token (assuming userId): ${userId}`);
+  } else {
+     // Fallback to less secure headers/query parameters if no Authorization header
+     userId = req.headers.get('X-User-Id') || new URL(req.url).searchParams.get('userId');
+     userType = req.headers.get('X-User-Type') || new URL(req.url).searchParams.get('userType');
+     console.log(`[Auth] Attempting to authenticate with headers/params: userId: ${userId}, userType: ${userType}`);
+  }
 
 
-  if (!userId || !userType) {
-    console.log('[Auth] User ID or User Type missing in request.');
+  if (!userId) {
+    console.log('[Auth] User ID missing after attempting all methods.');
     return null;
   }
 
   try {
-    // Verify if a user with this ID and type exists in the database
-    const userStmt = db.prepare("SELECT id, user_type FROM User WHERE id = ? AND user_type = ?");
-    const user = userStmt.get(userId, userType);
+    // Ensure userId is an integer for database lookup
+    const userIdInt = parseInt(userId, 10);
+    if (isNaN(userIdInt)) {
+        console.log('[Auth] Authentication failed: Invalid user ID format.');
+        return null;
+    }
+
+    // Verify if a user with this ID exists and get their type
+    const userStmt = db.prepare("SELECT id, user_type FROM User WHERE id = ?");
+    const user = userStmt.get(userIdInt); // Use the parsed integer ID
 
     if (user) {
-      console.log(`[Auth] Authentication successful for user ID: ${user.id}, type: ${user.user_type}`);
-      return { userId: user.id, userType: user.user_type };
+      // If userType was not provided via header/param, use the one from the database
+      if (!userType) {
+         userType = user.user_type;
+      } else if (userType !== user.user_type) {
+         // If userType was provided but doesn't match DB, authentication fails
+         console.log('[Auth] Authentication failed: Provided user type mismatch with database.');
+         return null;
+      }
+      console.log(`[Auth] Authentication successful for user ID: ${user.id}, type: ${userType}`);
+      return { userId: user.id, userType: userType };
     } else {
-      console.log('[Auth] Authentication failed: User not found or type mismatch.');
+      console.log('[Auth] Authentication failed: User not found.');
       return null;
     }
   } catch (error) {
