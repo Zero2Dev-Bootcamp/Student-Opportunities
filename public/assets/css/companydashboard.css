@@ -176,24 +176,25 @@ main p {
 }
 
 /* Buttons */
-.edit-button, .submit-button, .cancel-button, .save-button, .cta-button, #apply-now {
+.edit-button, .submit-button, .cancel-button, .save-button, .cta-button, #apply-now, .apply-now-button { /* Added .apply-now-button */
   background-color: var(--primary-blue);
   color: var(--white);
   border: none;
-  padding: 10px 20px;
+  padding: 12px 25px; /* Slightly larger padding */
   border-radius: 5px;
   font-family: 'Poppins', sans-serif;
-  font-weight: 400;
+  font-weight: 700; /* Make font bolder */
   cursor: pointer;
   transition: var(--transition);
-  margin-right: 10px;
-  margin-top: 10px;
-  transform: scale(1);
+  margin-top: 20px; /* Add some space above */
+  display: inline-block; /* Ensure it behaves like a block for margin/padding */
+  box-shadow: var(--shadow); /* Add a subtle shadow */
 }
 
-.edit-button:hover, .submit-button:hover, .save-button:hover, .cta-button:hover, #apply-now:hover {
+.edit-button:hover, .submit-button:hover, .save-button:hover, .cta-button:hover, #apply-now:hover, .mark-as-read-btn:hover, .apply-now-button:hover { /* Added .apply-now-button:hover */
   background-color: var(--teal-accent);
-  transform: scale(1.05);
+  transform: translateY(-3px); /* Lift slightly on hover */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* More pronounced shadow on hover */
 }
 
 .cancel-button {
@@ -204,6 +205,45 @@ main p {
   background-color: #555555;
   transform: scale(1.05);
 }
+
+.mark-as-read-btn {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 8px 15px; /* Slightly smaller padding for a less prominent button */
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-left: 10px; /* Add some space to the left */
+  display: inline-block;
+  box-shadow: var(--shadow);
+  font-size: 12px; /* Smaller font size */
+}
+
+.view-application-btn, .change-status-btn {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 12px 25px;
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-right: 10px; /* Add some space between buttons */
+  margin-top: 10px; /* Add some space above */
+  display: inline-block;
+  box-shadow: var(--shadow);
+}
+
+.view-application-btn:hover, .change-status-btn:hover {
+  background-color: var(--teal-accent);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 
 /* Form Styles */
 .form-container, #profile-edit-form, #postOpportunityForm {
