@@ -11,14 +11,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const urlParams = new URLSearchParams(window.location.search);
     const opportunityId = urlParams.get('opportunityId');
-    const opportunityTitleSpan = document.getElementById('opportunity-title');
+    const opportunityTitleElement = document.getElementById('opportunity-title');
     const applicationForm = document.getElementById('applicationForm');
     const applicationMessageDiv = document.getElementById('applicationMessage');
 
     if (!opportunityId) {
         // Use pseudo opportunity for testing if ID is missing
         opportunityId = '999'; // Pseudo ID
-        opportunityTitleSpan.textContent = 'Pseudo Opportunity for Testing'; // Pseudo Title
+        if (opportunityTitleElement) {
+            opportunityTitleElement.textContent = 'Pseudo Opportunity for Testing'; // Pseudo Title
+        }
         console.warn('Opportunity ID missing in URL. Using pseudo opportunity for testing.');
         // Do NOT hide the form when using pseudo ID for testing
         // applicationForm.style.display = 'none';
@@ -26,24 +28,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
          // Optional: Fetch opportunity details to display title
         try {
+            console.log('Fetching opportunity details for ID:', opportunityId);
             const opportunityResponse = await fetch(`/api/opportunities/${opportunityId}`, {
                  headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}` }
             });
+            console.log('Opportunity fetch response:', opportunityResponse);
             const opportunity = await opportunityResponse.json();
+            console.log('Opportunity data:', opportunity);
+
             if (opportunityResponse.ok) {
-                opportunityTitleSpan.textContent = opportunity.title || 'Unknown Opportunity';
+                if (opportunityTitleElement) {
+                    opportunityTitleElement.textContent = opportunity.title || 'Unknown Opportunity';
+                }
             } else {
-                opportunityTitleSpan.textContent = 'Error loading opportunity details.';
+                if (opportunityTitleElement) {
+                    opportunityTitleElement.textContent = 'Error loading opportunity details.';
+                }
                 console.error('Error fetching opportunity details:', opportunity.error);
             }
         } catch (error) {
-            opportunityTitleSpan.textContent = 'Error loading opportunity details.';
+            if (opportunityTitleElement) {
+                opportunityTitleElement.textContent = 'Error loading opportunity details.';
+            }
             console.error('Error fetching opportunity details:', error);
         }
     }
 
     // Ensure the form is visible if we proceed (either with real or pseudo ID)
-    applicationForm.style.display = 'flex'; // Assuming form uses flexbox for layout
+    if (applicationForm) {
+        applicationForm.style.display = 'flex'; // Assuming form uses flexbox for layout
+    }
 
 
     applicationForm.addEventListener('submit', async (event) => {
