@@ -362,6 +362,41 @@ main p {
   color: var(--text-muted);
 }
 
+.opportunity-item button {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 8px 15px; /* Slightly smaller padding for buttons within opportunity items */
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 10px;
+  margin-right: 10px; /* Add space between buttons */
+  display: inline-block;
+  box-shadow: var(--shadow);
+  font-size: 12px;
+}
+
+.opportunity-item button:last-child {
+  margin-right: 0; /* Remove right margin for the last button */
+}
+
+.opportunity-item button:hover {
+  background-color: var(--teal-accent);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.opportunity-item button:last-child { /* Style for the "Close" button */
+  background-color: var(--error-red);
+}
+
+.opportunity-item button:last-child:hover {
+  background-color: #E53935; /* Darker red on hover */
+}
+
 /* Applications Section */
 .applications-section, #applications {
   background-color: var(--white);
