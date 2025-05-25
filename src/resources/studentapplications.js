@@ -170,7 +170,16 @@ class Application {
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
-      const applicationStmt = this.db.prepare("SELECT * FROM Application WHERE id = ?");
+      // Fetch application details and join with User table to get student details
+      const applicationStmt = this.db.prepare(`
+        SELECT
+          A.*,
+          U.email AS student_email,
+          U.full_name AS student_full_name
+        FROM Application AS A
+        JOIN User AS U ON A.student_user_id = U.id
+        WHERE A.id = ?
+      `);
       const application = applicationStmt.get(applicationId);
 
       if (application) {

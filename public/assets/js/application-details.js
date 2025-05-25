@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('application-details.js: DOMContentLoaded');
     const urlParams = new URLSearchParams(window.location.search);
     const applicationId = urlParams.get('id');
+    console.log('application-details.js: Application ID from URL:', applicationId);
+
+    const applicantFullName = document.getElementById('applicant-full-name');
+    const applicantEmail = document.getElementById('applicant-email');
     const whyChooseMeText = document.getElementById('why-choose-me-text');
     const skillsText = document.getElementById('skills-text');
     const experiencesText = document.getElementById('experiences-text');
@@ -23,46 +28,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!applicationId) {
         actionMessageDiv.textContent = 'Error: Application ID not provided.';
         actionMessageDiv.style.color = 'red';
+        console.error('application-details.js: Application ID is missing.');
         return;
     }
 
     async function fetchApplicationDetails() {
+        console.log('application-details.js: Fetching application details...');
         try {
             const authToken = localStorage.getItem('authToken');
+            console.log('application-details.js: Auth Token:', authToken);
             const response = await fetch(`/api/applications/${applicationId}`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 }
             });
 
+            console.log('application-details.js: Fetch response status:', response.status);
             if (!response.ok) {
                 const error = await response.json();
+                console.error('application-details.js: Fetch error response:', error);
                 throw new Error(error.error || 'Failed to fetch application details');
             }
 
             const application = await response.json();
+            console.log('application-details.js: Fetched application data:', application);
             displayApplicationDetails(application);
 
         } catch (error) {
-            console.error('Error fetching application details:', error);
+            console.error('application-details.js: Error fetching application details:', error);
             actionMessageDiv.textContent = `Error: ${error.message}`;
             actionMessageDiv.style.color = 'red';
         }
     }
 
     function displayApplicationDetails(application) {
+        console.log('application-details.js: Displaying application details:', application);
         if (application) {
+            // Display applicant details
+            applicantFullName.textContent = application.student_full_name || 'N/A';
+            applicantEmail.textContent = application.student_email || 'N/A';
+
+            // Display application content
             whyChooseMeText.textContent = application.why_choose_me || 'N/A';
             skillsText.textContent = application.skills || 'N/A';
             experiencesText.textContent = application.experiences || 'N/A';
         } else {
+            // Clear applicant details
+            applicantFullName.textContent = '';
+            applicantEmail.textContent = '';
+
+            // Clear application content
             whyChooseMeText.textContent = 'Application not found.';
             skillsText.textContent = '';
             experiencesText.textContent = '';
+            console.warn('application-details.js: Application data is null or undefined.');
         }
     }
 
     async function updateApplicationStatus(status) {
+        console.log('application-details.js: Attempting to update status to:', status);
         try {
             const authToken = localStorage.getItem('authToken');
             const response = await fetch(`/api/applications/${applicationId}`, {
@@ -74,18 +98,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify({ status: status })
             });
 
+            console.log('application-details.js: Update status response status:', response.status);
             const result = await response.json();
+            console.log('application-details.js: Update status response body:', result);
 
             if (response.ok) {
                 actionMessageDiv.textContent = `Application status updated to "${status}" successfully!`;
                 actionMessageDiv.style.color = 'green';
+                console.log('application-details.js: Status update successful.');
                 // Optionally re-fetch details to show updated status if needed
                 // fetchApplicationDetails();
             } else {
+                console.error('application-details.js: Status update failed:', result);
                 throw new Error(result.error || `Failed to update application status to "${status}"`);
             }
         } catch (error) {
-            console.error('Error updating application status:', error);
+            console.error('application-details.js: Error updating application status:', error);
             actionMessageDiv.textContent = `Error: ${error.message}`;
             actionMessageDiv.style.color = 'red';
         }
