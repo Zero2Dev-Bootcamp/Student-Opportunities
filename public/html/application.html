@@ -4,23 +4,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application Details</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css"> <!-- General styles -->
+    <link rel="stylesheet" href="../assets/css/application.css"> <!-- Specific styles for application -->
+    <style>
+        .logo-img {
+            height: 45px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Application Details</h1>
-    <form id="application-form">
-        <div>
-            <label for="why-choose-me">Why Choose me?</label><br>
-            <textarea id="why-choose-me" name="why-choose-me" rows="4" cols="50"></textarea>
+    <nav class="navbar">
+        <div class="logo"><img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore</div>
+        <div class="nav-links">
+            <a href="index.html#home">Home</a>
+            <a href="opportunities.html">Opportunities</a>
+            <a href="studentdashboard.html#profile">Profile</a>
+            <a href="index.html" id="logout-link">Logout</a>
         </div>
-        <div>
-            <label for="skills">Skills</label><br>
-            <textarea id="skills" name="skills" rows="4" cols="50"></textarea>
+    </nav>
+
+    <main class="application-details-container">
+        <h1>Application Details</h1>
+        <div id="application-details">
+            <div class="detail-group">
+                <h3>Why Choose me?</h3>
+                <p id="why-choose-me-text"></p>
+            </div>
+            <div class="detail-group">
+                <h3>Skills</h3>
+                <p id="skills-text"></p>
+            </div>
+            <div class="detail-group">
+                <h3>Experiences</h3>
+                <p id="experiences-text"></p>
+            </div>
         </div>
-        <div>
-            <label for="experiences">Experiences</label><br>
-            <textarea id="experiences" name="experiences" rows="4" cols="50"></textarea>
+
+        <div class="application-actions">
+            <div id="action-message" class="form-message"></div>
+            <button id="approve-button" class="action-button">Approve</button>
+            <button id="for-review-button" class="action-button">For Review</button>
+            <button id="reviewed-button" class="action-button">Reviewed</button>
         </div>
-        <button type="submit">Submit Application</button>
-    </form>
+    </main>
+
+    <footer>
+        <p>© 2025 Studexplore. All rights reserved.</p>
+        <div class="social-media-links">
+            <a href="#" aria-label="X">X</a>
+            <a href="#" aria-label="Instagram">Instagram</a>
+            <a href="#" aria-label="TikTok">TikTok</a>
+        </div>
+    </footer>
+
+    <script src="../src/resources/login.js" type="module"></script> <!-- For logout() -->
+    <script src="../assets/js/application-details.js" type="module" defer></script> <!-- Script to load and manage application details -->
 </body>
 </html>
