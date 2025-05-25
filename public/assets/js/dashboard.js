@@ -240,19 +240,26 @@ async function loadOpportunities() {
     const programGrid = document.getElementById('program-grid'); // Get the new program grid element
     const otherGrid = document.getElementById('other-grid'); // Get the new other grid element
 
+    // Add logging before fetch
+    console.log('[loadOpportunities] Fetching from /api/opportunities');
+
     try {
         const response = await fetchWithAuth('/api/opportunities'); // Added /api prefix
-        console.log('[loadOpportunities] Fetch response:', response); // Log response
+        console.log('[loadOpportunities] Fetch response status:', response.status); // Log response status
+        console.log('[loadOpportunities] Fetch response OK:', response.ok); // Log response ok status
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error('[loadOpportunities] Fetch error data:', errorData); // Log error data
             throw new Error(`Failed to fetch opportunities: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
         }
         const opportunities = await response.json();
-        console.log('[loadOpportunities] Fetched opportunities:', opportunities); // Log fetched data
-        
+        console.log('[loadOpportunities] Fetched opportunities data:', opportunities); // Log fetched data
+
         // Display all opportunities regardless of user interests
+        console.log('[loadOpportunities] Calling renderOpportunities with data:', opportunities); // Log before calling render
         renderOpportunities(opportunities, internshipGrid, clubGrid, programGrid, otherGrid); // Pass the new grid
+        console.log('[loadOpportunities] renderOpportunities called.'); // Log after calling render
 
     } catch (error) {
         console.error('Error loading opportunities:', error);
@@ -264,8 +271,9 @@ async function loadOpportunities() {
 }
 
 function renderOpportunities(opportunitiesToRender, internshipContainer, clubContainer, programContainer, otherContainer) { // Add programContainer and otherContainer parameters
-    if (internshipContainer) internshipContainer.innerHTML = ''; 
-    if (clubContainer) clubContainer.innerHTML = ''; 
+    console.log('[renderOpportunities] Called with data:', opportunitiesToRender); // Log start of render
+    if (internshipContainer) internshipContainer.innerHTML = '';
+    if (clubContainer) clubContainer.innerHTML = '';
     if (programContainer) programContainer.innerHTML = ''; // Clear program container
     if (otherContainer) otherContainer.innerHTML = ''; // Clear other container
 
@@ -274,19 +282,29 @@ function renderOpportunities(opportunitiesToRender, internshipContainer, clubCon
     let hasPrograms = false; // Add flag for programs
     let hasOthers = false; // Add flag for others
 
+    if (!opportunitiesToRender || opportunitiesToRender.length === 0) {
+        console.log('[renderOpportunities] No opportunities to render.'); // Log if no data
+        if (internshipContainer) internshipContainer.innerHTML = '<p>No opportunities found.</p>';
+        if (clubContainer) clubContainer.innerHTML = '<p>No opportunities found.</p>';
+        if (programContainer) programContainer.innerHTML = '<p>No opportunities found.</p>';
+        if (otherContainer) otherContainer.innerHTML = '<p>No opportunities found.</p>';
+        return; // Exit if no data
+    }
+
     opportunitiesToRender.forEach(op => {
+        console.log('[renderOpportunities] Rendering opportunity:', op.title); // Log each opportunity being rendered
         const cardHTML = `
             <div class="${op.type === 'Internship' ? 'internship-card' : op.type === 'Club' ? 'club-card' : op.type === 'Program' ? 'program-card' : 'other-card'}"> <!-- Add program-card and other-card class -->
                 <h3>${op.title || 'Untitled Opportunity'}</h3>
-                <div class="company">${op.company_name || (op.type === 'Club' ? op.club_name || 'N/A' : 'N/A')}</div>
-                <p>${op.description || 'No description available.'}</p>
-                <p class="target">Skills: ${op.required_skills || 'General'}</p>
-                <div class="opportunity-actions">
-                    <a href="opportunities.html#opportunity/${op.id}" class="view-details-button">View Details</a>
-                    <button class="apply-now-button" data-opportunity-id="${op.id}">Apply Now</button>
-                </div>
-            </div>
-        `;
+        <div class="company">${op.company_name || (op.type === 'Club' ? op.club_name || 'N/A' : 'N/A')}</div>
+        <p>${op.description || 'No description available.'}</p>
+        <p class="target">Skills: ${op.required_skills || 'General'}</p>
+        <div class="opportunity-actions">
+            <a href="opportunities.html#opportunity/${op.id}" class="view-details-button">View Details</a>
+            <button class="apply-now-button" data-opportunity-id="${op.id}">Apply Now</button>
+        </div>
+    </div>
+`;
         if (op.type === 'Internship' && internshipContainer) {
             internshipContainer.innerHTML += cardHTML;
             hasInternships = true;
@@ -302,6 +320,7 @@ function renderOpportunities(opportunitiesToRender, internshipContainer, clubCon
         }
     });
 
+    // Update messages based on whether opportunities were found for each category
     if (internshipContainer && !hasInternships) {
         internshipContainer.innerHTML = '<p>No recommended internships found based on your interests. Explore all <a href="opportunities.html">opportunities</a>.</p>';
     }
@@ -314,6 +333,7 @@ function renderOpportunities(opportunitiesToRender, internshipContainer, clubCon
     if (otherContainer && !hasOthers) { // Add message if no other opportunities found
         otherContainer.innerHTML = '<p>No other opportunities found. Explore all <a href="opportunities.html">opportunities</a>.</p>';
     }
+    console.log('[renderOpportunities] Rendering complete.'); // Log end of render
 }
 
 async function loadApplications(studentId) {

@@ -13,6 +13,12 @@
         }
     </style>
     <script src="../assets/js/dashboard.js" type="module" defer></script>
+    <script>
+        // Temporarily clear localStorage to resolve potential authentication issues
+        localStorage.clear();
+        // Optionally, redirect to login after clearing if not already handled
+        // window.location.href = 'login.html';
+    </script>
 </head>
 <body>
     <nav class="navbar">
@@ -112,7 +118,7 @@
                 <div id="opportunity-content">
                     <!-- Opportunity details will be loaded here -->
                 </div>
-                <button id="apply-now" style="display: none;">Apply Now</button>
+                <button id="apply-now">Apply Now</button>
                 <div class="form-message"></div>
             </section>
         </main>

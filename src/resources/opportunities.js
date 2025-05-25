@@ -47,7 +47,10 @@ function renderOpportunities(opportunities) {
                 <div class="company">${op.company_name || 'Unknown'}</div>
                 <p>${op.description}</p>
                 <p class="target">Perfect for: ${op.required_skills || 'All students'}</p>
-                <a href="#opportunity/${op.id}" class="apply-button">View Details</a>
+                <div class="opportunity-actions">
+                    <a href="#opportunity/${op.id}" class="opportunity-link">View Details</a>
+                    <a href="#" class="opportunity-link">Apply Now</a> {/* Added Apply Now link */}
+                </div>
             </div>
         `;
         if (op.type === 'Internship') internshipGrid.innerHTML += card;

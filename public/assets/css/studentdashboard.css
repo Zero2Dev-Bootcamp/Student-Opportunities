@@ -1,12 +1,12 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap');
+
 /* Reset default styles for consistency */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap');
 
 /* Root variables for colors and spacing */
 :root {
@@ -150,24 +150,25 @@ main h1 {
 }
 
 /* Buttons */
-.edit-button, .submit-button, .cancel-button, .save-button, .cta-button, #apply-now {
+.edit-button, .submit-button, .cancel-button, .save-button, .cta-button, #apply-now, .apply-now-button { /* Added .apply-now-button */
   background-color: var(--primary-blue);
   color: var(--white);
   border: none;
-  padding: 10px 20px;
+  padding: 12px 25px; /* Slightly larger padding */
   border-radius: 5px;
   font-family: 'Poppins', sans-serif;
-  font-weight: 400;
+  font-weight: 700; /* Make font bolder */
   cursor: pointer;
   transition: var(--transition);
-  margin-right: 10px;
-  margin-top: 10px;
-  transform: scale(1);
+  margin-top: 20px; /* Add some space above */
+  display: inline-block; /* Ensure it behaves like a block for margin/padding */
+  box-shadow: var(--shadow); /* Add a subtle shadow */
 }
 
-.edit-button:hover, .submit-button:hover, .save-button:hover, .cta-button:hover, #apply-now:hover {
+.edit-button:hover, .submit-button:hover, .save-button:hover, .cta-button:hover, #apply-now:hover, .mark-as-read-btn:hover, .apply-now-button:hover { /* Added .apply-now-button:hover */
   background-color: var(--teal-accent);
-  transform: scale(1.05);
+  transform: translateY(-3px); /* Lift slightly on hover */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* More pronounced shadow on hover */
 }
 
 .cancel-button {
@@ -177,6 +178,22 @@ main h1 {
 .cancel-button:hover {
   background-color: #555555;
   transform: scale(1.05);
+}
+
+.mark-as-read-btn {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 8px 15px; /* Slightly smaller padding for a less prominent button */
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-left: 10px; /* Add some space to the left */
+  display: inline-block;
+  box-shadow: var(--shadow);
+  font-size: 12px; /* Smaller font size */
 }
 
 /* Form Styles */
@@ -308,6 +325,36 @@ main h1 {
 .opportunity-item p {
   font-size: 14px;
   color: var(--text-muted);
+  margin-bottom: 15px; /* Add space below paragraph */
+}
+
+.opportunity-actions {
+  margin-top: 15px; /* Increased top margin */
+  display: flex; /* Use flexbox for alignment */
+  align-items: center; /* Vertically align items */
+}
+
+.opportunity-actions .view-details-button { /* Changed class to match HTML */
+  display: inline-block;
+  background-color: var(--primary-blue);
+  color: var(--white);
+  text-decoration: none;
+  padding: 12px 25px;
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  transition: var(--transition);
+  margin-right: 15px;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
+}
+
+.opportunity-actions .view-details-button:hover { /* Changed class to match HTML */
+  background-color: var(--teal-accent);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Applications Section */
@@ -453,3 +500,196 @@ footer p {
     animation-delay: calc(var(--index, 0) * 0.1s);
   }
 }
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
+
+<environment_details>
+# VSCode Visible Files
+public/assets/css/studentdashboard.css
+
+# VSCode Open Tabs
+public/src/resources/user.js
+db/migration.js
+src/resources/studentuser.js
+public/html/style.css
+public/html/login.html
+public/assets/css/company-dashboard.css
+public/html/companydashboard.html
+public/assets/css/companydashboard.css
+public/assets/js/company-dashboard.js
+tests/application.test.js
+tests/dashboard.test.js
+public/src/resources/postOpportunity.js
+public/src/resources/opportunities.js
+opportunities.sqlite
+public/assets/css/application.css
+public/assets/css/searchopportunities.css
+public/companyprofile1.html
+public/companyprofile2.html
+public/searchopportunities.html
+public/assets/css/opportunity.css
+public/assets/images/studexplorelogo.png
+public/html/admin-dashboard.html
+src/resources/opportunityResource.js
+public/assets/css/dashboard.css
+db/db.js
+src/server.js
+src/resources/companyuser.js
+public/src/resources/register.js
+db/seed.js
+tests/register.test.js
+tests/user.test.js
+public/assets/js/application-add.js
+tests/login.test.js
+public/src/resources/login.js
+public/assets/css/newdashboard.css
+public/html/application.html
+public/html/opportunity.html
+public/src/resources/opportunity.js
+src/httphandlermethods.js
+db/migrations/create_applications_table.js
+public/opportunities.html
+public/assets/js/opportunities.js
+public/html/applications.html
+public/style.css
+public/html/notification-add.html
+public/html/notification.html
+public/html/notifications.html
+public/html/opportunities.html
+public/html/opportunity-add.html
+public/html/register.html
+public/html/user-add.html
+public/html/user-details.html
+public/html/user.html
+public/html/users.html
+public/html/admin-login.html
+public/src/resources/admin-login.js
+public/src/resources/user-details.js
+public/src/resources/admin-dashboard.js
+.git/COMMIT_EDITMSG
+public/html/application-add.html
+src/resources/studentapplications.js
+public/assets/js/applications.js
+src/resources/opportunities.js
+public/html/studentdashboard.html
+public/assets/js/dashboard.js
+public/assets/css/studentdashboard.css
+public/html/index.html
+src/resources/user.js
+public/assets/js/notifications.js
+tests/student_opportunities_api.flashpost.json
+src/resources/opportunity.js
+src/resources/notificationResource.js
+tests/opportunities.test.js
+
+# Recently Modified Files
+These files have been modified since you last accessed them (file was just edited so you may need to re-read it before editing):
+public/assets/css/studentdashboard.css
+
+# Current Time
+5/25/2025, 12:15:35 PM (Asia/Manila, UTC+8:00)
+
+# Context Window Usage
+115,869 / 1,048.576K tokens used (11%)
+
+# Current Mode
+ACT MODE
+</environment_details>
+
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
+
+
+
+New problems detected after saving the file:
+public/assets/css/studentdashboard.css
+- [css Error] Line 504: { expected<environment_details>
+# VSCode Visible Files
+public/assets/css/studentdashboard.css
+
+# VSCode Open Tabs
+public/src/resources/user.js
+db/migration.js
+src/resources/studentuser.js
+public/html/style.css
+public/html/login.html
+public/assets/css/company-dashboard.css
+public/html/companydashboard.html
+public/assets/css/companydashboard.css
+public/assets/js/company-dashboard.js
+tests/application.test.js
+tests/dashboard.test.js
+public/src/resources/postOpportunity.js
+public/src/resources/opportunities.js
+opportunities.sqlite
+public/assets/css/application.css
+public/assets/css/searchopportunities.css
+public/companyprofile1.html
+public/companyprofile2.html
+public/searchopportunities.html
+public/assets/css/opportunity.css
+public/assets/images/studexplorelogo.png
+public/html/admin-dashboard.html
+src/resources/opportunityResource.js
+public/assets/css/dashboard.css
+db/db.js
+src/server.js
+src/resources/companyuser.js
+public/src/resources/register.js
+db/seed.js
+tests/register.test.js
+tests/user.test.js
+public/assets/js/application-add.js
+tests/login.test.js
+public/src/resources/login.js
+public/assets/css/newdashboard.css
+public/html/application.html
+public/html/opportunity.html
+public/src/resources/opportunity.js
+src/httphandlermethods.js
+db/migrations/create_applications_table.js
+public/opportunities.html
+public/assets/js/opportunities.js
+public/html/applications.html
+public/style.css
+public/html/notification-add.html
+public/html/notification.html
+public/html/notifications.html
+public/html/opportunities.html
+public/html/opportunity-add.html
+public/html/register.html
+public/html/user-add.html
+public/html/user-details.html
+public/html/user.html
+public/html/users.html
+public/html/admin-login.html
+public/src/resources/admin-login.js
+public/src/resources/user-details.js
+public/src/resources/admin-dashboard.js
+.git/COMMIT_EDITMSG
+public/html/application-add.html
+src/resources/studentapplications.js
+public/assets/js/applications.js
+src/resources/opportunities.js
+public/html/studentdashboard.html
+public/assets/js/dashboard.js
+public/assets/css/studentdashboard.css
+public/html/index.html
+src/resources/user.js
+public/assets/js/notifications.js
+tests/student_opportunities_api.flashpost.json
+src/resources/opportunity.js
+src/resources/notificationResource.js
+tests/opportunities.test.js
+
+# Current Time
+5/25/2025, 12:15:35 PM (Asia/Manila, UTC+8:00)
+
+# Context Window Usage
+115,869 / 1,048.576K tokens used (11%)
+
+# Current Mode
+ACT MODE
+</environment_details>
