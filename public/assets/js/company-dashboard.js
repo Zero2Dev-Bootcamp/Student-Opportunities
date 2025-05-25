@@ -253,31 +253,50 @@ async function loadReceivedApplications() {
 }
 
 // Helper function to render applications
-function renderApplications(applicationsToRender) {
+async function renderApplications(applicationsToRender) {
     const applicationListDiv = document.getElementById('application-list');
-    applicationListDiv.innerHTML = applicationsToRender.map(app => {
-        // Assuming application object includes student_name, student_email, and opportunity_title
-        const applicantInfo = app.student_name && app.student_email ?
-                              `${app.student_name} (${app.student_email})` :
-                              `User ID ${app.student_user_id || 'N/A'}`; // Fallback if student info is missing
+    applicationListDiv.innerHTML = ''; // Clear loading message or previous content
+
+    if (applicationsToRender.length === 0) {
+        applicationListDiv.innerHTML = '<p>No applications received yet.</p>';
+        return;
+    }
+
+    // Fetch user names for all applicants concurrently
+    const userPromises = applicationsToRender.map(app =>
+        fetch(`/api/users/${app.student_user_id}`)
+            .then(response => response.json())
+            .catch(error => {
+                console.error(`Error fetching user ${app.student_user_id}:`, error);
+                return { name: `User ID ${app.student_user_id || 'N/A'}` }; // Return fallback on error
+            })
+    );
+
+    const users = await Promise.all(userPromises);
+
+    applicationsToRender.forEach((app, index) => {
+        const user = users[index];
+        const applicantName = user.name || `User ID ${app.student_user_id || 'N/A'}`; // Use fetched name or fallback
 
         const opportunityTitle = app.opportunity_title || `Opportunity ID ${app.opportunity_id || 'N/A'}`; // Fallback if title is missing
 
-        return `
-            <div class="application-item">
-                <p><strong>Applicant:</strong> ${applicantInfo}</p>
-                <p><strong>For:</strong> ${opportunityTitle}</p>
-                <p><strong>Status:</strong> ${app.status || 'N/A'}</p>
-                <p><strong>Applied on:</strong> ${app.application_date ? new Date(app.application_date).toLocaleDateString() : 'N/A'}</p>
-                ${app.why_choose_me ? `<p><strong>Why Choose Me:</strong> ${app.why_choose_me}</p>` : ''}
-                ${app.skills ? `<p><strong>Skills:</strong> ${app.skills}</p>` : ''}
-                ${app.experiences ? `<p><strong>Experiences:</strong> ${app.experiences}</p>` : ''}
-                <!-- Add buttons for View Application, Change Status, etc. as needed -->
-                <button class="view-application-btn" data-application-id="${app.id || ''}">View Application</button>
-                <button class="change-status-btn" data-application-id="${app.id || ''}">Change Status</button>
-            </div>
+        const applicationItem = document.createElement('div');
+        applicationItem.classList.add('application-item');
+        applicationItem.innerHTML = `
+            <p><strong>Applicant:</strong> ${applicantName}</p>
+            <p><strong>For:</strong> ${opportunityTitle}</p>
+            <p><strong>Status:</strong> ${app.status || 'N/A'}</p>
+            <p><strong>Applied on:</strong> ${app.application_date ? new Date(app.application_date).toLocaleDateString() : 'N/A'}</p>
+            ${app.why_choose_me ? `<p><strong>Why Choose Me:</strong> ${app.why_choose_me}</p>` : ''}
+            ${app.skills ? `<p><strong>Skills:</strong> ${app.skills}</p>` : ''}
+            ${app.experiences ? `<p><strong>Experiences:</strong> ${app.experiences}</p>` : ''}
+            <!-- Add buttons for View Application, Change Status, etc. as needed -->
+            <button class="view-application-btn" data-application-id="${app.id || ''}">View Application</button>
+            <button class="change-status-btn" data-application-id="${app.id || ''}">Change Status</button>
         `;
-    }).join('');
+        applicationListDiv.appendChild(applicationItem);
+    });
+
 
     // Add event listeners for buttons (example)
     applicationListDiv.querySelectorAll('.view-application-btn').forEach(button => {
