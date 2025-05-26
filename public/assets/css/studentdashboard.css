@@ -467,13 +467,17 @@ footer p {
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-container {
-    flex-direction: column;
+    grid-template-areas:
+      "sidebar"
+      "opportunities"
+      "newsfeed";
+    grid-template-columns: 1fr;
     padding: 10px;
   }
 
   .sidebar {
-    width: 100%;
     position: static;
+    width: 100%;
   }
 
   .navbar {
