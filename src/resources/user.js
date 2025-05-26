@@ -289,14 +289,14 @@ class User {
 
         console.log(`[User.loginUser] Login successful for user ID: ${user.id}, type: ${user.user_type}`);
         // In a real app, generate and return a secure token here
-        const mockToken = user.user_type === 'admin' ? 'mock-admin' :
-                          user.user_type === 'company' ? 'mock-company' :
-                          'mock-student';
+        // const mockToken = user.user_type === 'admin' ? 'mock-admin' :
+        //                   user.user_type === 'company' ? 'mock-company' :
+        //                   'mock-student';
 
         return {
             userId: user.id,
             userType: user.user_type,
-            token: mockToken, // Return a mock token
+            token: user.id, // Return the actual user ID as the token
             message: 'Login successful'
         };
 
