@@ -121,3 +121,119 @@ h1 {
         align-self: stretch; /* Stretch button to full width */
     }
 }
+
+/* Styles for the application actions section */
+.application-actions {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Styles for the message box */
+.message-box {
+    width: 100%;
+    max-width: 500px; /* Limit the width of the message box */
+    margin-bottom: 1rem;
+}
+
+.message-box label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-family: 'Source Code Pro', monospace;
+    color: #E6E6E6; /* Light text for dark background */
+}
+
+#company-message {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #555; /* Darker border for dark background */
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: #333; /* Dark background for textarea */
+    color: #E6E6E6; /* Light text for textarea */
+    resize: vertical;
+    min-height: 100px;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+#company-message:focus {
+    border-color: #1E90FF; /* Primary accent color on focus */
+    outline: none;
+    box-shadow: 0 0 5px #1E90FF;
+}
+
+/* Styles for the action buttons */
+.action-button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    color: #E6E6E6; /* Light text for buttons */
+    min-width: 120px; /* Ensure buttons have a minimum width */
+}
+
+#approve-button {
+    background-color: #00D4B4; /* Tertiary accent color (Green) */
+}
+
+#for-review-button {
+    background-color: #FFC107; /* Yellow */
+}
+
+#reviewed-button {
+    background-color: #1E90FF; /* Primary accent color (Blue) */
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.action-button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Style for the action message (error/success) */
+#action-message {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 5px;
+    font-weight: 700;
+    width: 100%;
+    max-width: 500px;
+    box-sizing: border-box;
+}
+
+/* Specific style for error messages */
+#action-message:not(:empty) {
+    background-color: #FF2D55; /* Secondary accent color (Red) */
+    color: #E6E6E6;
+}
+
+/* Specific style for success messages (if any) */
+/* You might add a class for success messages in your JS */
+/*
+.form-message.success {
+    background-color: #00D4B4;
+    color: #121212;
+}
+*/
+
+/* Responsive adjustments for buttons */
+@media (max-width: 768px) {
+    .application-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .action-button {
+        width: 100%;
+        min-width: auto;
+    }
+}
