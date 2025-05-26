@@ -8,9 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!userId || !authToken) {
         // If no userId or token, redirect to login, as dashboard is for logged-in users
-        // window.location.href = 'login.html'; 
+        window.location.href = 'login.html'; 
         // For now, let's log an error and attempt to load, but ideally redirect.
-        console.error('User ID or auth token not found. Dashboard functionality may be limited.');
+        // console.error('User ID or auth token not found. Dashboard functionality may be limited.');
         // Optionally, disable sections or show a login prompt.
     }
 
@@ -366,10 +366,22 @@ async function loadApplications(studentId) {
 
         applicationList.innerHTML = applications.map(app => {
             const opportunityTitle = opportunityMap.get(app.opportunity_id) || `ID ${app.opportunity_id}`;
+            // Determine a class based on status for styling
+            let statusClass = '';
+            if (app.status === 'Approved') {
+                statusClass = 'status-approved';
+            } else if (app.status === 'For Review') {
+                statusClass = 'status-for-review';
+            } else if (app.status === 'Reviewed') {
+                statusClass = 'status-reviewed';
+            } else {
+                statusClass = 'status-pending'; // Assuming a default or initial status
+            }
+
             return `
                 <li>
                     Applied for: <strong>${opportunityTitle}</strong>
-                    <br>Status: ${app.status}
+                    <br>Status: <span class="${statusClass}">${app.status}</span>
                     <br>Applied on: ${new Date(app.application_date).toLocaleDateString()}
                     ${app.notes ? `<br><em>Notes: ${app.notes}</em>` : ''}
                 </li>
