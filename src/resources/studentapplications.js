@@ -175,7 +175,7 @@ class Application {
         SELECT
           A.*,
           U.email AS student_email,
-          U.full_name AS student_full_name
+          U.name AS student_full_name
         FROM Application AS A
         JOIN User AS U ON A.student_user_id = U.id
         WHERE A.id = ?
@@ -183,9 +183,9 @@ class Application {
       const application = applicationStmt.get(applicationId);
 
       if (application) {
-        // Fetch associated files
-        const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
-        application.files = filesStmt.all(applicationId);
+        // Removed fetching associated files as ApplicationFile table is not defined
+        // const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
+        // application.files = filesStmt.all(applicationId);
       }
 
       return application || null;
@@ -196,9 +196,9 @@ class Application {
   }
 
   /**
-   * Retrieves all applications submitted by a specific student, including associated files.
+   * Retrieves all applications submitted by a specific student.
    * @param {string|number} studentUserId - The ID of the student user.
-   * @returns {Promise<Array<object>>} An array of application objects, each with a 'files' array.
+   * @returns {Promise<Array<object>>} An array of application objects.
    */
   async getApplicationsByStudentId(studentUserId) {
     try {
@@ -209,11 +209,11 @@ class Application {
       const applicationsStmt = this.db.prepare("SELECT * FROM Application WHERE student_user_id = ? ORDER BY application_date DESC");
       const applications = applicationsStmt.all(studentUserId);
 
-      // For each application, fetch associated files
-      for (const app of applications) {
-        const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
-        app.files = filesStmt.all(app.id);
-      }
+      // Removed fetching associated files as ApplicationFile table is not defined
+      // for (const app of applications) {
+      //   const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
+      //   app.files = filesStmt.all(app.id);
+      // }
 
       return applications;
     } catch (error) {
@@ -223,9 +223,9 @@ class Application {
   }
 
   /**
-   * Retrieves all applications for a specific opportunity, including associated files.
+   * Retrieves all applications for a specific opportunity.
    * @param {string|number} opportunityId - The ID of the opportunity.
-   * @returns {Promise<Array<object>>} An array of application objects, each with a 'files' array.
+   * @returns {Promise<Array<object>>} An array of application objects.
    */
   async getApplicationsByOpportunityId(opportunityId) {
     try {
@@ -236,11 +236,11 @@ class Application {
       const applicationsStmt = this.db.prepare("SELECT * FROM Application WHERE opportunity_id = ? ORDER BY application_date DESC");
       const applications = applicationsStmt.all(opportunityId);
 
-      // For each application, fetch associated files
-      for (const app of applications) {
-        const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
-        app.files = filesStmt.all(app.id);
-      }
+      // Removed fetching associated files as ApplicationFile table is not defined
+      // for (const app of applications) {
+      //   const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
+      //   app.files = filesStmt.all(app.id);
+      // }
 
       return applications;
     } catch (error) {
@@ -250,9 +250,9 @@ class Application {
   }
 
   /**
-   * Retrieves all applications for opportunities posted by a specific company, including associated files.
+   * Retrieves all applications for opportunities posted by a specific company.
    * @param {string|number} companyUserId - The ID of the company user.
-   * @returns {Promise<Array<object>>} An array of application objects, each with a 'files' array.
+   * @returns {Promise<Array<object>>} An array of application objects.
    */
   async getApplicationsByCompanyId(companyUserId) {
     try {
@@ -278,11 +278,11 @@ class Application {
       const applications = applicationsStmt.all(companyUserId);
       console.log('[Application.getApplicationsByCompanyId] Query result:', applications);
 
-      // For each application, fetch associated files
-      for (const app of applications) {
-        const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
-        app.files = filesStmt.all(app.id);
-      }
+      // Removed fetching associated files as ApplicationFile table is not defined
+      // for (const app of applications) {
+      //   const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
+      //   app.files = filesStmt.all(app.id);
+      // }
 
       return applications;
 
@@ -333,8 +333,14 @@ class Application {
         }
 
       } else if (authContext.userType === 'company') {
-        // Simplification: Company can update status but not withdraw.
-        // A real scenario would check if the company owns the opportunity linked to the application.
+        // Fetch the opportunity associated with the application
+        const opportunityStmt = this.db.prepare("SELECT company_user_id FROM Opportunity WHERE id = ?");
+        const opportunity = opportunityStmt.get(applicationToUpdate.opportunity_id);
+
+        if (!opportunity || opportunity.company_user_id !== authContext.userId) {
+          throw new Error('Forbidden: Company user does not own the opportunity associated with this application.');
+        }
+        // Company can update status but not withdraw.
         if (updateData.status === 'Withdrawn') {
           throw new Error('Forbidden: Company cannot withdraw an application.');
         }
@@ -362,7 +368,7 @@ class Application {
       
       // Validate status if provided
       if (updateData.status) {
-        const validStatuses = ['Submitted', 'Reviewed', 'Interviewing', 'Offered', 'Accepted', 'Rejected', 'Withdrawn'];
+        const validStatuses = ['Approved', 'For Review', 'Reviewed'];
         if (!validStatuses.includes(updateData.status)) {
           throw new Error(`Invalid status: ${updateData.status}. Must be one of ${validStatuses.join(', ')}.`);
         }
@@ -371,8 +377,13 @@ class Application {
       values.push(applicationId); // Add applicationId for the WHERE clause
       const sql = `UPDATE Application SET ${fieldPlaceholders.join(', ')} WHERE id = ?`;
       
+      console.log('[Application.updateApplication] SQL:', sql); // Added logging
+      console.log('[Application.updateApplication] Values:', values); // Added logging
+
       const stmt = this.db.prepare(sql);
       const result = stmt.run(...values);
+
+      console.log('[Application.updateApplication] Result:', result); // Added logging
 
       if (result.changes > 0) {
         return this.getApplicationById(applicationId);

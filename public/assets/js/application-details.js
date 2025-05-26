@@ -87,6 +87,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function updateApplicationStatus(status) {
         console.log('application-details.js: Attempting to update status to:', status);
+        const messageInput = document.getElementById('company-message');
+        const message = messageInput ? messageInput.value : ''; // Get message if input exists
+
         try {
             const authToken = localStorage.getItem('authToken');
             const response = await fetch(`/api/applications/${applicationId}`, {
@@ -95,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`
                 },
-                body: JSON.stringify({ status: status })
+                body: JSON.stringify({ status: status, message: message }) // Include message in the body
             });
 
             console.log('application-details.js: Update status response status:', response.status);
