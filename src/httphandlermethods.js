@@ -139,6 +139,40 @@ export async function handleHttpRequest(req, resources, publicDir) {
     if (req.method === 'POST') { // Handles /api/applications for creation
       return studentapplicationsResource.handlePost(req);
     }
+    if (req.method === 'PUT') { // Handles /api/applications/:id for updates
+        const pathParts = url.pathname.split('/').filter(Boolean);
+        const applicationId = (pathParts.length > 1 && pathParts[1].toLowerCase() === 'applications' && pathParts.length > 2) ? pathParts[pathParts.length - 1] : null;
+
+        if (!applicationId) {
+            return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        try {
+            const authContext = await getAuthContext(req);
+            if (!authContext) {
+                return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+            }
+
+            const updateData = await req.json();
+            const updatedApplication = await studentapplicationsResource.updateApplication(applicationId, updateData, authContext);
+
+            if (updatedApplication) {
+                return new Response(JSON.stringify(updatedApplication), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            } else {
+                 // This case should ideally not be reached if updateApplication throws on error
+                return new Response(JSON.stringify({ error: 'Failed to update application' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+            }
+
+        } catch (error) {
+            console.error('Error handling PUT /api/applications/:id:', error.message);
+            let statusCode = 500;
+            if (error.message.includes('Unauthorized')) statusCode = 401;
+            if (error.message.includes('Forbidden')) statusCode = 403;
+            if (error.message.includes('not found')) statusCode = 404;
+            if (error.message.includes('required') || error.message.includes('Invalid')) statusCode = 400;
+            return new Response(JSON.stringify({ error: error.message || 'Failed to update application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+        }
+    }
     if (req.method === 'PATCH') { // Handles /api/applications/:id for updates
       return studentapplicationsResource.handlePatch(req);
     }
