@@ -297,7 +297,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
     const staticPublicDir = path.join(projectRoot, 'public'); // Use the passed publicDir or recalculate if needed
 
     // Update the list of known HTML files in the 'html' directory
-    const htmlFilesInHtmlDir = ['/index.html', '/login.html', '/studentdashboard.html', '/companydashboard.html', '/admin-dashboard.html']; // Added admin-dashboard.html
+    const htmlFilesInHtmlDir = ['/index.html', '/login.html', '/studentdashboard.html', '/companydashboard.html', '/admin-dashboard.html', '/application.html', '/style.css']; // Added admin-dashboard.html, application.html, style.css
 
     if (requestedPath === '/') {
       filePath = path.join(staticPublicDir, 'html', 'index.html');

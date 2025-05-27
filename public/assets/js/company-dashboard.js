@@ -304,7 +304,7 @@ async function renderApplications(applicationsToRender) {
             const appId = e.target.dataset.applicationId;
             console.log(`View application with ID: ${appId}`);
             // Implement logic to view application details (e.g., redirect to application.html)
-            window.location.href = `html/application.html?id=${appId}`;
+            window.location.href = `application.html?id=${appId}`;
         });
     });
 

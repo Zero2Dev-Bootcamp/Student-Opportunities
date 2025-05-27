@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apply for Opportunity - Studexplore</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css"> <!-- General styles -->
-    <link rel="stylesheet" href="../assets/css/application.css"> <!-- Specific styles for application -->
+    <link rel="stylesheet" href="/assets/css/companydashboard.css"> <!-- Base styles for navbar and footer -->
+    <link rel="stylesheet" href="/assets/css/application.css"> <!-- Specific styles for application -->
     <style>
         .logo-img {
             height: 45px;
@@ -15,30 +15,32 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo"><img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore (Student)</div>
+        <div class="logo">
+            <img src="/assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore (Student)
+        </div>
         <div class="nav-links">
-            <a href="index.html#home">Home</a>
-            <a href="opportunities.html">Opportunities</a>
-            <a href="studentdashboard.html#profile">Profile</a>
-            <a href="index.html" id="logout-link">Logout</a>
+            <a href="/index.html#home">Home</a>
+            <a href="/opportunities.html">Opportunities</a>
+            <a href="/studentdashboard.html#profile">Profile</a>
+            <a href="/index.html" id="logout-link">Logout</a>
         </div>
     </nav>
 
-    <main>
+    <main class="opportunity-section">
         <h1>Apply for Opportunity</h1>
         <h3 id="opportunity-title"></h3>
 
         <form id="applicationForm">
             <div class="form-group">
-                <label for="why-choose-me">Why Choose me?</label><br>
+                <label for="why-choose-me">Why Choose me?</label>
                 <textarea id="why-choose-me" name="why-choose-me" rows="4" required></textarea>
             </div>
             <div class="form-group">
-                <label for="skills">Skills</label><br>
+                <label for="skills">Skills</label>
                 <textarea id="skills" name="skills" rows="4" required></textarea>
             </div>
             <div class="form-group">
-                <label for="experiences">Experiences</label><br>
+                <label for="experiences">Experiences</label>
                 <textarea id="experiences" name="experiences" rows="4" required></textarea>
             </div>
 

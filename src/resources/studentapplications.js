@@ -14,23 +14,22 @@ export async function getAuthContext(req) {
   // directly from custom headers or query parameters. This is less secure.
   // A more robust solution would involve proper token validation (e.g., JWT).
 
-  let userId = null;
-  let userType = null;
+  let userId = req.headers.get('X-User-Id') || new URL(req.url).searchParams.get('userId');
+  let userType = req.headers.get('X-User-Type') || new URL(req.url).searchParams.get('userType');
 
-  // Attempt to get token from Authorization header (assuming Bearer token)
-  const authHeader = req.headers.get('Authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    // IMPORTANT: In a real application, you would validate this token (e.g., JWT)
-    // and extract the user ID and type securely.
-    // For this temporary fix, we'll assume the token *is* the userId and fetch userType from DB.
-    userId = token;
-    console.log(`[Auth] Attempting to authenticate with token (assuming userId): ${userId}`);
-  } else {
-     // Fallback to less secure headers/query parameters if no Authorization header
-     userId = req.headers.get('X-User-Id') || new URL(req.url).searchParams.get('userId');
-     userType = req.headers.get('X-User-Type') || new URL(req.url).searchParams.get('userType');
-     console.log(`[Auth] Attempting to authenticate with headers/params: userId: ${userId}, userType: ${userType}`);
+  console.log(`[Auth] Attempting to authenticate with headers/params: userId: ${userId}, userType: ${userType}`);
+
+  // If X-User-Id is not present, try Authorization header as a fallback (less secure, temporary fix)
+  if (!userId) {
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      // IMPORTANT: In a real application, you would validate this token (e.g., JWT)
+      // and extract the user ID and type securely.
+      // For this temporary fix, we'll assume the token *is* the userId and fetch userType from DB.
+      userId = token;
+      console.log(`[Auth] Attempting to authenticate with token (assuming userId): ${userId}`);
+    }
   }
 
 
@@ -453,7 +452,14 @@ class Application {
         return new Response(JSON.stringify({ error: 'Unauthorized or not a student user' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
       }
 
-      const applicationData = await req.json();
+      const formData = await req.formData();
+      const applicationData = {
+        opportunity_id: parseInt(formData.get('opportunity_id'), 10),
+        why_choose_me: formData.get('why-choose-me'),
+        skills: formData.get('skills'),
+        experiences: formData.get('experiences'),
+        // student_user_id will be added from authContext
+      };
       // Add student_user_id from auth context to application data
       applicationData.student_user_id = authContext.userId;
 

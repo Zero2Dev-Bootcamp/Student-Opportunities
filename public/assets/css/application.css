@@ -1,125 +1,105 @@
 /* Specific styles for application pages */
 
-/* Inherit general styles from ../../style.css */
+/* Import Google Fonts - already in HTML, but good to have here for completeness if not global */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap');
+
+/* Root variables for colors and spacing - copied from companydashboard.css */
+:root {
+  --primary-blue: #0077B5;
+  --light-gray: #F3F2EF;
+  --white: #FFFFFF;
+  --teal-accent: #00A0DC;
+  --text-dark: #333333;
+  --text-muted: #666666;
+  --border-gray: #E0E0E0;
+  --error-red: #D32F2F;
+  --success-green: #2E7D32;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+/* Inherit general styles from ../../style.css - This comment is now misleading as style.css is removed */
+
+body { /* Apply base styles to body for consistency */
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--light-gray);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
 
 main {
     padding: 2rem;
-    max-width: 800px; /* Adjust max-width for the form */
+    width: 100%; /* Maximize width */
     margin: 0 auto;
-    /* background-color: #121212; Inherited from body */
-    /* color: #E6E6E6; Inherited from body */
+    /* background-color: #121212; Inherited from body */ /* Remove or update */
+    /* color: #E6E6E6; Inherited from body */ /* Remove or update */
+}
+
+.application-details-container { /* Add a container for the main content to give it a white background */
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    transition: var(--transition);
+    margin-top: 20px; /* Add some space from navbar */
 }
 
 h1 {
-    color: #1E90FF; /* Primary accent color */
+    color: var(--primary-blue); /* Primary accent color */
     text-align: center;
     margin-bottom: 1.5rem;
 }
 
-#opportunity-details {
+#opportunity-title {
     text-align: center;
-    margin-bottom: 1.5rem;
-    color: #E6E6E6; /* Light text for dark background */
+    margin-bottom: 1.5rem; /* Add some margin for spacing */
+    color: var(--text-dark); /* Ensure it's visible with dark text */
 }
 
-#opportunity-details h2 {
-    color: #00D4B4; /* Tertiary accent for opportunity title */
-    font-size: 1.5rem;
+h2 { /* Style for Applicant Details, Application Content headings */
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--primary-blue);
+    margin-bottom: 15px;
 }
 
-#applicationForm {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    background-color: #E6E6E6; /* Light background for form */
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    color: #121212; /* Dark text for light background */
-    text-align: left;
+#applicant-details, #application-details {
+    background-color: var(--white); /* Ensure these sections have white background */
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: var(--transition);
 }
 
+#applicant-details:hover, #application-details:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.detail-group {
+    margin-bottom: 15px;
+}
+
+.detail-group h3 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-dark); /* Dark text for labels */
+    margin-bottom: 5px;
+}
+
+.detail-group p {
+    font-size: 14px;
+    color: var(--text-muted); /* Muted text for details */
+}
+
+/* Ensure form groups are vertical */
 .form-group {
     display: flex;
     flex-direction: column;
-}
-
-.form-group label {
-    font-family: 'Source Code Pro', monospace;
-    font-weight: 400;
-    margin-bottom: 0.5rem;
-    color: #121212; /* Dark text for labels */
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    padding: 0.75rem;
-    border: 1px solid #121212;
-    border-radius: 5px;
-    font-size: 1rem;
-    background-color: #FFFFFF; /* White background for inputs */
-    color: #121212; /* Dark text for input */
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: #00D4B4;
-    outline: none;
-    box-shadow: 0 0 5px #00D4B4;
-}
-
-.form-group textarea {
-    resize: vertical;
-    min-height: 100px;
-}
-
-.submit-button {
-    background-color: #FF2D55; /* Secondary accent color */
-    color: #E6E6E6;
-    padding: 0.75rem;
-    border: none;
-    border-radius: 5px;
-    font-family: 'Source Code Pro', monospace;
-    font-weight: 400;
-    cursor: pointer;
-    transition: box-shadow 0.3s, transform 0.3s;
-    align-self: flex-start; /* Align button to the left */
-}
-
-.submit-button:hover {
-    box-shadow: 0 0 10px #FF2D55, 0 0 20px #FF2D55;
-    transform: translateY(-2px);
-}
-
-.form-message {
-    margin-top: 0.5rem;
-    font-family: 'Source Code Pro', monospace;
-    text-align: center;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    main {
-        padding: 1rem;
-    }
-
-    h1 {
-        font-size: 1.8rem;
-    }
-
-    #opportunity-details h2 {
-        font-size: 1.3rem;
-    }
-
-    #applicationForm {
-        padding: 1.5rem;
-    }
-
-    .submit-button {
-        align-self: stretch; /* Stretch button to full width */
-    }
+    width: 100%; /* Ensure it takes full width */
+    margin-bottom: 15px; /* Add margin for spacing between groups */
 }
 
 /* Styles for the application actions section */
@@ -129,6 +109,15 @@ h1 {
     flex-direction: column;
     gap: 1rem;
     align-items: center;
+    background-color: var(--white); /* White background for actions section */
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 20px;
+    transition: var(--transition);
+}
+
+.application-actions:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Styles for the message box */
@@ -141,57 +130,58 @@ h1 {
 .message-box label {
     display: block;
     margin-bottom: 0.5rem;
-    font-family: 'Source Code Pro', monospace;
-    color: #E6E6E6; /* Light text for dark background */
+    font-family: 'Poppins', sans-serif; /* Changed font to Poppins */
+    color: var(--text-dark); /* Dark text for labels */
 }
 
 #company-message {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #555; /* Darker border for dark background */
+    border: 1px solid var(--border-gray); /* Light border for light background */
     border-radius: 5px;
     font-size: 1rem;
-    background-color: #333; /* Dark background for textarea */
-    color: #E6E6E6; /* Light text for textarea */
+    background-color: var(--white); /* White background for textarea */
+    color: var(--text-dark); /* Dark text for textarea */
     resize: vertical;
     min-height: 100px;
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    box-sizing: border-box;
 }
 
 #company-message:focus {
-    border-color: #1E90FF; /* Primary accent color on focus */
+    border-color: var(--primary-blue); /* Primary accent color on focus */
     outline: none;
-    box-shadow: 0 0 5px #1E90FF;
+    box-shadow: 0 0 5px rgba(0, 119, 181, 0.3); /* Use primary blue for shadow */
 }
 
 /* Styles for the action buttons */
 .action-button {
-    padding: 0.75rem 1.5rem;
+    padding: 12px 25px; /* Larger padding */
     border: none;
     border-radius: 5px;
-    font-family: 'Source Code Pro', monospace;
+    font-family: 'Poppins', sans-serif;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-    color: #E6E6E6; /* Light text for buttons */
-    min-width: 120px; /* Ensure buttons have a minimum width */
+    transition: var(--transition);
+    color: var(--white); /* Light text for buttons */
+    min-width: 120px;
+    box-shadow: var(--shadow); /* Add shadow */
 }
 
 #approve-button {
-    background-color: #00D4B4; /* Tertiary accent color (Green) */
+    background-color: var(--success-green); /* Green for approve */
 }
 
 #for-review-button {
-    background-color: #FFC107; /* Yellow */
+    background-color: var(--primary-blue); /* Blue for for review */
 }
 
 #reviewed-button {
-    background-color: #1E90FF; /* Primary accent color (Blue) */
+    background-color: var(--teal-accent); /* Teal for reviewed */
 }
 
 .action-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px); /* Lift slightly on hover */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* More pronounced shadow on hover */
 }
 
 .action-button:active {
@@ -211,19 +201,16 @@ h1 {
 }
 
 /* Specific style for error messages */
-#action-message:not(:empty) {
-    background-color: #FF2D55; /* Secondary accent color (Red) */
-    color: #E6E6E6;
+#action-message[style*="color: red"] { /* Use attribute selector for consistency */
+    background-color: var(--error-red); /* Red for error */
+    color: var(--white);
 }
 
 /* Specific style for success messages (if any) */
-/* You might add a class for success messages in your JS */
-/*
-.form-message.success {
-    background-color: #00D4B4;
-    color: #121212;
+#action-message[style*="color: green"] { /* Use attribute selector for consistency */
+    background-color: var(--success-green);
+    color: var(--white);
 }
-*/
 
 /* Responsive adjustments for buttons */
 @media (max-width: 768px) {
@@ -236,4 +223,19 @@ h1 {
         width: 100%;
         min-width: auto;
     }
+}
+
+/* Styles for application form */
+#applicationForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: var(--white); /* Light background for form */
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    color: var(--text-dark); /* Dark text for light background */
+    text-align: left;
+    width: 100%; /* Maximize width within its container */
+    margin: 2rem auto; /* Centered the form and added top/bottom margin */
 }
