@@ -96,7 +96,7 @@ class Application {
         throw new Error('Database connection not available in Application resource.');
       }
 
-      const { student_user_id, opportunity_id, why_choose_me, skills, experiences } = applicationData;
+      const { student_user_id, opportunity_id, why_choose_me, skills, experiences, notes } = applicationData;
 
       // Basic input validation
       if (!student_user_id || !opportunity_id) {
@@ -107,13 +107,13 @@ class Application {
       this.db.run('BEGIN TRANSACTION');
 
       try {
-        // Insert the application record with new fields
+        // Insert the application record with new fields, including notes
         const insertApplicationStmt = this.db.prepare(
-          `INSERT INTO Application (student_user_id, opportunity_id, why_choose_me, skills, experiences)
-           VALUES (?, ?, ?, ?, ?)`
+          `INSERT INTO Application (student_user_id, opportunity_id, why_choose_me, skills, experiences, notes)
+           VALUES (?, ?, ?, ?, ?, ?)`
         );
 
-        const applicationResult = insertApplicationStmt.run(student_user_id, opportunity_id, why_choose_me, skills, experiences);
+        const applicationResult = insertApplicationStmt.run(student_user_id, opportunity_id, why_choose_me, skills, experiences, notes);
 
         if (applicationResult.changes === 0) {
           throw new Error('Failed to create application (no rows affected).');
@@ -396,10 +396,11 @@ class Application {
           const opportunity = opportunityStmt.get(updatedApplication.opportunity_id);
           const opportunityTitle = opportunity ? opportunity.title : 'an opportunity';
 
-          const notificationMessage = `Your application for "${opportunityTitle}" has been updated to status: ${updatedApplication.status}.`;
+            const notificationMessage = `Your application for "${opportunityTitle}" has been updated to status: ${updatedApplication.status}.`;
 
-          // Create a simple request-like object for handlePost
-          const notificationReq = {
+
+            // Create a simple request-like object for handlePost
+            const notificationReq = {
             json: async () => ({
               user_id: updatedApplication.student_user_id,
               message: notificationMessage
@@ -505,6 +506,55 @@ class Application {
       if (error.message.includes('required') || error.message.includes('Invalid')) statusCode = 400; // Bad Request for validation errors
       if (error.message.includes('Forbidden')) statusCode = 403;
       return new Response(JSON.stringify({ error: error.message || 'Failed to create application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
+  /**
+   * Handles PUT requests to /api/applications/:applicationId to update an application.
+   * @param {Request} req - The incoming request object.
+   * @returns {Promise<Response>} - The response to send back to the client.
+   */
+  async handlePut(req) {
+    try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const url = new URL(req.url);
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[pathParts.length - 1] : null;
+
+      if (!applicationId) {
+        return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      let updateData;
+      try {
+        updateData = await req.json(); // Parse the JSON request body
+        console.log('[Application.handlePut] Received updateData:', updateData); // Log received data
+      } catch (error) {
+        console.error('[Application.handlePut] Error parsing request body:', error.message);
+        return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      // Pass authContext and updateData to the core updateApplication method
+      const updatedApplication = await this.updateApplication(applicationId, updateData, authContext);
+
+      if (updatedApplication) {
+        return new Response(JSON.stringify(updatedApplication), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } else {
+        // This case (null result) means application not found by updateApplication's initial check
+        return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+      }
+    } catch (error) {
+      console.error('Error in Application.handlePut:', error.message);
+      let statusCode = 500; // Internal Server Error by default
+      if (error.message.includes('Unauthorized')) statusCode = 401;
+      if (error.message.includes('Forbidden')) statusCode = 403;
+      if (error.message.includes('not found')) statusCode = 404;
+      if (error.message.includes('Invalid')) statusCode = 400;
+      return new Response(JSON.stringify({ error: error.message || 'Failed to update application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
     }
   }
 }
