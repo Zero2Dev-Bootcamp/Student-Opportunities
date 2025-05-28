@@ -1,7 +1,3 @@
-export function initNotifications() {
-    document.addEventListener('DOMContentLoaded', loadNotifications);
-}
-
 async function loadNotifications() {
     if (localStorage.getItem('authToken')) {
         try {
@@ -25,7 +21,7 @@ async function loadNotifications() {
     }
 }
 
-export async function markAsRead(id) {
+async function markAsRead(id) {
     try {
         const response = await fetch(`/notifications/${id}`, {
             method: 'PATCH',
@@ -42,3 +38,5 @@ export async function markAsRead(id) {
         console.error('Mark as read error:', error);
     }
 }
+
+document.addEventListener('DOMContentLoaded', loadNotifications);
