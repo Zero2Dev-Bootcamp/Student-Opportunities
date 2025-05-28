@@ -1,7 +1,7 @@
-async function loadNotifications() {
+export async function loadNotifications() {
     if (localStorage.getItem('authToken')) {
         try {
-            const response = await fetch('/notifications', {
+            const response = await fetch('/api/notifications', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
             });
             const notifications = await response.json();
@@ -23,7 +23,7 @@ async function loadNotifications() {
 
 async function markAsRead(id) {
     try {
-        const response = await fetch(`/notifications/${id}`, {
+        const response = await fetch(`/api/notifications/${id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',

@@ -1,3 +1,5 @@
+import { loadNotifications } from './notification.js'; // Import loadNotifications
+
 document.addEventListener('DOMContentLoaded', () => {
     const editProfileBtn = document.getElementById('edit-profile-btn');
     const profileEditForm = document.getElementById('profile-edit-form');
@@ -245,6 +247,7 @@ async function loadReceivedApplications() {
             }
 
             renderApplications(applications); // Pass only applications data
+            loadNotifications(); // Call loadNotifications after applications are loaded
         }
     } catch (error) {
         console.error('Error loading received applications:', error);
