@@ -345,7 +345,7 @@ async function loadApplications(studentId) {
     }
 
     try {
-        const response = await fetchWithAuth(`/api/applications?studentId=${studentId}`); // Added /api prefix
+        const response = await fetchWithAuth(`/api/applications?studentId=${studentId}&_=${new Date().getTime()}`); // Added /api prefix and cache buster
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(`Failed to fetch applications: ${response.status} ${response.statusText}. ${errorData.error || ''}`);

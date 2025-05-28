@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`
                 },
-                body: JSON.stringify({ status: status, message: message }) // Include message in the body
+                body: JSON.stringify({ status: status, notes: message }) // Include message in the body as 'notes'
             });
 
             console.log('application-details.js: Update status response status:', response.status);
