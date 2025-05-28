@@ -1,6 +1,7 @@
 import * as path from 'path'; // Import the path module
 import * as fs from 'fs/promises'; // Import the file system module with promises
 import db from '../../db/db.js'; // Import the database connection
+import NotificationResource from './notificationResource.js'; // Import NotificationResource
 
 // src/resources/application.js
 
@@ -78,6 +79,7 @@ class Application {
    */
   constructor(db) {
     this.db = db;
+    this.notificationResource = new NotificationResource(db); // Instantiate NotificationResource
   }
 
   // --- Core Service Methods ---
@@ -385,7 +387,31 @@ class Application {
       console.log('[Application.updateApplication] Result:', result); // Added logging
 
       if (result.changes > 0) {
-        return this.getApplicationById(applicationId);
+        const updatedApplication = await this.getApplicationById(applicationId);
+
+        // Check if status was updated and the update was by a company
+        if (updateData.status !== undefined && authContext.userType === 'company') {
+          // Fetch opportunity title for the notification message
+          const opportunityStmt = this.db.prepare("SELECT title FROM Opportunity WHERE id = ?");
+          const opportunity = opportunityStmt.get(updatedApplication.opportunity_id);
+          const opportunityTitle = opportunity ? opportunity.title : 'an opportunity';
+
+          const notificationMessage = `Your application for "${opportunityTitle}" has been updated to status: ${updatedApplication.status}.`;
+
+          // Create a simple request-like object for handlePost
+          const notificationReq = {
+            json: async () => ({
+              user_id: updatedApplication.student_user_id,
+              message: notificationMessage
+            })
+          };
+
+          // Use the NotificationResource to create the notification
+          console.log('[Application.updateApplication] Creating notification for student:', updatedApplication.student_user_id);
+          await this.notificationResource.handlePost(notificationReq);
+        }
+
+        return updatedApplication;
       } else {
         const existingApp = await this.getApplicationById(applicationId);
         if (!existingApp) {
