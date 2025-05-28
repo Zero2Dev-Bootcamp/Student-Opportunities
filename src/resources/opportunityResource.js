@@ -7,14 +7,22 @@ class OpportunityResource {
 
   async handleGet(req) {
     try {
-      // Extract opportunity ID from the request URL if present
       const url = new URL(req.url);
       const pathSegments = url.pathname.split('/').filter(segment => segment !== '');
       const opportunityId = pathSegments[2]; // Assuming URL is /api/opportunities/:id
+      const companyId = url.searchParams.get('companyId'); // Extract companyId from query params
 
       if (opportunityId) {
-        // Fetch a specific opportunity by ID
-        const stmt = this.db.prepare("SELECT * FROM Opportunity WHERE id = ?");
+        // Fetch a specific opportunity by ID, including application count
+        const stmt = this.db.prepare(`
+          SELECT
+              O.*,
+              COUNT(A.id) AS applications_count
+          FROM Opportunity AS O
+          LEFT JOIN Application AS A ON O.id = A.opportunity_id
+          WHERE O.id = ?
+          GROUP BY O.id
+        `);
         const opportunity = stmt.get(opportunityId);
 
         if (opportunity) {
@@ -29,9 +37,25 @@ class OpportunityResource {
           });
         }
       } else {
-        // Fetch all opportunities
-        const stmt = this.db.prepare("SELECT * FROM Opportunity");
-        const opportunities = stmt.all();
+        // Fetch opportunities, filtered by companyId if present, and include application count
+        let sql = `
+          SELECT
+              O.*,
+              COUNT(A.id) AS applications_count
+          FROM Opportunity AS O
+          LEFT JOIN Application AS A ON O.id = A.opportunity_id
+        `;
+        const params = [];
+
+        if (companyId) {
+          sql += ` WHERE O.company_user_id = ?`;
+          params.push(companyId);
+        }
+
+        sql += ` GROUP BY O.id`;
+
+        const stmt = this.db.prepare(sql);
+        const opportunities = stmt.all(...params);
 
         return new Response(JSON.stringify(opportunities), {
           headers: { 'Content-Type': 'application/json' },

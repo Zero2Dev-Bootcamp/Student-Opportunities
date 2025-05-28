@@ -130,7 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadReceivedApplications();
 
     // Poll for new applications every 10 seconds (adjust as needed)
-    setInterval(loadReceivedApplications, 10000);
+    setInterval(() => {
+        loadReceivedApplications();
+        loadPostedOpportunities(); // Also refresh posted opportunities
+    }, 10000);
 });
 
 // Function to load posted opportunities
