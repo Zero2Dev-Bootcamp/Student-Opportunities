@@ -293,8 +293,10 @@ async function renderApplications(applicationsToRender) {
             <p><strong>For:</strong> ${opportunityTitle}</p>
             <p><strong>Applied on:</strong> ${app.application_date ? new Date(app.application_date).toLocaleDateString() : 'N/A'}</p>
             <!-- Add buttons for View Application, Change Status, etc. as needed -->
-            <button class="view-application-btn" data-application-id="${app.id || ''}" data-opportunity-id="${app.opportunity_id || ''}">View all Applications</button>
-            <a href="application.html?id=${app.id || ''}" class="change-status-btn">Change Status</a>
+            <div class="application-actions">
+                <button class="view-application-btn" data-application-id="${app.id || ''}" data-opportunity-id="${app.opportunity_id || ''}">View all Applications</button>
+                <a href="application.html?id=${app.id || ''}" class="change-status-btn">Change Status</a>
+            </div>
         `;
         applicationListDiv.appendChild(applicationItem);
     });

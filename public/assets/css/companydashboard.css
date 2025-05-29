@@ -222,23 +222,48 @@ main p {
   font-size: 12px; /* Smaller font size */
 }
 
-.view-application-btn, .change-status-btn {
+.view-application-btn {
   background-color: var(--primary-blue);
   color: var(--white);
   border: none;
-  padding: 12px 25px;
+  padding: 5px 10px; /* Made buttons mini */
   border-radius: 5px;
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
   margin-right: 10px; /* Add some space between buttons */
-  margin-top: 10px; /* Add some space above */
+  margin-top: 10px; /* Add some space above the buttons */
   display: inline-block;
   box-shadow: var(--shadow);
+  font-size: 12px; /* Smaller font size for mini buttons */
 }
 
-.view-application-btn:hover, .change-status-btn:hover {
+.view-application-btn:hover {
+  background-color: var(--teal-accent);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.change-status-btn {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 5px 10px; /* Made buttons mini */
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-right: 10px; /* Add some space between buttons */
+  margin-top: 10px; /* Add some space above the buttons */
+  display: inline-block; /* Treat link as a block for styling */
+  text-decoration: none; /* Remove underline */
+  box-shadow: var(--shadow);
+  font-size: 12px; /* Smaller font size for mini buttons */
+}
+
+.change-status-btn:hover {
   background-color: var(--teal-accent);
   transform: translateY(-3px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -433,6 +458,12 @@ main p {
 .application-item p, #application-list p {
   font-size: 14px;
   margin-bottom: 10px;
+}
+
+.application-actions {
+  display: flex; /* Arrange children (buttons/links) in a row */
+  gap: 10px; /* Add some space between the buttons */
+  margin-top: 10px; /* Add some space above the buttons */
 }
 
 /* Notifications Section */
