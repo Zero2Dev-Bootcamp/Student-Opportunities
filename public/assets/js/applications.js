@@ -1,5 +1,14 @@
+import { logout } from '../src/resources/login.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('applications.js: DOMContentLoaded');
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            logout();
+            window.location.href = 'index.html';
+        });
+    }
     const urlParams = new URLSearchParams(window.location.search);
     const opportunityId = urlParams.get('opportunityId');
     console.log('applications.js: Extracted opportunityId from URL:', opportunityId);
