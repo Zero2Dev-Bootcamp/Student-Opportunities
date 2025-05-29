@@ -215,10 +215,10 @@ class Application {
       //   const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
       //   app.files = filesStmt.all(app.id);
       // }
-
-      return applications;
+      // Ensure the result is always an array
+      return Array.isArray(applications) ? applications : (applications ? [applications] : []);
     } catch (error) {
-      console.error('Error in Application.getApplicationsByStudentId:', error.message);
+      console.error('Error in Application.getApplicationsByOpportunityId:', error.message);
       throw error;
     }
   }
