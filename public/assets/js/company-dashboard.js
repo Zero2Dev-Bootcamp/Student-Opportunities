@@ -291,14 +291,10 @@ async function renderApplications(applicationsToRender) {
         applicationItem.innerHTML = `
             <p><strong>Applicant:</strong> ${applicantName}</p>
             <p><strong>For:</strong> ${opportunityTitle}</p>
-            <p><strong>Status:</strong> ${app.status || 'N/A'}</p>
             <p><strong>Applied on:</strong> ${app.application_date ? new Date(app.application_date).toLocaleDateString() : 'N/A'}</p>
-            ${app.why_choose_me ? `<p><strong>Why Choose Me:</strong> ${app.why_choose_me}</p>` : ''}
-            ${app.skills ? `<p><strong>Skills:</strong> ${app.skills}</p>` : ''}
-            ${app.experiences ? `<p><strong>Experiences:</strong> ${app.experiences}</p>` : ''}
             <!-- Add buttons for View Application, Change Status, etc. as needed -->
-            <button class="view-application-btn" data-application-id="${app.id || ''}">View Application</button>
-            <button class="change-status-btn" data-application-id="${app.id || ''}">Change Status</button>
+            <button class="view-application-btn" data-application-id="${app.id || ''}" data-opportunity-id="${app.opportunity_id || ''}">View all Applications</button>
+            <a href="application.html?id=${app.id || ''}" class="change-status-btn">Change Status</a>
         `;
         applicationListDiv.appendChild(applicationItem);
     });
@@ -308,17 +304,10 @@ async function renderApplications(applicationsToRender) {
     applicationListDiv.querySelectorAll('.view-application-btn').forEach(button => {
         button.addEventListener('click', (e) => {
             const appId = e.target.dataset.applicationId;
-            console.log(`View application with ID: ${appId}`);
-            // Implement logic to view application details (e.g., redirect to application.html)
-            window.location.href = `application.html?id=${appId}`;
-        });
-    });
-
-    applicationListDiv.querySelectorAll('.change-status-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const appId = e.target.dataset.applicationId;
-            console.log(`Change status for application with ID: ${appId}`);
-            // Implement logic to change application status
+            const opportunityId = e.target.dataset.opportunityId;
+            console.log(`View applications for opportunity with ID: ${opportunityId}`);
+            // Redirect to applications.html, passing the opportunity ID
+            window.location.href = `/html/applications.html?opportunityId=${opportunityId}`;
         });
     });
 }
