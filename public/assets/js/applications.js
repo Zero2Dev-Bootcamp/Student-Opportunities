@@ -106,6 +106,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Display Applications
     function displayApplications(applications) {
         applicationsListDiv.innerHTML = ''; // Clear loading message
+        const applicationCountElement = document.getElementById('application-count');
+
+        console.log('applications.js: Raw data received for display:', applications); // Added logging
 
         let applicationsArray = applications;
 
@@ -119,9 +122,19 @@ document.addEventListener('DOMContentLoaded', async () => {
              // If it's not an array, not an object with a 'data' array, and not a single object, log an error
             console.error('applications.js: Expected applications data to be an array, a single object, or an object with a "data" array, but received:', applications);
             applicationsListDiv.innerHTML = '<p>Error: Unexpected data format received from the server.</p>';
+            if (applicationCountElement) {
+                applicationCountElement.textContent = 'Application Count: Error';
+            }
             return;
         }
 
+        console.log('applications.js: Processed applications array for display:', applicationsArray); // Added logging
+        console.log('applications.js: Number of applications to display:', applicationsArray.length); // Added logging
+
+
+        if (applicationCountElement) {
+            applicationCountElement.textContent = `Application Count: ${applicationsArray.length}`;
+        }
 
         if (!applicationsArray || applicationsArray.length === 0) {
             applicationsListDiv.innerHTML = '<p>No applications found for this opportunity.</p>';
@@ -129,7 +142,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const list = document.createElement('ul');
-        applicationsArray.forEach(app => {
+        applicationsArray.forEach((app, index) => { // Added index for logging
+            console.log(`applications.js: Processing application ${index + 1}:`, app); // Added logging
             const listItem = document.createElement('li');
             listItem.innerHTML = `
                 <strong>Applicant:</strong> ${app.student_full_name || 'N/A'} (${app.student_email || 'N/A'})<br>
@@ -142,10 +156,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button class="status-button" data-application-id="${app.id}" data-status="For Review">For Review</button>
                     <button class="status-button" data-application-id="${app.id}" data-status="Reviewed">Reviewed</button>
                     <button class="status-button" data-application-id="${app.id}" data-status="Approved">Approved</button>
-                    <a href="application-details.html?id=${app.id}">View Details</a>
+                    <a href="application-details.html?id=${app.id}" class="change-status-btn">View Details</a>
                 </div>
                 <hr>
             `;
+            console.log('Generated listItem HTML:', listItem.innerHTML); // Log generated HTML
             list.appendChild(listItem);
         });
         applicationsListDiv.appendChild(list);
