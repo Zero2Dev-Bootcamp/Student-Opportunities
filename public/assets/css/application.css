@@ -155,16 +155,18 @@ h2 { /* Style for Applicant Details, Application Content headings */
 
 /* Styles for the action buttons */
 .action-button {
-    padding: 12px 25px; /* Larger padding */
     border: none;
+    padding: 12px 25px; /* Slightly larger padding */
     border-radius: 5px;
     font-family: 'Poppins', sans-serif;
-    font-weight: 700;
+    font-weight: 700; /* Make font bolder */
     cursor: pointer;
     transition: var(--transition);
+    margin-top: 20px; /* Add some space above */
+    display: inline-block; /* Ensure it behaves like a block for margin/padding */
+    box-shadow: var(--shadow); /* Add a subtle shadow */
     color: var(--white); /* Light text for buttons */
     min-width: 120px;
-    box-shadow: var(--shadow); /* Add shadow */
 }
 
 #approve-button {
@@ -180,14 +182,57 @@ h2 { /* Style for Applicant Details, Application Content headings */
 }
 
 .action-button:hover {
+    background-color: var(--teal-accent); /* Change background on hover */
     transform: translateY(-3px); /* Lift slightly on hover */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* More pronounced shadow on hover */
+}
+
+#approve-button:hover {
+    background-color: #4CAF50; /* Darker green on hover */
+}
+
+#for-review-button:hover {
+    background-color: var(--teal-accent); /* Use teal accent on hover */
+}
+
+#reviewed-button:hover {
+    background-color: #0077B5; /* Use primary blue on hover */
 }
 
 .action-button:active {
     transform: translateY(0);
     box-shadow: none;
 }
+
+.status-actions {
+  display: flex; /* Arrange children (buttons/links) in a row */
+  gap: 10px; /* Add some space between the buttons */
+  margin-top: 10px; /* Add some space above the buttons */
+}
+
+.status-actions .status-button, .status-actions .change-status-btn {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 5px 10px; /* Made buttons mini */
+  border-radius: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-right: 10px; /* Add some space between buttons */
+  margin-top: 10px; /* Add some space above the buttons */
+  box-shadow: var(--shadow);
+  font-size: 12px; /* Smaller font size for mini buttons */
+  text-decoration: none; /* Remove underline for anchor tags */
+}
+
+.status-button:hover, .change-status-btn:hover {
+  background-color: var(--teal-accent);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 
 /* Style for the action message (error/success) */
 #action-message {
