@@ -11,6 +11,7 @@ import { getAuthContext } from './resources/studentapplications.js'; // Import g
  */
 export async function handleHttpRequest(req, resources, publicDir) {
   const url = new URL(req.url);
+  console.log('[handleHttpRequest] Received request for path:', url.pathname, 'with method:', req.method); // Added logging
   const { userResource, studentapplicationsResource, opportunityResource, notificationResource } = resources;
 
   // API Routes
@@ -96,21 +97,47 @@ export async function handleHttpRequest(req, resources, publicDir) {
   }
   // /api/applications (GET: list applications, POST: create application, PATCH: update application, DELETE: delete application)
   else if (url.pathname.startsWith('/api/applications')) {
-    if (req.method === 'GET') { // Handles /api/applications and /api/applications/:id
+    if (req.method === 'GET') {
         const pathParts = url.pathname.split('/').filter(Boolean);
-        const applicationId = (pathParts.length > 1 && pathParts[1].toLowerCase() === 'applications' && pathParts.length > 2) ? pathParts[pathParts.length - 1] : null;
+        console.log('[handleHttpRequest] pathParts for GET /api/applications:', pathParts); // Added logging
 
-        try {
-            if (applicationId) {
-                // Get a specific application by ID
+        // Prioritize the specific /api/applications/opportunity/:opportunityId route
+        if (
+            pathParts.length === 4 &&
+            pathParts[0].toLowerCase() === 'api' &&
+            pathParts[1].toLowerCase() === 'applications' &&
+            pathParts[2].toLowerCase() === 'opportunity'
+        ) {
+            console.log('[handleHttpRequest] Routing to studentapplicationsResource.handleGet for /api/applications/opportunity/:opportunityId (Explicit check)'); // Updated logging
+            return studentapplicationsResource.handleGet(req);
+        }
+
+        // Handle requests for a single application by ID: /api/applications/:applicationId
+        if (pathParts.length === 2 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) {
+            const applicationId = pathParts[1];
+            console.log('[handleHttpRequest] Routing to studentapplicationsResource.getApplicationById for /api/applications/:applicationId'); // Added logging
+            try {
                 const application = await studentapplicationsResource.getApplicationById(applicationId);
                 if (application) {
                     return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
                 } else {
                     return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
                 }
-            } else {
-                // Get applications for the logged-in user (student or company)
+            } catch (error) {
+                console.error('Error handling GET /api/applications/:id:', error.message);
+                let statusCode = 500;
+                if (error.message.includes('Unauthorized')) statusCode = 401;
+                if (error.message.includes('Forbidden')) statusCode = 403;
+                if (error.message.includes('not found')) statusCode = 404;
+                return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+            }
+        }
+
+        // Handle the base /api/applications GET request (e.g., list all for user)
+        // This will only be reached if the path is exactly /api/applications
+        if (pathParts.length === 2 && pathParts[1].toLowerCase() === 'applications') { // Corrected pathParts.length to 2 and index to 1
+             console.log('[handleHttpRequest] Routing to studentapplicationsResource.getApplicationsByStudentId/CompanyId for base /api/applications'); // Added logging
+             try {
                 const authContext = await getAuthContext(req);
                 if (!authContext) {
                     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
@@ -126,22 +153,27 @@ export async function handleHttpRequest(req, resources, publicDir) {
                 }
 
                 return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            } catch (error) {
+                console.error('Error handling GET /api/applications:', error.message);
+                let statusCode = 500;
+                if (error.message.includes('Unauthorized')) statusCode = 401;
+                if (error.message.includes('Forbidden')) statusCode = 403;
+                return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve applications' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
             }
-        } catch (error) {
-            console.error('Error handling GET /api/applications:', error.message);
-            let statusCode = 500;
-            if (error.message.includes('Unauthorized')) statusCode = 401;
-            if (error.message.includes('Forbidden')) statusCode = 403;
-            if (error.message.includes('not found')) statusCode = 404;
-            return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve applications' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
         }
+
+        // If none of the above GET paths match
+        console.warn('[handleHttpRequest] No matching /api/applications GET route for path:', url.pathname); // Added logging
+        return new Response(JSON.stringify({ error: 'Not Found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+
     }
     if (req.method === 'POST') { // Handles /api/applications for creation
       return studentapplicationsResource.handlePost(req);
     }
     if (req.method === 'PUT') { // Handles /api/applications/:id for updates
         const pathParts = url.pathname.split('/').filter(Boolean);
-        const applicationId = (pathParts.length > 1 && pathParts[1].toLowerCase() === 'applications' && pathParts.length > 2) ? pathParts[pathParts.length - 1] : null;
+        const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[1] : null;
+
 
         if (!applicationId) {
             return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
