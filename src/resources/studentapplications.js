@@ -186,7 +186,7 @@ class Application {
       if (application) {
         // Removed fetching associated files as ApplicationFile table is not defined
         // const filesStmt = this.db.prepare("SELECT id, file_name, file_path, mime_type FROM ApplicationFile WHERE application_id = ?");
-        // application.files = filesStmt.all(applicationId);
+        // application.files = filesStmt.all(app.id);
       }
 
       return application || null;
@@ -234,8 +234,23 @@ class Application {
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
-      const applicationsStmt = this.db.prepare("SELECT * FROM Application WHERE opportunity_id = ? ORDER BY application_date DESC");
+      // Modify the SQL query to join with the User table and select student details
+      const sql = `
+        SELECT
+          A.*,
+          U.email AS student_email,
+          U.name AS student_full_name
+        FROM Application AS A
+        JOIN User AS U ON A.student_user_id = U.id
+        WHERE A.opportunity_id = ?
+        ORDER BY A.application_date DESC
+      `;
+      const applicationsStmt = this.db.prepare(sql);
+      console.log('[Application.getApplicationsByOpportunityId] Executing SQL:', sql, 'with opportunityId:', opportunityId); // Added logging before execution
       const applications = applicationsStmt.all(opportunityId);
+
+      console.log('[Application.getApplicationsByOpportunityId] Raw result from DB:', applications); // Added logging for raw result
+      console.log('[Application.getApplicationsByOpportunityId] Number of applications fetched:', applications ? applications.length : 0); // Added logging
 
       // Removed fetching associated files as ApplicationFile table is not defined
       // for (const app of applications) {
@@ -465,7 +480,7 @@ class Application {
       }
       return new Response(JSON.stringify({ error: error.message || 'Failed to delete application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
     }
-  }; // Added semicolon
+  }
 
   /**
    * Handles POST requests to /api/applications to create a new application.
@@ -480,8 +495,13 @@ class Application {
       }
 
       const formData = await req.formData();
+      const opportunityIdRaw = formData.get('opportunity_id');
+      console.log('[Application.handlePost] Raw opportunity_id from formData:', opportunityIdRaw);
+      const opportunity_id = parseInt(opportunityIdRaw, 10);
+      console.log('[Application.handlePost] Parsed opportunity_id:', opportunity_id);
+
       const applicationData = {
-        opportunity_id: parseInt(formData.get('opportunity_id'), 10),
+        opportunity_id: opportunity_id, // Use the parsed value
         why_choose_me: formData.get('why-choose-me'),
         skills: formData.get('skills'),
         experiences: formData.get('experiences'),
@@ -555,6 +575,107 @@ class Application {
       if (error.message.includes('not found')) statusCode = 404;
       if (error.message.includes('Invalid')) statusCode = 400;
       return new Response(JSON.stringify({ error: error.message || 'Failed to update application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
+  /**
+   * Handles GET requests to /api/applications/opportunity/:opportunityId
+   * @param {Request} req - The incoming request object.
+   * @returns {Promise<Response>} - The response to send back to the client.
+   */
+  async handleGet(req) {
+    try {
+      const authContext = await getAuthContext(req);
+      if (!authContext) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const url = new URL(req.url);
+      const pathParts = url.pathname.split('/').filter(Boolean);
+
+      console.log('[Application.handleGet] Received GET request for path:', url.pathname); // Added logging
+
+      // Check if the request is for /api/applications/opportunity/:opportunityId
+      if (url.pathname.startsWith('/api/applications/opportunity/')) {
+          const opportunityId = url.pathname.substring('/api/applications/opportunity/'.length);
+          console.log('[Application.handleGet] Matched /api/applications/opportunity/:opportunityId with ID:', opportunityId); // Added logging
+
+          if (!opportunityId) {
+            return new Response(JSON.stringify({ error: 'Opportunity ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+          }
+
+          // Fetch applications using the core method
+          const applications = await this.getApplicationsByOpportunityId(opportunityId);
+
+          console.log('[Application.handleGet] Data to be sent in response:', applications); // Added logging
+          console.log('[Application.handleGet] Number of applications to be sent:', applications ? applications.length : 0); // Added logging
+
+          // Assuming the frontend expects an array directly
+          return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } // <-- MISSING CLOSING BRACE WAS HERE
+
+      else if (url.pathname.startsWith('/api/applications/')) { // Handle other /api/applications routes
+          const pathParts = url.pathname.split('/').filter(Boolean);
+
+          // Handle requests for a single application by ID: /api/applications/:applicationId
+          if (pathParts.length === 2 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) {
+             const applicationId = pathParts[1];
+             console.log('[Application.handleGet] Matched /api/applications/:applicationId with ID:', applicationId); // Added logging
+             // You would typically call getApplicationById here
+             const application = await this.getApplicationById(applicationId);
+             if (application) {
+                 return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
+             } else {
+                 return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+             }
+
+          } else if (pathParts.length === 2 && pathParts[0].toLowerCase() === 'api' && pathParts[1].toLowerCase() === 'applications') { // Corrected length and indices for base /api/applications
+               console.log('[Application.handleGet] Routing to getApplicationsByStudentId/CompanyId for base /api/applications'); // Updated logging
+               try {
+                  const authContext = await getAuthContext(req);
+                  if (!authContext) {
+                      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+                  }
+
+                  let applications = [];
+                  if (authContext.userType === 'student') {
+                      applications = await this.getApplicationsByStudentId(authContext.userId);
+                  } else if (authContext.userType === 'company') {
+                      applications = await this.getApplicationsByCompanyId(authContext.userId);
+                  } else {
+                      return new Response(JSON.stringify({ error: 'Forbidden: User type cannot access applications' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+                  }
+
+                  return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+              } catch (error) {
+                  console.error('Error handling GET /api/applications:', error.message);
+                  let statusCode = 500;
+                  if (error.message.includes('Unauthorized')) statusCode = 401;
+                  if (error.message.includes('Forbidden')) statusCode === 403;
+                  return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve applications' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+              }
+          }
+          else {
+            // If none of the above GET paths match
+            console.warn('[Application.handleGet] No matching GET route for path:', url.pathname); // Added logging
+            return new Response(JSON.stringify({ error: 'Not Found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+          }
+
+      }
+      else {
+        // Handle other potential GET requests or return a 404
+        console.warn('[Application.handleGet] No matching GET route for path:', url.pathname); // Added logging
+        return new Response(JSON.stringify({ error: 'Not Found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+      }
+
+    } catch (error) {
+      console.error('Error in Application.handleGet:', error.message);
+      let statusCode = 500; // Internal Server Error by default
+      if (error.message.includes('Unauthorized')) statusCode = 401;
+      if (error.message.includes('Forbidden')) statusCode = 403;
+      if (error.message.includes('not found')) statusCode = 404;
+      if (error.message.includes('Invalid')) statusCode = 400;
+      return new Response(JSON.stringify({ error: error.message || 'Failed to fetch applications' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
     }
   }
 }
