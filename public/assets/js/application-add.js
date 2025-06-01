@@ -1,4 +1,4 @@
-import { logout } from '../../src/resources/login.js'; // Adjust path as needed
+import { logout } from '../../src/resources/user.js'; // Updated to use consolidated user resource
 
 document.addEventListener('DOMContentLoaded', async () => {
     const logoutLink = document.getElementById('logout-link');

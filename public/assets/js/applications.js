@@ -1,4 +1,4 @@
-import { logout } from '/src/resources/login.js';
+import { logout } from '/src/resources/user.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('applications.js: DOMContentLoaded');
