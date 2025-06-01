@@ -1,6 +1,91 @@
 import db from '../../db/db.js'; // Corrected path to db.js
-import CompanyUser from './companyuser.js';
-import StudentUser from './studentuser.js';
+
+// ============================================================================
+// STUDENT USER CLASS - CONSOLIDATED FROM studentuser.js
+// ============================================================================
+// This class handles student-specific user operations
+
+class StudentUser {
+  constructor(db) {
+    this.db = db;
+  }
+
+  async createStudentSpecificData(userId, userData) {
+    console.log(`[StudentUser.createStudentSpecificData] Called for userId: ${userId} with userData:`, JSON.stringify(userData, null, 2));
+    const interests = userData.interests || [];
+    const institutionName = userData.institution_name; // Get institution name from user data
+
+    if (institutionName) {
+      // Assuming 'User' is the main table and userId is the primary key
+      const updateStmt = this.db.prepare("UPDATE User SET institution_name = ? WHERE id = ?");
+      updateStmt.run(institutionName, userId);
+      console.log(`[StudentUser.createStudentSpecificData] Updated institution_name for userId: ${userId}`);
+    } else {
+        console.log(`[StudentUser.createStudentSpecificData] No institution_name provided for userId: ${userId}`);
+    }
+
+
+    if (interests.length > 0) {
+      const interestStmt = this.db.prepare("INSERT INTO UserInterests (user_id, interest) VALUES (?, ?)");
+      for (const interest of interests) {
+        interestStmt.run(userId, interest);
+      }
+      console.log(`[StudentUser.createStudentSpecificData] Inserted ${interests.length} interests for userId: ${userId}`);
+    } else {
+      console.log(`[StudentUser.createStudentSpecificData] No interests to insert for userId: ${userId}`);
+    }
+    return true; // Indicate success
+  }
+
+  // Add other student-specific methods here if needed
+}
+
+// ============================================================================
+// COMPANY USER CLASS - CONSOLIDATED FROM companyuser.js
+// ============================================================================
+// This class handles company-specific user operations
+
+class CompanyUser {
+  constructor(db) {
+    this.db = db;
+  }
+
+  async createCompanySpecificData(userId, userData) {
+    console.log(`[CompanyUser.createCompanySpecificData] Called for userId: ${userId} with userData:`, JSON.stringify(userData, null, 2));
+    // Currently, there is no company-specific data insertion logic in the original user.js
+    // If company-specific tables or data are added later, implement the insertion here.
+    console.log(`[CompanyUser.createCompanySpecificData] No company-specific data to insert for userId: ${userId}`);
+    return true; // Indicate success
+  }
+
+  async getCompanyUserById(userId) {
+    console.log(`[CompanyUser.getCompanyUserById] Called for userId: ${userId}`);
+    try {
+      // Assuming your 'User' table has a 'user_type' column and relevant profile fields
+      // Corrected table name from 'users' to 'User' for consistency
+      // Selecting institution_name as company_name
+      const user = await this.db.query('SELECT id, name, email, user_type, industry, location, description, institution_name AS company_name FROM User WHERE id = ? AND user_type = "company"').get(userId);
+
+      if (user) {
+        console.log(`[CompanyUser.getCompanyUserById] Found company user:`, user);
+        // The query already aliases institution_name to company_name
+        return user;
+      } else {
+        console.log(`[CompanyUser.getCompanyUserById] Company user not found for userId: ${userId}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`[CompanyUser.getCompanyUserById] Error fetching company user ${userId}:`, error);
+      throw error; // Re-throw the error for the caller to handle
+    }
+  }
+
+  // Add other company-specific methods here if needed
+}
+
+// ============================================================================
+// MAIN USER CLASS
+// ============================================================================
 
 class User {
   constructor(db) {

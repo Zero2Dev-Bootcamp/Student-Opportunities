@@ -1,17 +1,18 @@
 import path from 'path';
 import Bun from 'bun'; // Import Bun for Bun.file
-import { getAuthContext } from './resources/studentapplications.js'; // Import getAuthContext
+import { getAuthContext } from './resources/applicationResource.js'; // Import getAuthContext
 
 /**
  * Handles incoming HTTP requests, routing them to the appropriate resource or serving static files.
  * @param {Request} req - The incoming request object.
- * @param {object} resources - An object containing instantiated resources (userResource, studentapplicationsResource, etc.).
+ * @param {object} resources - An object containing instantiated resources (userResource, applicationResource, etc.).
  * @param {string} publicDir - The path to the public directory.
  * @returns {Promise<Response>} - The response to send back to the client.
  */
 export async function handleHttpRequest(req, resources, publicDir) {
   const url = new URL(req.url);
-  const { userResource, studentapplicationsResource, opportunityResource, notificationResource } = resources;
+  console.log('[handleHttpRequest] Received request for path:', url.pathname, 'with method:', req.method); // Added logging
+  const { userResource, applicationResource, opportunityResource, notificationResource } = resources;
 
   // API Routes
   // /api/users (POST: register user, GET: retrieve user by ID)
@@ -96,21 +97,47 @@ export async function handleHttpRequest(req, resources, publicDir) {
   }
   // /api/applications (GET: list applications, POST: create application, PATCH: update application, DELETE: delete application)
   else if (url.pathname.startsWith('/api/applications')) {
-    if (req.method === 'GET') { // Handles /api/applications and /api/applications/:id
+    if (req.method === 'GET') {
         const pathParts = url.pathname.split('/').filter(Boolean);
-        const applicationId = (pathParts.length > 1 && pathParts[1].toLowerCase() === 'applications' && pathParts.length > 2) ? pathParts[pathParts.length - 1] : null;
+        console.log('[handleHttpRequest] pathParts for GET /api/applications:', pathParts); // Added logging
 
-        try {
-            if (applicationId) {
-                // Get a specific application by ID
-                const application = await studentapplicationsResource.getApplicationById(applicationId);
+        // Prioritize the specific /api/applications/opportunity/:opportunityId route
+        if (
+            pathParts.length === 4 &&
+            pathParts[0].toLowerCase() === 'api' &&
+            pathParts[1].toLowerCase() === 'applications' &&
+            pathParts[2].toLowerCase() === 'opportunity'
+        ) {
+            console.log('[handleHttpRequest] Routing to applicationResource.handleGet for /api/applications/opportunity/:opportunityId (Explicit check)'); // Updated logging
+            return applicationResource.handleGet(req);
+        }
+
+        // Handle requests for a single application by ID: /api/applications/:applicationId
+        if (pathParts.length === 2 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) {
+            const applicationId = pathParts[1];
+            console.log('[handleHttpRequest] Routing to applicationResource.getApplicationById for /api/applications/:applicationId'); // Added logging
+            try {
+                const application = await applicationResource.getApplicationById(applicationId);
                 if (application) {
                     return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
                 } else {
                     return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
                 }
-            } else {
-                // Get applications for the logged-in user (student or company)
+            } catch (error) {
+                console.error('Error handling GET /api/applications/:id:', error.message);
+                let statusCode = 500;
+                if (error.message.includes('Unauthorized')) statusCode = 401;
+                if (error.message.includes('Forbidden')) statusCode = 403;
+                if (error.message.includes('not found')) statusCode = 404;
+                return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve application' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
+            }
+        }
+
+        // Handle the base /api/applications GET request (e.g., list all for user)
+        // This will only be reached if the path is exactly /api/applications
+        if (pathParts.length === 2 && pathParts[1].toLowerCase() === 'applications') { // Corrected pathParts.length to 2 and index to 1
+             console.log('[handleHttpRequest] Routing to applicationResource.getApplicationsByStudentId/CompanyId for base /api/applications'); // Added logging
+             try {
                 const authContext = await getAuthContext(req);
                 if (!authContext) {
                     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
@@ -118,30 +145,35 @@ export async function handleHttpRequest(req, resources, publicDir) {
 
                 let applications = [];
                 if (authContext.userType === 'student') {
-                    applications = await studentapplicationsResource.getApplicationsByStudentId(authContext.userId);
+                    applications = await applicationResource.getApplicationsByStudentId(authContext.userId);
                 } else if (authContext.userType === 'company') {
-                    applications = await studentapplicationsResource.getApplicationsByCompanyId(authContext.userId);
+                    applications = await applicationResource.getApplicationsByCompanyId(authContext.userId);
                 } else {
                     return new Response(JSON.stringify({ error: 'Forbidden: User type cannot access applications' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
                 }
 
                 return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            } catch (error) {
+                console.error('Error handling GET /api/applications:', error.message);
+                let statusCode = 500;
+                if (error.message.includes('Unauthorized')) statusCode = 401;
+                if (error.message.includes('Forbidden')) statusCode = 403;
+                return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve applications' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
             }
-        } catch (error) {
-            console.error('Error handling GET /api/applications:', error.message);
-            let statusCode = 500;
-            if (error.message.includes('Unauthorized')) statusCode = 401;
-            if (error.message.includes('Forbidden')) statusCode = 403;
-            if (error.message.includes('not found')) statusCode = 404;
-            return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve applications' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
         }
+
+        // If none of the above GET paths match
+        console.warn('[handleHttpRequest] No matching /api/applications GET route for path:', url.pathname); // Added logging
+        return new Response(JSON.stringify({ error: 'Not Found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+
     }
     if (req.method === 'POST') { // Handles /api/applications for creation
-      return studentapplicationsResource.handlePost(req);
+      return applicationResource.handlePost(req);
     }
     if (req.method === 'PUT') { // Handles /api/applications/:id for updates
         const pathParts = url.pathname.split('/').filter(Boolean);
-        const applicationId = (pathParts.length > 1 && pathParts[1].toLowerCase() === 'applications' && pathParts.length > 2) ? pathParts[pathParts.length - 1] : null;
+        const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[1] : null;
+
 
         if (!applicationId) {
             return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
@@ -154,7 +186,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
             }
 
             const updateData = await req.json();
-            const updatedApplication = await studentapplicationsResource.updateApplication(applicationId, updateData, authContext);
+            const updatedApplication = await applicationResource.updateApplication(applicationId, updateData, authContext);
 
             if (updatedApplication) {
                 return new Response(JSON.stringify(updatedApplication), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -174,17 +206,17 @@ export async function handleHttpRequest(req, resources, publicDir) {
         }
     }
     if (req.method === 'PATCH') { // Handles /api/applications/:id for updates
-      return studentapplicationsResource.handlePatch(req);
+      return applicationResource.handlePatch(req);
     }
     if (req.method === 'DELETE') { // Handles /api/applications/:id for deletion
-      return studentapplicationsResource.handleDelete(req);
+      return applicationResource.handleDelete(req);
     }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/applications` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
   // /api/company/profile (GET: retrieve company profile for logged-in user)
   else if (url.pathname === '/api/company/profile') {
     if (req.method === 'GET') {
-      const { companyUserResource } = resources; // Access companyUserResource
+      // Access companyUser through userResource
 
       // Extract userId from query parameter
       const userId = url.searchParams.get('userId');
@@ -207,7 +239,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
       // }
 
       try {
-        const companyProfile = await companyUserResource.getCompanyUserById(userId);
+        const companyProfile = await userResource.companyUser.getCompanyUserById(userId);
 
         if (companyProfile) {
           // Include login email in the response

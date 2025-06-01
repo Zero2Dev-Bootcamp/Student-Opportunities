@@ -13,7 +13,7 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo"><img src="../../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore</div>
+        <div class="logo"><img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore</div>
         <div class="nav-links">
             <!-- Add navigation links here if needed -->
         </div>
@@ -34,6 +34,10 @@
         </div>
     </div>
 
-    <script src="../src/resources/user-details.js"></script>
+    <script src="../assets/js/user.js" type="module"></script>
+    <script type="module">
+        import { initUserDetails } from '../assets/js/user.js';
+        initUserDetails();
+    </script>
 </body>
 </html>

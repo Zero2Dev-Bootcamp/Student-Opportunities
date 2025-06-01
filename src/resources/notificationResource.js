@@ -1,5 +1,5 @@
 import db from '../../db/db.js'; // Corrected import path
-import { getAuthContext } from './studentapplications.js'; // Import getAuthContext
+import { getAuthContext } from './applicationResource.js'; // Import getAuthContext
 
 class NotificationResource {
   constructor(db) {
