@@ -5,14 +5,14 @@ import { getAuthContext } from './resources/applicationResource.js'; // Import g
 /**
  * Handles incoming HTTP requests, routing them to the appropriate resource or serving static files.
  * @param {Request} req - The incoming request object.
- * @param {object} resources - An object containing instantiated resources (userResource, studentapplicationsResource, etc.).
+ * @param {object} resources - An object containing instantiated resources (userResource, applicationResource, etc.).
  * @param {string} publicDir - The path to the public directory.
  * @returns {Promise<Response>} - The response to send back to the client.
  */
 export async function handleHttpRequest(req, resources, publicDir) {
   const url = new URL(req.url);
   console.log('[handleHttpRequest] Received request for path:', url.pathname, 'with method:', req.method); // Added logging
-  const { userResource, studentapplicationsResource, opportunityResource, notificationResource } = resources;
+  const { userResource, applicationResource, opportunityResource, notificationResource } = resources;
 
   // API Routes
   // /api/users (POST: register user, GET: retrieve user by ID)
@@ -108,16 +108,16 @@ export async function handleHttpRequest(req, resources, publicDir) {
             pathParts[1].toLowerCase() === 'applications' &&
             pathParts[2].toLowerCase() === 'opportunity'
         ) {
-            console.log('[handleHttpRequest] Routing to studentapplicationsResource.handleGet for /api/applications/opportunity/:opportunityId (Explicit check)'); // Updated logging
-            return studentapplicationsResource.handleGet(req);
+            console.log('[handleHttpRequest] Routing to applicationResource.handleGet for /api/applications/opportunity/:opportunityId (Explicit check)'); // Updated logging
+            return applicationResource.handleGet(req);
         }
 
         // Handle requests for a single application by ID: /api/applications/:applicationId
         if (pathParts.length === 2 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) {
             const applicationId = pathParts[1];
-            console.log('[handleHttpRequest] Routing to studentapplicationsResource.getApplicationById for /api/applications/:applicationId'); // Added logging
+            console.log('[handleHttpRequest] Routing to applicationResource.getApplicationById for /api/applications/:applicationId'); // Added logging
             try {
-                const application = await studentapplicationsResource.getApplicationById(applicationId);
+                const application = await applicationResource.getApplicationById(applicationId);
                 if (application) {
                     return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
                 } else {
@@ -136,7 +136,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
         // Handle the base /api/applications GET request (e.g., list all for user)
         // This will only be reached if the path is exactly /api/applications
         if (pathParts.length === 2 && pathParts[1].toLowerCase() === 'applications') { // Corrected pathParts.length to 2 and index to 1
-             console.log('[handleHttpRequest] Routing to studentapplicationsResource.getApplicationsByStudentId/CompanyId for base /api/applications'); // Added logging
+             console.log('[handleHttpRequest] Routing to applicationResource.getApplicationsByStudentId/CompanyId for base /api/applications'); // Added logging
              try {
                 const authContext = await getAuthContext(req);
                 if (!authContext) {
@@ -145,9 +145,9 @@ export async function handleHttpRequest(req, resources, publicDir) {
 
                 let applications = [];
                 if (authContext.userType === 'student') {
-                    applications = await studentapplicationsResource.getApplicationsByStudentId(authContext.userId);
+                    applications = await applicationResource.getApplicationsByStudentId(authContext.userId);
                 } else if (authContext.userType === 'company') {
-                    applications = await studentapplicationsResource.getApplicationsByCompanyId(authContext.userId);
+                    applications = await applicationResource.getApplicationsByCompanyId(authContext.userId);
                 } else {
                     return new Response(JSON.stringify({ error: 'Forbidden: User type cannot access applications' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
                 }
@@ -168,7 +168,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
 
     }
     if (req.method === 'POST') { // Handles /api/applications for creation
-      return studentapplicationsResource.handlePost(req);
+      return applicationResource.handlePost(req);
     }
     if (req.method === 'PUT') { // Handles /api/applications/:id for updates
         const pathParts = url.pathname.split('/').filter(Boolean);
@@ -186,7 +186,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
             }
 
             const updateData = await req.json();
-            const updatedApplication = await studentapplicationsResource.updateApplication(applicationId, updateData, authContext);
+            const updatedApplication = await applicationResource.updateApplication(applicationId, updateData, authContext);
 
             if (updatedApplication) {
                 return new Response(JSON.stringify(updatedApplication), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -206,17 +206,17 @@ export async function handleHttpRequest(req, resources, publicDir) {
         }
     }
     if (req.method === 'PATCH') { // Handles /api/applications/:id for updates
-      return studentapplicationsResource.handlePatch(req);
+      return applicationResource.handlePatch(req);
     }
     if (req.method === 'DELETE') { // Handles /api/applications/:id for deletion
-      return studentapplicationsResource.handleDelete(req);
+      return applicationResource.handleDelete(req);
     }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/applications` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
   // /api/company/profile (GET: retrieve company profile for logged-in user)
   else if (url.pathname === '/api/company/profile') {
     if (req.method === 'GET') {
-      const { companyUserResource } = resources; // Access companyUserResource
+      // Access companyUser through userResource
 
       // Extract userId from query parameter
       const userId = url.searchParams.get('userId');
@@ -239,7 +239,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
       // }
 
       try {
-        const companyProfile = await companyUserResource.getCompanyUserById(userId);
+        const companyProfile = await userResource.companyUser.getCompanyUserById(userId);
 
         if (companyProfile) {
           // Include login email in the response

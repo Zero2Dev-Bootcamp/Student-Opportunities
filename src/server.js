@@ -26,7 +26,7 @@ const notificationResource = new NotificationResource(db); // Instantiate Notifi
 
 const resources = {
   userResource, // CompanyUser functionality is now included within userResource
-  studentapplicationsResource: applicationResource,
+  applicationResource,
   opportunityResource,
   notificationResource,
 };
