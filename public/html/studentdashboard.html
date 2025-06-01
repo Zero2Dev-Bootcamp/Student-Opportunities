@@ -6,7 +6,7 @@
     <title>Student Dashboard - Studexplore</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/studentdashboard.css">
-    <script src="../src/resources/user.js" type="module"></script> <!-- For logout() -->
+    <script src="../assets/js/user.js" type="module"></script> <!-- For logout() -->
     <style>
         .logo-img {
             height: 40px;
@@ -144,7 +144,7 @@
     </footer>
 
     <script type="module">
-        import { logout } from '../src/resources/user.js';
+        import { logout } from '../assets/js/user.js';
         document.addEventListener('DOMContentLoaded', () => {
             const logoutLink = document.getElementById('logout-link');
             if (logoutLink) {

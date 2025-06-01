@@ -6,7 +6,7 @@
     <title>Company Dashboard - Studexplore</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/companydashboard.css">
-    <script src="../src/resources/user.js" type="module"></script>
+    <script src="../assets/js/user.js" type="module"></script>
     <script src="../assets/js/company-dashboard.js" type="module" defer></script>
 </head>
 <body>
@@ -145,7 +145,7 @@
     </footer>
 
     <script type="module">
-        import { logout } from '../src/resources/user.js';
+        import { logout } from '../assets/js/user.js';
         document.addEventListener('DOMContentLoaded', () => {
             const logoutLink = document.getElementById('logout-link');
             if (logoutLink) {
