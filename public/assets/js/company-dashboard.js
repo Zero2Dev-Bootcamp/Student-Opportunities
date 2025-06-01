@@ -294,7 +294,7 @@ async function renderApplications(applicationsToRender) {
             <p><strong>Applied on:</strong> ${app.application_date ? new Date(app.application_date).toLocaleDateString() : 'N/A'}</p>
             <!-- Add buttons for View Application, Change Status, etc. as needed -->
             <div class="application-actions">
-                <button class="view-application-btn" data-application-id="${app.id || ''}" data-opportunity-id="${app.opportunity_id || ''}">View all Applications</button>
+                <button class="view-application-btn" data-application-id="${app.id || ''}" data-opportunity-id="${app.opportunity_id || ''}">View All Company Applications</button>
                 <a href="application.html?id=${app.id || ''}" class="change-status-btn">Change Status</a>
             </div>
         `;
@@ -305,11 +305,9 @@ async function renderApplications(applicationsToRender) {
     // Add event listeners for buttons (example)
     applicationListDiv.querySelectorAll('.view-application-btn').forEach(button => {
         button.addEventListener('click', (e) => {
-            const appId = e.target.dataset.applicationId;
-            const opportunityId = e.target.dataset.opportunityId;
-            console.log(`View applications for opportunity with ID: ${opportunityId}`);
-            // Redirect to applications.html, passing the opportunity ID
-            window.location.href = `/html/applications.html?opportunityId=${opportunityId}`;
+            console.log('View all applications for the company');
+            // Redirect to applications.html without opportunityId to show all applications
+            window.location.href = `/html/applications.html`;
         });
     });
 }

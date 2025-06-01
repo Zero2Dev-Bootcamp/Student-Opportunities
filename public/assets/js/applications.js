@@ -15,12 +15,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const applicationsListDiv = document.getElementById('applications-list');
     const opportunityTitleSpan = document.getElementById('opportunity-title');
 
-    if (!opportunityId) {
-        applicationsListDiv.innerHTML = '<p>Error: Opportunity ID not provided.</p>';
-        console.error('applications.js: Opportunity ID is missing.');
-        return;
-    }
-
     // Fetch Opportunity Details (for title)
     async function fetchOpportunityDetails(id) {
         try {
@@ -43,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Fetch Applications for the Opportunity
+    // Fetch Applications for a specific Opportunity
     async function fetchApplications(opportunityId) {
         try {
             const authToken = localStorage.getItem('authToken');
@@ -70,6 +64,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Fetch ALL Applications for the company
+    async function fetchAllCompanyApplications() {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            const companyUserId = localStorage.getItem('userId');
+            
+            const response = await fetch('/api/applications', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Id': companyUserId,
+                    'X-User-Type': localStorage.getItem('userType'),
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('applications.js: Fetch all applications error response:', error);
+                throw new Error(error.error || 'Failed to fetch all applications');
+            }
+
+            const applications = await response.json();
+            console.log('applications.js: Fetched all applications data:', applications);
+            return applications;
+
+        } catch (error) {
+            console.error('applications.js: Error fetching all applications:', error);
+            applicationsListDiv.innerHTML = `<p>Error loading applications: ${error.message}</p>`;
+            return null;
+        }
+    }
+
+    // Fetch student details to get full name
+    async function fetchStudentDetails(studentUserId) {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            const response = await fetch(`/api/users/${studentUserId}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error(`applications.js: Failed to fetch student details for user ID ${studentUserId}`);
+                return null;
+            }
+
+            const studentDetails = await response.json();
+            console.log(`applications.js: Fetched student details for user ID ${studentUserId}:`, studentDetails);
+            return studentDetails;
+        } catch (error) {
+            console.error(`applications.js: Error fetching student details for user ID ${studentUserId}:`, error);
+            return null;
+        }
+    }
+
     async function updateApplicationStatus(applicationId, status) {
         console.log(`applications.js: Attempting to update application ${applicationId} status to: ${status}`);
         try {
@@ -87,24 +138,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (response.ok) {
                 console.log(`applications.js: Status update successful for application ${applicationId}. New status: ${status}`);
-                // Re-fetch and display all applications to see the change.
-                const updatedApplications = await fetchApplications(opportunityId);
+                // Re-fetch and display applications to see the change
+                let updatedApplications;
+                if (opportunityId) {
+                    updatedApplications = await fetchApplications(opportunityId);
+                } else {
+                    updatedApplications = await fetchAllCompanyApplications();
+                }
                 if (updatedApplications) {
                     displayApplications(updatedApplications);
                 }
 
             } else {
                 console.error(`applications.js: Status update failed for application ${applicationId}:`, result);
-                alert(`Failed to update status: ${result.error || 'Unknown error'}`); // Simple feedback to the user
+                alert(`Failed to update status: ${result.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error(`applications.js: Error updating application ${applicationId} status:`, error);
-            alert(`Error updating status: ${error.message}`); // Simple feedback to the user
+            alert(`Error updating status: ${error.message}`);
         }
     }
 
     // Display Applications
-    function displayApplications(applications) {
+    async function displayApplications(applications) {
         applicationsListDiv.innerHTML = ''; // Clear loading message
 
         let applicationsArray = applications;
@@ -122,17 +178,49 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-
         if (!applicationsArray || applicationsArray.length === 0) {
-            applicationsListDiv.innerHTML = '<p>No applications found for this opportunity.</p>';
+            if (opportunityId) {
+                applicationsListDiv.innerHTML = '<p>No applications found for this opportunity.</p>';
+            } else {
+                applicationsListDiv.innerHTML = '<p>No applications found for your company.</p>';
+            }
             return;
         }
 
         const list = document.createElement('ul');
-        applicationsArray.forEach(app => {
+        
+        // Fetch student details for each application concurrently
+        const studentDetailsPromises = applicationsArray.map(async (app) => {
+            console.log('Processing application:', app);
+            
+            // If student_full_name is not present, try to fetch student details
+            if (!app.student_full_name && app.student_user_id) {
+                const studentDetails = await fetchStudentDetails(app.student_user_id);
+                if (studentDetails) {
+                    // Update the application object with student details
+                    app.student_full_name = studentDetails.name || `User ID ${app.student_user_id}`;
+                    app.student_email = studentDetails.email || app.student_email;
+                }
+            }
+            return app;
+        });
+
+        const processedApplications = await Promise.all(studentDetailsPromises);
+
+        processedApplications.forEach(app => {
             const listItem = document.createElement('li');
+            
+            // Include opportunity title if showing all applications
+            let opportunityInfo = '';
+            if (!opportunityId && (app.opportunity_title || app.opportunity_id)) {
+                opportunityInfo = `<strong>Opportunity:</strong> ${app.opportunity_title || `Opportunity ID ${app.opportunity_id}`}<br>`;
+            }
+            
+            console.log('Rendering application:', app);
+            
             listItem.innerHTML = `
                 <strong>Applicant:</strong> ${app.student_full_name || 'N/A'} (${app.student_email || 'N/A'})<br>
+                ${opportunityInfo}
                 <strong>Applied On:</strong> ${new Date(app.application_date).toLocaleDateString()}<br>
                 <strong>Why Choose Me:</strong> ${app.why_choose_me || 'N/A'}<br>
                 <strong>Skills:</strong> ${app.skills || 'N/A'}<br>
@@ -161,16 +249,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Main execution
-    const opportunity = await fetchOpportunityDetails(opportunityId);
-    if (opportunity) {
-        opportunityTitleSpan.textContent = opportunity.title;
-    } else {
-        opportunityTitleSpan.textContent = 'Unknown Opportunity';
-    }
+    if (opportunityId) {
+        // Show applications for specific opportunity
+        const opportunity = await fetchOpportunityDetails(opportunityId);
+        if (opportunity) {
+            opportunityTitleSpan.textContent = opportunity.title;
+        } else {
+            opportunityTitleSpan.textContent = 'Unknown Opportunity';
+        }
 
-    const applications = await fetchApplications(opportunityId);
-    console.log('applications.js: Result of fetchApplications:', applications);
-    if (applications) {
-        displayApplications(applications);
+        const applications = await fetchApplications(opportunityId);
+        console.log('applications.js: Result of fetchApplications:', applications);
+        if (applications) {
+            displayApplications(applications);
+        }
+    } else {
+        // Show all applications for the company
+        opportunityTitleSpan.textContent = 'All Company Applications';
+        
+        const applications = await fetchAllCompanyApplications();
+        console.log('applications.js: Result of fetchAllCompanyApplications:', applications);
+        if (applications) {
+            displayApplications(applications);
+        }
     }
 });
