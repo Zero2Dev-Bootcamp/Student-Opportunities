@@ -6,8 +6,7 @@ console.log(`Server running on port ${port}`);
 
 // import fs from 'fs'; // fs might not be needed anymore if all file ops are in httphandlermethods
 import db from '../db/db.js'; // Import the database instance
-import User from './resources/userResource.js'; // Import the User resource
-import CompanyUser from './resources/companyuser.js'; // Import the CompanyUser resource
+import User from './resources/userResource.js'; // Import the User resource (includes CompanyUser)
 import Application from './resources/studentapplications.js'; // Import the Application resource
 import OpportunityResource from './resources/opportunityResource.js'; // Import the Opportunity resource
 import NotificationResource from './resources/notificationResource.js'; // Import the Notifications resource
@@ -20,15 +19,13 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const publicDir = path.join(__dirname, '..', 'public');
 
 // Instantiate resources (keep this outside startServer if resources are stateless and reusable)
-const userResource = new User(db);
-const companyUserResource = new CompanyUser(db); // Instantiate CompanyUser resource
+const userResource = new User(db); // CompanyUser is now consolidated within User
 const applicationResource = new Application(db); // Instantiate Application resource
 const opportunityResource = new OpportunityResource(db); // Instantiate Opportunity resource
 const notificationResource = new NotificationResource(db); // Instantiate Notifications resource
 
 const resources = {
-  userResource,
-  companyUserResource, // Add companyUserResource to resources
+  userResource, // CompanyUser functionality is now included within userResource
   studentapplicationsResource: applicationResource,
   opportunityResource,
   notificationResource,
