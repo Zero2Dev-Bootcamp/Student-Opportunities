@@ -34,6 +34,10 @@
         </div>
     </div>
 
-    <script src="../src/resources/user-details.js"></script>
+    <script src="../src/resources/user.js" type="module"></script>
+    <script type="module">
+        import { initUserDetails } from '../src/resources/user.js';
+        initUserDetails();
+    </script>
 </body>
 </html>
