@@ -5,7 +5,7 @@
 // following ROA (Resource-Oriented Architecture) standards
 // ============================================================================
 
-import { logout } from '/src/resources/user.js';
+import { logout } from './user.js';
 
 // ============================================================================
 // SECTION 1: APPLICATION LISTING FUNCTIONALITY

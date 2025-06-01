@@ -1,6 +1,6 @@
 console.log('--- Loading dashboard.js ---'); // Add a log at the very beginning
 
-import { logout } from '../../src/resources/user.js'; // Updated to use consolidated user resource
+import { logout } from './user.js'; // Updated to use consolidated user resource
 
 document.addEventListener('DOMContentLoaded', () => {
     const userId = localStorage.getItem('userId');
