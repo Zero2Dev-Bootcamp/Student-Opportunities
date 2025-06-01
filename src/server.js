@@ -7,7 +7,7 @@ console.log(`Server running on port ${port}`);
 // import fs from 'fs'; // fs might not be needed anymore if all file ops are in httphandlermethods
 import db from '../db/db.js'; // Import the database instance
 import User from './resources/userResource.js'; // Import the User resource (includes CompanyUser)
-import Application from './resources/studentapplications.js'; // Import the Application resource
+import Application from './resources/applicationResource.js'; // Import the Application resource
 import OpportunityResource from './resources/opportunityResource.js'; // Import the Opportunity resource
 import NotificationResource from './resources/notificationResource.js'; // Import the Notifications resource
 import { handleHttpRequest } from './httphandlermethods.js'; // Import the new HTTP handler

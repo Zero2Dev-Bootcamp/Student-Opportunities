@@ -1,6 +1,6 @@
 import path from 'path';
 import Bun from 'bun'; // Import Bun for Bun.file
-import { getAuthContext } from './resources/studentapplications.js'; // Import getAuthContext
+import { getAuthContext } from './resources/applicationResource.js'; // Import getAuthContext
 
 /**
  * Handles incoming HTTP requests, routing them to the appropriate resource or serving static files.
