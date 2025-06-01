@@ -47,9 +47,6 @@ export async function loadOpportunityDetails() {
                 } else if (applyButton) {
                      applyButton.style.display = 'none'; // Hide apply button if not a logged-in student
                 }
-
-                // Assuming there's an element with id 'opportunity' to show/hide - removed reference
-                // document.getElementById('opportunity').style.display = 'block';
             } else {
                  // Handle case where opportunity is not found or error
                  if(opportunityDetailsDiv) opportunityDetailsDiv.innerHTML = '<p>Opportunity not found or error loading details.</p>';
@@ -151,19 +148,49 @@ function renderOpportunities(opportunities) {
 // using a simpler grid layout structure
 
 export function initSimpleOpportunities() {
-    document.addEventListener('DOMContentLoaded', () => {
-        fetchOpportunities();
-    });
+    fetchOpportunities();
 }
 
 async function fetchOpportunities() {
     try {
-        const response = await fetch('/api/opportunities');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // Sample opportunities
+        const sampleOpportunities = [
+            {
+                id: 'sample1',
+                title: 'Pseudo Software Intern',
+                company: 'PseudoTech Corp',
+                type: 'Internship',
+                description: 'This is a pseudo description for a software engineering internship.'
+            },
+            {
+                id: 'sample2',
+                title: 'Pseudo Marketing Role',
+                company: 'PseudoMarketing Inc.',
+                type: 'Part-Time Job',
+                description: 'This is a pseudo description for a part-time marketing position.'
+            },
+            {
+                id: 'sample3',
+                title: 'Community Volunteer',
+                company: 'Philippine Red Cross',
+                type: 'Volunteer',
+                description: 'Organize local environmental clean-up events. Flexible hours, ideal for sustainability enthusiasts.'
+            }
+        ];
+
+        // Fetch backend opportunities
+        const response = await fetch('/api/opportunities', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}` }
+        });
+        
+        let backendOpportunities = [];
+        if (response.ok) {
+            backendOpportunities = await response.json();
         }
-        const opportunities = await response.json();
-        displayOpportunities(opportunities);
+
+        // Combine backend and sample opportunities
+        const allOpportunities = [...backendOpportunities, ...sampleOpportunities];
+        displayOpportunities(allOpportunities);
     } catch (error) {
         console.error('Error fetching opportunities:', error);
         // Display an error message to the user
@@ -187,7 +214,7 @@ function displayOpportunities(opportunities) {
 
         opportunityCard.innerHTML = `
             <h3>${opportunity.title}</h3>
-            <div class="company">${opportunity.company}</div>
+            <div class="company">${opportunity.company || opportunity.company_name || 'Company Name Not Specified'}</div>
             <div class="type">${opportunity.type}</div>
             <p>${opportunity.description}</p>
             <a href="html/application-add.html?opportunityId=${opportunity.id}" class="apply-button">Apply Now</a>
@@ -289,3 +316,6 @@ export async function submitApplication(opportunityId) {
 // All frontend functionality for opportunities is now consolidated in this file
 // following ROA standards with clear separation of concerns and labeled sections
 // ============================================================================
+
+// Immediately initialize simple opportunities display
+initSimpleOpportunities();
