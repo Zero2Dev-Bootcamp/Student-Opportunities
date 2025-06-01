@@ -44,6 +44,10 @@
         </div>
     </div>
 
-    <script src="../src/resources/admin-dashboard.js"></script>
+    <script src="../src/resources/user.js" type="module"></script>
+    <script type="module">
+        import { initAdminDashboard } from '../src/resources/user.js';
+        initAdminDashboard();
+    </script>
 </body>
 </html>
