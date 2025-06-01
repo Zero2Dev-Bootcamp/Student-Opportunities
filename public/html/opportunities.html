@@ -3,36 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Opportunities</title>
-    <link rel="stylesheet" href="style.css"> <!-- Link to general styles -->
-    <link rel="stylesheet" href="../assets/css/opportunities.css"> <!-- Link to specific opportunities styles -->
+    <title>Opportunities - Studexplore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/opportunity.css">
     <style>
         .logo-img {
             height: 40px;
         }
     </style>
-    <script src="../assets/js/opportunities.js" type="module" defer></script>
+    <script src="../assets/js/user.js" type="module" defer></script>
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo"><img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore</div>
+        <div class="logo">
+            <img src="../assets/images/studexplorelogo.png" alt="Studexplore Logo" class="logo-img"> Studexplore
+        </div>
         <div class="nav-links">
-            <a href="index.html#home">Home</a>
-            <a href="studentdashboard.html">Dashboard</a>
-            <a href="#profile">Profile</a>
-            <a href="#notifications">Notifications</a>
+            <a href="studentdashboard.html">Opportunities</a>
+            <a href="studentdashboard.html#profile">Profile</a>
+            <a href="studentdashboard.html#notifications">Notifications</a>
             <a href="#" id="logout-link">Logout</a>
         </div>
     </nav>
 
-    <main>
-        <h1>Opportunities</h1>
-        <div id="opportunities-list">
-            <!-- Opportunities will be loaded here by opportunities.js -->
+    <section class="opportunities-header" id="opportunities">
+        <h1>Find Your Opportunity</h1>
+        <p>Explore internships, part-time jobs, and volunteer roles tailored for college students.</p>
+    </section>
+    <section class="filter-search">
+        <div class="form-group">
+            <label for="keyword">Keyword</label>
+            <input type="text" id="keyword" placeholder="e.g., Software, Marketing" aria-describedby="keyword-hint">
+            <span id="keyword-hint" class="sr-only">Enter keywords to search for opportunities.</span>
+        </div>
+        <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" placeholder="e.g., New York, Remote" aria-describedby="location-hint">
+            <span id="location-hint" class="sr-only">Enter a city or select remote for location-based filtering.</span>
+        </div>
+        <div class="form-group">
+            <label for="type">Opportunity Type</label>
+            <select id="type" aria-describedby="type-hint">
+                <option value="">All Types</option>
+                <option value="internship">Internship</option>
+                <option value="part-time">Part-Time Job</option>
+                <option value="volunteer">Volunteer</option>
+                <option value="red-cross-volunteer">Philippine Red Cross Volunteer</option>
+            </select>
+            <span id="type-hint" class="sr-only">Select the type of opportunity you are looking for.</span>
+        </div>
+        <button type="button" aria-label="Search opportunities" id="search-button">Search</button>
+    </section>
+    <section class="opportunities-list">
+        <h2>Available Opportunities</h2>
+        <div class="opportunity-grid">
+            <!-- Opportunities will be dynamically loaded by opportunity.js -->
             <p>Loading opportunities...</p>
         </div>
-    </main>
-
+    </section>
     <footer>
         <p>© 2025 Studexplore. All rights reserved.</p>
         <div class="social-media-links">
@@ -41,5 +69,32 @@
             <a href="#" aria-label="TikTok">TikTok</a>
         </div>
     </footer>
+
+    <script type="module">
+        import { logout } from '../assets/js/user.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            const logoutLink = document.getElementById('logout-link');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', (e) => {
+                    logout();
+                    window.location.href = 'index.html';
+                });
+            }
+
+            document.getElementById('search-button').addEventListener('click', function() {
+                window.location.href = 'searchopportunities.html';
+            });
+
+            // Add event listener to dynamically created Apply Now buttons
+            document.querySelector('.opportunity-grid').addEventListener('click', function(e) {
+                const applyButton = e.target.closest('.apply-button');
+                if (applyButton) {
+                    const opportunityId = applyButton.getAttribute('data-opportunity-id');
+                    window.location.href = `application-add.html?opportunityId=${opportunityId}`;
+                }
+            });
+        });
+    </script>
+    <script src="../assets/js/opportunity.js" type="module" defer></script>
 </body>
 </html>
