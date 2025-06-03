@@ -12,6 +12,7 @@ const OPPORTUNITIES_HTML_PATH = 'public/html/opportunities.html';
 const APPLICATION_ADD_HTML_PATH = 'public/html/application-add.html';
 const COMPANY_DASHBOARD_HTML_PATH = 'public/html/companydashboard.html';
 const APPLICATIONS_HTML_PATH = 'public/html/applications.html';
+const STUDENT_DASHBOARD_HTML_PATH = 'public/html/studentdashboard.html';
 
 // --- Helper Functions ---
 const loadHTML = (filePath) => {
