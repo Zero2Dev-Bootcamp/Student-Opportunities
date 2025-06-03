@@ -11,6 +11,7 @@ const SERVER_URL = `http://localhost:${TEST_PORT}`;
 const OPPORTUNITIES_HTML_PATH = 'public/html/opportunities.html';
 const APPLICATION_ADD_HTML_PATH = 'public/html/application-add.html';
 const COMPANY_DASHBOARD_HTML_PATH = 'public/html/companydashboard.html';
+const APPLICATIONS_HTML_PATH = 'public/html/applications.html';
 
 // --- Helper Functions ---
 const loadHTML = (filePath) => {
@@ -66,25 +67,19 @@ const APPLICATION_TABLE_SCHEMA = `
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     student_user_id INTEGER NOT NULL,
     opportunity_id INTEGER NOT NULL,
-    application_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status TEXT DEFAULT 'Submitted' CHECK(status IN ('Submitted', 'Reviewed', 'Interviewing', 'Offered', 'Accepted', 'Rejected', 'Withdrawn')),
+    why_choose_me TEXT,
+    skills TEXT,
+    experiences TEXT,
     notes TEXT,
+    application_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'Submitted',
     FOREIGN KEY (student_user_id) REFERENCES User(id) ON DELETE CASCADE,
     FOREIGN KEY (opportunity_id) REFERENCES Opportunity(id) ON DELETE CASCADE
   );
 `;
 
-const APPLICATION_FILE_TABLE_SCHEMA = `
-  CREATE TABLE ApplicationFile (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    application_id INTEGER NOT NULL,
-    file_name TEXT NOT NULL,
-    file_path TEXT NOT NULL,
-    mime_type TEXT,
-    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (application_id) REFERENCES Application(id) ON DELETE CASCADE
-  );
-`;
+// ApplicationFile table is not used in current implementation
+// const APPLICATION_FILE_TABLE_SCHEMA = `...`;
 
 
 // --- Test Suite ---
@@ -117,7 +112,6 @@ describe('Application and Company Dashboard Tests', () => {
     // Clear server's actual database tables before each test
     try {
       const serverDb = new Database('opportunities.sqlite');
-      serverDb.run('DELETE FROM ApplicationFile'); // Clear files first due to FK
       serverDb.run('DELETE FROM Application');
       serverDb.run('DELETE FROM Opportunity');
       serverDb.run('DELETE FROM UserInterests');
@@ -126,7 +120,6 @@ describe('Application and Company Dashboard Tests', () => {
       serverDb.run("DELETE FROM sqlite_sequence WHERE name='User';");
       serverDb.run("DELETE FROM sqlite_sequence WHERE name='Opportunity';");
       serverDb.run("DELETE FROM sqlite_sequence WHERE name='Application';");
-      serverDb.run("DELETE FROM sqlite_sequence WHERE name='ApplicationFile';");
       serverDb.close();
       console.log('[tests/application.test.js] Server database tables cleared.');
     } catch (e) {
@@ -139,7 +132,7 @@ describe('Application and Company Dashboard Tests', () => {
     db.run(USER_INTERESTS_TABLE_SCHEMA);
     db.run(OPPORTUNITY_TABLE_SCHEMA);
     db.run(APPLICATION_TABLE_SCHEMA);
-    db.run(APPLICATION_FILE_TABLE_SCHEMA);
+    // db.run(APPLICATION_FILE_TABLE_SCHEMA); // Not used in current implementation
 
 
     // --- Create Test Data via API Calls ---
@@ -483,24 +476,24 @@ describe('Application and Company Dashboard Tests', () => {
         }
         // Mock fetching application submission
         if (parsedUrl.pathname === '/api/applications' && options?.method === 'POST') {
-            // Verify the request body is JSON and contains expected fields
-            expect(options.headers['Content-Type']).toBe('application/json');
-            const requestBody = JSON.parse(options.body);
+            // The frontend uses FormData, so we need to handle that
+            const formData = options.body;
+            expect(formData).toBeInstanceOf(dom.window.FormData);
 
-            expect(requestBody.opportunity_id).toBe(String(testOpportunities[0].id)); // Values from frontend are strings
-            expect(requestBody.student_id).toBe(String(student.id));
-            expect(requestBody.why_choose_me).toBe('I am a great fit because...');
-            expect(requestBody.skills).toBe('JavaScript, Bun, Testing');
-            expect(requestBody.experiences).toBe('Worked on project X, contributed to Y');
+            expect(formData.get('opportunity_id')).toBe(String(testOpportunities[0].id));
+            expect(formData.get('student_user_id')).toBe(String(student.id));
+            expect(formData.get('why-choose-me')).toBe('I am a great fit because...');
+            expect(formData.get('skills')).toBe('JavaScript, Bun, Testing');
+            expect(formData.get('experiences')).toBe('Worked on project X, contributed to Y');
 
             // Simulate a successful backend response
             return Promise.resolve(new dom.window.Response(JSON.stringify({
                 id: 101, // Mock application ID
                 opportunity_id: testOpportunities[0].id,
                 student_user_id: student.id,
-                why_choose_me: requestBody.why_choose_me,
-                skills: requestBody.skills,
-                experiences: requestBody.experiences,
+                why_choose_me: formData.get('why-choose-me'),
+                skills: formData.get('skills'),
+                experiences: formData.get('experiences'),
                 status: 'Submitted',
                 application_date: new Date().toISOString(),
             }), { status: 201, headers: { 'Content-Type': 'application/json' } }));
@@ -520,27 +513,17 @@ describe('Application and Company Dashboard Tests', () => {
     // Assertions
     expect(applicationFetchMock).toHaveBeenCalledTimes(2); // One for opportunity details, one for application POST
 
-    // Verify success message is displayed (based on applications.js logic)
-    // applications.js uses alert, which is hard to test directly in JSDOM.
-    // We can check if the fetch was called correctly and assume the alert happens.
-    // If we were testing the UI rendering after submission, we'd check for a message div update.
-    // The current applications.js redirects on success, so we can't check for a message div.
-    // Let's add a check for the fetch call to the correct endpoint with correct data.
+    // Verify the fetch was called with FormData containing the correct fields
+    // We can't easily check the exact FormData content in the assertion,
+    // but we verified it in the mock above
     expect(applicationFetchMock).toHaveBeenCalledWith(
         '/api/applications',
         expect.objectContaining({
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+            headers: expect.objectContaining({
                 'Authorization': `Bearer mock-student-${student.id}`
-            },
-            body: JSON.stringify({
-                opportunity_id: String(testOpportunities[0].id),
-                student_id: String(student.id),
-                why_choose_me: 'I am a great fit because...',
-                skills: 'JavaScript, Bun, Testing',
-                experiences: 'Worked on project X, contributed to Y'
-            })
+            }),
+            body: expect.any(dom.window.FormData)
         })
     );
 
