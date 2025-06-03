@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - Studexplore</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/studentdashboard.css">
     <script src="../assets/js/user.js" type="module"></script> <!-- For logout() -->
     <style>
@@ -141,9 +142,9 @@
 
             <section id="notifications" class="notifications">
                 <h2>Notifications</h2>
-                <div class="notification-list" id="notification-list">
-                    <p>Loading notifications...</p>
-                </div>
+                <ul id="notification-list">
+                    <li>Loading notifications...</li>
+                </ul>
             </section>
         </div>
     </div>
@@ -162,6 +163,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             const logoutLink = document.getElementById('logout-link');
             if (logoutLink) {
+                logoutLink.addEventListener('click', (e) => {
+                    logout();
+                    window.location.href = 'index.html';
+                });
+            }
+        });
+    </script>
+</body>
                 logoutLink.addEventListener('click', (e) => {
                     logout();
                     window.location.href = 'index.html';
