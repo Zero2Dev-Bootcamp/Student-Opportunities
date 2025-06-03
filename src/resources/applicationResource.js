@@ -27,9 +27,17 @@ export async function getAuthContext(req) {
       const token = authHeader.substring(7);
       // IMPORTANT: In a real application, you would validate this token (e.g., JWT)
       // and extract the user ID and type securely.
-      // For this temporary fix, we'll assume the token *is* the userId and fetch userType from DB.
-      userId = token;
-      console.log(`[Auth] Attempting to authenticate with token (assuming userId): ${userId}`);
+      // For this temporary fix, we'll extract the user ID from mock tokens like "mock-student-3"
+      if (token.startsWith('mock-')) {
+        const parts = token.split('-');
+        if (parts.length >= 3) {
+          userId = parts[2]; // Extract the user ID from "mock-student-3" or "mock-company-1"
+          userType = parts[1]; // Extract the user type from "mock-student-3" or "mock-company-1"
+        }
+      } else {
+        userId = token; // Fallback for non-mock tokens
+      }
+      console.log(`[Auth] Attempting to authenticate with token (extracted userId): ${userId}, userType: ${userType}`);
     }
   }
 
