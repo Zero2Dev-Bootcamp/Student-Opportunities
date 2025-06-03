@@ -24,10 +24,28 @@ export async function handleHttpRequest(req, resources, publicDir) {
       return userResource.handlePost(req);
     }
     if (req.method === 'PATCH') { // Handles /api/users/:id for updates
-        // The user ID is expected to be in the URL path, which handlePatch will extract
         return userResource.handlePatch(req);
     }
+    if (req.method === 'DELETE') { // Handles /api/users/:id for deletion
+        return userResource.handleDelete(req);
+    }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/users` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
+  }
+  // /users (without /api prefix) - for test compatibility
+  else if (url.pathname.startsWith('/users')) {
+    if (req.method === 'GET') { // Handles /users and /users/:id
+      return userResource.handleGet(req);
+    }
+    if (req.method === 'POST') { // Handles /users for registration
+      return userResource.handlePost(req);
+    }
+    if (req.method === 'PATCH') { // Handles /users/:id for updates
+        return userResource.handlePatch(req);
+    }
+    if (req.method === 'DELETE') { // Handles /users/:id for deletion
+        return userResource.handleDelete(req);
+    }
+    return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /users` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
   // /api/login (POST: authenticate user)
   else if (url.pathname === '/api/login') {
@@ -85,10 +103,13 @@ export async function handleHttpRequest(req, resources, publicDir) {
     }
     return new Response(JSON.stringify({ message: `Method ${req.method} not allowed for /api/opportunities` }), { status: 405, headers: { 'Content-Type': 'application/json' } });
   }
-  // /api/notifications (GET: list notifications, PATCH by ID: update notification)
+  // /api/notifications (GET: list notifications, POST: create notification, PATCH by ID: update notification)
   else if (url.pathname.startsWith('/api/notifications')) {
     if (req.method === 'GET') { // Handles /api/notifications
       return notificationResource.handleGet(req);
+    }
+    if (req.method === 'POST') { // Handles /api/notifications for creation
+      return notificationResource.handlePost(req);
     }
     if (req.method === 'PATCH') { // Handles /api/notifications/:id for updates
       return notificationResource.handlePatch(req);
@@ -113,8 +134,8 @@ export async function handleHttpRequest(req, resources, publicDir) {
         }
 
         // Handle requests for a single application by ID: /api/applications/:applicationId
-        if (pathParts.length === 2 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) {
-            const applicationId = pathParts[1];
+        if (pathParts.length === 3 && pathParts[0].toLowerCase() === 'api' && pathParts[1].toLowerCase() === 'applications') {
+            const applicationId = pathParts[2];
             console.log('[handleHttpRequest] Routing to applicationResource.getApplicationById for /api/applications/:applicationId'); // Added logging
             try {
                 const application = await applicationResource.getApplicationById(applicationId);
@@ -135,7 +156,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
 
         // Handle the base /api/applications GET request (e.g., list all for user)
         // This will only be reached if the path is exactly /api/applications
-        if (pathParts.length === 2 && pathParts[1].toLowerCase() === 'applications') { // Corrected pathParts.length to 2 and index to 1
+        if (pathParts.length === 2 && pathParts[0].toLowerCase() === 'api' && pathParts[1].toLowerCase() === 'applications') {
              console.log('[handleHttpRequest] Routing to applicationResource.getApplicationsByStudentId/CompanyId for base /api/applications'); // Added logging
              try {
                 const authContext = await getAuthContext(req);
@@ -172,8 +193,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
     }
     if (req.method === 'PUT') { // Handles /api/applications/:id for updates
         const pathParts = url.pathname.split('/').filter(Boolean);
-        const applicationId = (pathParts.length > 1 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) ? pathParts[1] : null;
-
+        const applicationId = (pathParts.length === 3 && pathParts[0].toLowerCase() === 'api' && pathParts[1].toLowerCase() === 'applications') ? pathParts[2] : null;
 
         if (!applicationId) {
             return new Response(JSON.stringify({ error: 'Application ID not provided in URL path' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
