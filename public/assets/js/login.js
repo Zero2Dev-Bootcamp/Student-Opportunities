@@ -104,8 +104,8 @@ export function initLogin() {
 // ============================================================================
 // These functions automatically initialize based on the current page
 
-// Auto-initialize login if on login page
-if (document.getElementById('loginForm')) {
+// Auto-initialize login if on login page (only when not in test environment)
+if (typeof window !== 'undefined' && !window.isTestEnvironment && document.getElementById('loginForm')) {
     initLogin();
 }
 

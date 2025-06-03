@@ -199,6 +199,281 @@ function displayUsers(users) {
 // This section handles student dashboard functionality
 // Originally from: public/assets/js/dashboard.js
 
+// Export functions for testing
+export function setupEventListeners() {
+    console.log('[Dashboard] Setting up event listeners');
+    
+    // Set up notification mark as read functionality
+    const notificationList = document.getElementById('notification-list');
+    if (notificationList) {
+        notificationList.addEventListener('click', async (e) => {
+            if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Mark as Read')) {
+                const notificationItem = e.target.closest('.notification');
+                if (notificationItem) {
+                    const notificationId = notificationItem.dataset.notificationId;
+                    if (notificationId) {
+                        await markNotificationAsRead(notificationId);
+                    }
+                }
+            }
+        });
+    }
+}
+
+export async function loadProfileData(userId) {
+    console.log('[Dashboard] Loading profile data');
+    const authToken = localStorage.getItem('authToken');
+    
+    if (!userId || !authToken) {
+        console.error('[Dashboard] No user ID or auth token found');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const userData = await response.json();
+            console.log('[Dashboard] Profile data loaded:', userData);
+            
+            // Update profile elements
+            const profileName = document.getElementById('profile-name');
+            const profileEmail = document.getElementById('profile-email');
+            const profileInterests = document.getElementById('profile-interests');
+            const profileMajor = document.getElementById('profile-major');
+            const profileGradYear = document.getElementById('profile-graduation-year');
+            
+            if (profileName) profileName.textContent = userData.name || '';
+            if (profileEmail) profileEmail.textContent = userData.email || '';
+            if (profileInterests && userData.interests) {
+                profileInterests.textContent = userData.interests.join(', ');
+            }
+            if (profileMajor) profileMajor.textContent = userData.major || '';
+            if (profileGradYear) profileGradYear.textContent = userData.graduation_year || '';
+            
+            // Store interests for filtering
+            if (userData.interests) {
+                localStorage.setItem('userInterests', JSON.stringify(userData.interests));
+            }
+        } else {
+            console.error('[Dashboard] Failed to load profile data:', response.status);
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error loading profile data:', error);
+    }
+}
+
+export async function loadOpportunities() {
+    console.log('[Dashboard] Loading opportunities');
+    const authToken = localStorage.getItem('authToken');
+    const userInterests = JSON.parse(localStorage.getItem('userInterests') || '[]');
+    
+    try {
+        const response = await fetch('/api/opportunities', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const opportunities = await response.json();
+            console.log('[Dashboard] Opportunities loaded:', opportunities);
+            
+            // Filter opportunities based on user interests
+            const filteredOpportunities = filterOpportunitiesByInterests(opportunities, userInterests);
+            
+            // Render opportunities
+            renderDashboardOpportunities(filteredOpportunities);
+        } else {
+            console.error('[Dashboard] Failed to load opportunities:', response.status);
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error loading opportunities:', error);
+    }
+}
+
+function filterOpportunitiesByInterests(opportunities, userInterests) {
+    if (!userInterests || userInterests.length === 0) {
+        return opportunities;
+    }
+    
+    return opportunities.filter(opportunity => {
+        const requiredSkills = (opportunity.required_skills || '').toLowerCase();
+        return userInterests.some(interest => 
+            requiredSkills.includes(interest.toLowerCase())
+        );
+    });
+}
+
+function renderDashboardOpportunities(opportunities) {
+    const internshipGrid = document.querySelector('.internship-grid');
+    const clubGrid = document.querySelector('.club-grid');
+    
+    if (internshipGrid) {
+        internshipGrid.innerHTML = '';
+        const internships = opportunities.filter(opp => 
+            opp.type === 'Internship' || opp.type === 'Job'
+        );
+        
+        internships.forEach(opportunity => {
+            const card = createOpportunityCard(opportunity);
+            internshipGrid.appendChild(card);
+        });
+    }
+    
+    if (clubGrid) {
+        clubGrid.innerHTML = '';
+        const clubs = opportunities.filter(opp => 
+            opp.type === 'Event' || opp.type === 'Program' || opp.type === 'Other'
+        );
+        
+        clubs.forEach(opportunity => {
+            const card = createOpportunityCard(opportunity);
+            clubGrid.appendChild(card);
+        });
+    }
+}
+
+function createOpportunityCard(opportunity) {
+    const card = document.createElement('div');
+    card.className = 'internship-card';
+    card.innerHTML = `
+        <h3>${opportunity.title}</h3>
+        <p>${opportunity.description || ''}</p>
+        <p><strong>Location:</strong> ${opportunity.location || 'Not specified'}</p>
+        <p><strong>Skills:</strong> ${opportunity.required_skills || 'Not specified'}</p>
+    `;
+    return card;
+}
+
+export async function loadApplications() {
+    console.log('[Dashboard] Loading applications');
+    const authToken = localStorage.getItem('authToken');
+    
+    try {
+        const response = await fetch('/api/applications', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const applications = await response.json();
+            console.log('[Dashboard] Applications loaded:', applications);
+            
+            // Render applications
+            renderDashboardApplications(applications);
+        } else {
+            console.error('[Dashboard] Failed to load applications:', response.status);
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error loading applications:', error);
+    }
+}
+
+function renderDashboardApplications(applications) {
+    const applicationList = document.getElementById('application-list');
+    if (!applicationList) return;
+    
+    applicationList.innerHTML = '';
+    
+    applications.forEach(application => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+            Application ID: ${application.id}, 
+            Opportunity ID: ${application.opportunity_id}, 
+            Status: ${application.status}, 
+            Date: ${new Date(application.application_date).toLocaleDateString()}
+        `;
+        applicationList.appendChild(listItem);
+    });
+}
+
+export async function loadNotifications() {
+    console.log('[Dashboard] Loading notifications');
+    const authToken = localStorage.getItem('authToken');
+    
+    try {
+        const response = await fetch('/api/notifications', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const notifications = await response.json();
+            console.log('[Dashboard] Notifications loaded:', notifications);
+            
+            // Render notifications
+            renderDashboardNotifications(notifications);
+        } else {
+            console.error('[Dashboard] Failed to load notifications:', response.status);
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error loading notifications:', error);
+    }
+}
+
+function renderDashboardNotifications(notifications) {
+    const notificationList = document.getElementById('notification-list');
+    if (!notificationList) return;
+    
+    notificationList.innerHTML = '';
+    
+    notifications.forEach(notification => {
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = 'notification';
+        notificationDiv.dataset.notificationId = notification.id;
+        
+        const isRead = notification.is_read === 1;
+        notificationDiv.innerHTML = `
+            <p>${notification.message}</p>
+            <p><strong>Status:</strong> ${isRead ? 'Read' : 'Unread'}</p>
+            ${!isRead ? '<button>Mark as Read</button>' : ''}
+        `;
+        
+        notificationList.appendChild(notificationDiv);
+    });
+}
+
+async function markNotificationAsRead(notificationId) {
+    console.log('[Dashboard] Marking notification as read:', notificationId);
+    const authToken = localStorage.getItem('authToken');
+    
+    try {
+        const response = await fetch(`/api/notifications/${notificationId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ is_read: 1 })
+        });
+
+        if (response.ok) {
+            console.log('[Dashboard] Notification marked as read');
+            // Reload notifications to update the UI
+            await loadNotifications();
+        } else {
+            console.error('[Dashboard] Failed to mark notification as read:', response.status);
+        }
+    } catch (error) {
+        console.error('[Dashboard] Error marking notification as read:', error);
+    }
+}
+
 export function initStudentDashboard() {
     console.log('--- Loading dashboard.js ---'); // Add a log at the very beginning
 
