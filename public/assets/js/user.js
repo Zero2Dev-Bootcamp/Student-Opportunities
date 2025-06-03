@@ -998,8 +998,9 @@ export function initCompanyDashboard() {
             };
 
             try {
-                const response = await fetch('/api/company/profile', {
-                    method: 'PUT',
+                const companyUserId = localStorage.getItem('userId');
+                const response = await fetch(`/api/users/${companyUserId}`, {
+                    method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -1008,15 +1009,17 @@ export function initCompanyDashboard() {
                 });
 
                 if (response.ok) {
-                    companyNameSpan.textContent = updatedProfile.name;
-                    companyEmailSpan.textContent = updatedProfile.email;
-                    companyIndustrySpan.textContent = updatedProfile.industry;
-                    companyLocationSpan.textContent = updatedProfile.location;
-                    companyDescriptionSpan.textContent = updatedProfile.description;
+                    const updatedUser = await response.json();
+                    companyNameSpan.textContent = updatedUser.name || 'N/A';
+                    companyEmailSpan.textContent = updatedUser.email || 'N/A';
+                    companyIndustrySpan.textContent = updatedUser.industry || 'N/A';
+                    companyLocationSpan.textContent = updatedUser.location || 'N/A';
+                    companyDescriptionSpan.textContent = updatedUser.description || 'N/A';
                     profileEditForm.style.display = 'none';
                     alert('Profile updated successfully!');
                 } else {
-                    alert('Failed to update profile.');
+                    const errorData = await response.json().catch(() => ({}));
+                    alert(`Failed to update profile: ${errorData.error || response.statusText}`);
                 }
             } catch (error) {
                 console.error('Error updating profile:', error);
@@ -1042,22 +1045,24 @@ export function initCompanyDashboard() {
         }
 
         try {
-            const response = await fetch(`/api/company/profile?userId=${companyUserId}`, {
+            const response = await fetch(`/api/users/${companyUserId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'X-User-Id': companyUserId,
+                    'X-User-Type': localStorage.getItem('userType')
                 }
             });
 
             if (response.ok) {
                 const profile = await response.json();
-                companyNameSpan.textContent = profile.institution_name;
-                companyEmailSpan.textContent = profile.email;
-                companyIndustrySpan.textContent = profile.industry;
-                companyLocationSpan.textContent = profile.location;
-                companyDescriptionSpan.textContent = profile.description;
-                companyLoginEmailSpan.textContent = profile.login_email;
+                companyNameSpan.textContent = profile.name || 'N/A';
+                companyEmailSpan.textContent = profile.email || 'N/A';
+                companyIndustrySpan.textContent = profile.industry || 'N/A';
+                companyLocationSpan.textContent = profile.location || 'N/A';
+                companyDescriptionSpan.textContent = profile.description || 'N/A';
+                companyLoginEmailSpan.textContent = profile.email || 'N/A'; // Use email as login email
             } else {
                 console.error('Failed to load company profile.');
             }
@@ -1080,7 +1085,9 @@ export function initCompanyDashboard() {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'X-User-Id': companyUserId,
+                    'X-User-Type': localStorage.getItem('userType')
                 }
             });
 

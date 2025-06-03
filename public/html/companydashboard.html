@@ -6,7 +6,6 @@
     <title>Company Dashboard - Studexplore</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/companydashboard.css">
-    <script src="../assets/js/user.js" type="module"></script>
     <script src="../assets/js/user.js" type="module" defer></script>
 </head>
 <body>
@@ -144,12 +143,150 @@
         </div>
     </footer>
 
-    <script type="module">
-        import { logout } from '../assets/js/user.js';
-        document.addEventListener('DOMContentLoaded', () => {
+    <script>
+        // Simple debug function without modules to avoid import errors
+        async function debugAndLoadData() {
+            console.log('=== COMPANY DASHBOARD DEBUG ===');
+            console.log('User ID:', localStorage.getItem('userId'));
+            console.log('Auth Token:', localStorage.getItem('authToken'));
+            console.log('User Type:', localStorage.getItem('userType'));
+            
+            const userId = localStorage.getItem('userId');
+            const authToken = localStorage.getItem('authToken');
+            
+            if (!userId || !authToken) {
+                console.error('Missing authentication data!');
+                document.getElementById('company-name').textContent = 'Error: Not logged in';
+                document.getElementById('opportunity-list').innerHTML = '<p>Error: Not logged in</p>';
+                document.getElementById('application-list').innerHTML = '<p>Error: Not logged in</p>';
+                return;
+            }
+            
+            // Try to load company profile directly
+            try {
+                console.log('Attempting to fetch user profile...');
+                const response = await fetch('/api/users/' + userId, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken,
+                        'X-User-Id': userId,
+                        'X-User-Type': localStorage.getItem('userType')
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                if (response.ok) {
+                    const profile = await response.json();
+                    console.log('Profile data:', profile);
+                    
+                    // Update UI directly
+                    document.getElementById('company-name').textContent = profile.name || 'N/A';
+                    document.getElementById('company-email').textContent = profile.email || 'N/A';
+                    document.getElementById('company-industry').textContent = profile.industry || 'N/A';
+                    document.getElementById('company-location').textContent = profile.location || 'N/A';
+                    document.getElementById('company-description').textContent = profile.description || 'N/A';
+                    document.getElementById('company-login-email').textContent = profile.email || 'N/A';
+                } else {
+                    const errorText = await response.text();
+                    console.error('Failed to load profile:', errorText);
+                    document.getElementById('company-name').textContent = 'Error: ' + response.status;
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.getElementById('company-name').textContent = 'Error: ' + error.message;
+            }
+            
+            // Try to load opportunities
+            try {
+                console.log('Attempting to fetch opportunities...');
+                const response = await fetch('/api/opportunities?companyId=' + userId, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken,
+                        'X-User-Id': userId,
+                        'X-User-Type': localStorage.getItem('userType')
+                    }
+                });
+                
+                console.log('Opportunities response status:', response.status);
+                
+                if (response.ok) {
+                    const opportunities = await response.json();
+                    console.log('Opportunities data:', opportunities);
+                    
+                    const opportunityListDiv = document.getElementById('opportunity-list');
+                    if (opportunities.length === 0) {
+                        opportunityListDiv.innerHTML = '<p>No opportunities posted yet.</p>';
+                    } else {
+                        opportunityListDiv.innerHTML = opportunities.map(function(opp) {
+                            return '<div class="opportunity-item"><h3>' + opp.title + '</h3><p>Applications: ' + (opp.applications_count || 0) + '</p></div>';
+                        }).join('');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.error('Failed to load opportunities:', errorText);
+                    document.getElementById('opportunity-list').innerHTML = '<p>Error: ' + response.status + '</p>';
+                }
+            } catch (error) {
+                console.error('Error loading opportunities:', error);
+                document.getElementById('opportunity-list').innerHTML = '<p>Error: ' + error.message + '</p>';
+            }
+            
+            // Try to load applications
+            try {
+                console.log('Attempting to fetch applications...');
+                const response = await fetch('/api/applications', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Id': userId,
+                        'X-User-Type': localStorage.getItem('userType')
+                    }
+                });
+                
+                console.log('Applications response status:', response.status);
+                
+                if (response.ok) {
+                    const applications = await response.json();
+                    console.log('Applications data:', applications);
+                    
+                    const applicationListDiv = document.getElementById('application-list');
+                    if (applications.length === 0) {
+                        applicationListDiv.innerHTML = '<p>No applications received yet.</p>';
+                    } else {
+                        applicationListDiv.innerHTML = applications.map(function(app) {
+                            return '<div class="application-item"><p><strong>Application ID:</strong> ' + app.id + '</p><p><strong>Student ID:</strong> ' + app.student_user_id + '</p><p><strong>Opportunity ID:</strong> ' + app.opportunity_id + '</p></div>';
+                        }).join('');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.error('Failed to load applications:', errorText);
+                    document.getElementById('application-list').innerHTML = '<p>Error: ' + response.status + '</p>';
+                }
+            } catch (error) {
+                console.error('Error loading applications:', error);
+                document.getElementById('application-list').innerHTML = '<p>Error: ' + error.message + '</p>';
+            }
+        }
+        
+        // Simple logout function
+        function logout() {
+            localStorage.clear();
+            window.location.reload();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Run debug function
+            debugAndLoadData();
+            
             const logoutLink = document.getElementById('logout-link');
             if (logoutLink) {
-                logoutLink.addEventListener('click', (e) => {
+                logoutLink.addEventListener('click', function(e) {
+                    e.preventDefault();
                     logout();
                     window.location.href = 'index.html';
                 });

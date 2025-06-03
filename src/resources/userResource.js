@@ -64,7 +64,8 @@ class CompanyUser {
       // Assuming your 'User' table has a 'user_type' column and relevant profile fields
       // Corrected table name from 'users' to 'User' for consistency
       // Selecting institution_name as company_name
-      const user = await this.db.query('SELECT id, name, email, user_type, industry, location, description, institution_name AS company_name FROM User WHERE id = ? AND user_type = "company"').get(userId);
+      const stmt = this.db.prepare('SELECT id, name, email, user_type, industry, location, description, institution_name AS company_name FROM User WHERE id = ? AND user_type = "company"');
+      const user = stmt.get(userId);
 
       if (user) {
         console.log(`[CompanyUser.getCompanyUserById] Found company user:`, user);
@@ -139,7 +140,8 @@ class User {
       }
 
       // Get the last inserted row ID using a separate query
-      const userIdResult = await this.db.query("SELECT last_insert_rowid() as lastId;").get();
+      const userIdStmt = this.db.prepare("SELECT last_insert_rowid() as lastId");
+      const userIdResult = userIdStmt.get();
       const userId = userIdResult ? userIdResult.lastId : null;
 
       if (!userId) {
