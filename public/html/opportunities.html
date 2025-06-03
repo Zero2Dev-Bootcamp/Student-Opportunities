@@ -90,7 +90,7 @@
                 const applyButton = e.target.closest('.apply-button');
                 if (applyButton) {
                     const opportunityId = applyButton.getAttribute('data-opportunity-id');
-                    window.location.href = `application-add.html?opportunityId=${opportunityId}`;
+                    window.location.href = `/html/application-add.html?opportunityId=${opportunityId}`;
                 }
             });
         });

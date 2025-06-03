@@ -42,7 +42,7 @@ export async function loadOpportunityDetails() {
                     applyButton.style.display = 'block';
                     // Update the button to navigate to the application form page with opportunityId
                     applyButton.onclick = () => {
-                        window.location.href = `/public/html/application-add.html?opportunityId=${id}`;
+                        window.location.href = `/html/application-add.html?opportunityId=${id}`;
                     };
                 } else if (applyButton) {
                      applyButton.style.display = 'none'; // Hide apply button if not a logged-in student
@@ -217,7 +217,7 @@ function displayOpportunities(opportunities) {
             <div class="company">${opportunity.company || opportunity.company_name || 'Company Name Not Specified'}</div>
             <div class="type">${opportunity.type}</div>
             <p>${opportunity.description}</p>
-            <a href="html/application-add.html?opportunityId=${opportunity.id}" class="apply-button">Apply Now</a>
+            <a href="/html/application-add.html?opportunityId=${opportunity.id}" class="apply-button">Apply Now</a>
         `;
 
         opportunityGrid.appendChild(opportunityCard);
