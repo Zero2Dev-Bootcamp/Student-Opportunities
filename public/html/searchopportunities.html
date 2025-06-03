@@ -86,6 +86,26 @@
                     window.location.href = 'index.html';
                 });
             }
+
+            // Parse URL search parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyword = urlParams.get('keyword')?.toLowerCase() || '';
+            const location = urlParams.get('location')?.toLowerCase() || '';
+            const type = urlParams.get('type') || '';
+
+            // Filter opportunity cards based on search parameters
+            const opportunityCards = document.querySelectorAll('.opportunity-grid .opportunity-card');
+            opportunityCards.forEach(card => {
+                const cardKeyword = card.textContent.toLowerCase();
+                const cardLocation = card.querySelector('.company')?.textContent.toLowerCase() || '';
+                const cardType = card.querySelector('.type')?.textContent.toLowerCase() || '';
+
+                const keywordMatch = !keyword || cardKeyword.includes(keyword);
+                const locationMatch = !location || cardLocation.includes(location);
+                const typeMatch = !type || cardType === type.toLowerCase();
+
+                card.style.display = (keywordMatch && locationMatch && typeMatch) ? 'block' : 'none';
+            });
         });
     </script>
 </body>
