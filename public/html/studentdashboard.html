@@ -13,6 +13,20 @@
         }
     </style>
     <script src="../assets/js/user.js" type="module" defer></script>
+    <script type="module">
+        import { initStudentDashboard, setupEventListeners, loadProfileData, loadOpportunities, loadApplications, loadNotifications } from '../assets/js/user.js';
+        
+        // Make functions available globally for testing
+        window.setupEventListeners = setupEventListeners;
+        window.loadProfileData = loadProfileData;
+        window.loadOpportunities = loadOpportunities;
+        window.loadApplications = loadApplications;
+        window.loadNotifications = loadNotifications;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initStudentDashboard();
+        });
+    </script>
 </head>
 <body>
     <nav class="navbar">
