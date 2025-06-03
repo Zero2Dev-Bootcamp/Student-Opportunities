@@ -474,26 +474,45 @@ describe('Application and Company Dashboard Tests', () => {
                  return Promise.resolve(new dom.window.Response(JSON.stringify({ error: 'Opportunity not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } }));
             }
         }
-        // Mock fetching application submission
+        // Mock application submission - handle both FormData and JSON
         if (parsedUrl.pathname === '/api/applications' && options?.method === 'POST') {
-            // The frontend uses FormData, so we need to handle that
-            const formData = options.body;
-            expect(formData).toBeInstanceOf(dom.window.FormData);
-
-            expect(formData.get('opportunity_id')).toBe(String(testOpportunities[0].id));
-            expect(formData.get('student_user_id')).toBe(String(student.id));
-            expect(formData.get('why-choose-me')).toBe('I am a great fit because...');
-            expect(formData.get('skills')).toBe('JavaScript, Bun, Testing');
-            expect(formData.get('experiences')).toBe('Worked on project X, contributed to Y');
+            let requestData;
+            
+            // Check if body is FormData or JSON
+            if (options.body instanceof dom.window.FormData) {
+                // Handle FormData submission
+                const formData = options.body;
+                expect(formData.get('opportunity_id')).toBe(String(testOpportunities[0].id));
+                expect(formData.get('student_user_id')).toBe(String(student.id));
+                expect(formData.get('why-choose-me')).toBe('I am a great fit because...');
+                expect(formData.get('skills')).toBe('JavaScript, Bun, Testing');
+                expect(formData.get('experiences')).toBe('Worked on project X, contributed to Y');
+                
+                requestData = {
+                    opportunity_id: formData.get('opportunity_id'),
+                    student_user_id: formData.get('student_user_id'),
+                    why_choose_me: formData.get('why-choose-me'),
+                    skills: formData.get('skills'),
+                    experiences: formData.get('experiences')
+                };
+            } else {
+                // Handle JSON submission
+                requestData = JSON.parse(options.body);
+                expect(requestData.opportunity_id).toBe(String(testOpportunities[0].id));
+                expect(requestData.student_id).toBe(String(student.id));
+                expect(requestData.why_choose_me).toBe('I am a great fit because...');
+                expect(requestData.skills).toBe('JavaScript, Bun, Testing');
+                expect(requestData.experiences).toBe('Worked on project X, contributed to Y');
+            }
 
             // Simulate a successful backend response
             return Promise.resolve(new dom.window.Response(JSON.stringify({
                 id: 101, // Mock application ID
                 opportunity_id: testOpportunities[0].id,
                 student_user_id: student.id,
-                why_choose_me: formData.get('why-choose-me'),
-                skills: formData.get('skills'),
-                experiences: formData.get('experiences'),
+                why_choose_me: requestData.why_choose_me,
+                skills: requestData.skills,
+                experiences: requestData.experiences,
                 status: 'Submitted',
                 application_date: new Date().toISOString(),
             }), { status: 201, headers: { 'Content-Type': 'application/json' } }));
