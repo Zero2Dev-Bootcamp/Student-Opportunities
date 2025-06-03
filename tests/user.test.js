@@ -1,5 +1,17 @@
-import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import { describe, it, test, expect, beforeAll, afterAll, beforeEach, afterEach, mock } from 'bun:test';
+import { JSDOM, VirtualConsole } from 'jsdom';
+import { Database } from 'bun:sqlite';
+import fs from 'fs';
+import path from 'path';
 import User from '../src/resources/userResource.js'; // Updated to use renamed backend file
+import { setupEventListeners, loadProfileData, loadOpportunities, loadApplications, loadNotifications } from '../public/assets/js/dashboard.js'; // Import dashboard functions
+import { startServer, stopServer } from '../src/server.js'; // For registration integration tests
+
+// Helper function to load HTML file content
+const loadHTML = (filePath) => {
+  const fullPath = path.resolve(__dirname, '..', filePath);
+  return fs.readFileSync(fullPath, 'utf-8');
+};
 
 describe('User Resource', () => {
   let mockDb;
@@ -459,5 +471,693 @@ describe('User Resource', () => {
             expect(response.status).toBe(500); // Changed from 400 to 500 as per implementation
         });
     });
+  });
+});
+
+// ============================================================================
+// DASHBOARD INTEGRATION TESTS
+// ============================================================================
+// Consolidated from tests/dashboard.test.js
+
+describe('Dashboard Integration Tests', () => {
+  let dom;
+  let window;
+  let document;
+  let virtualConsole;
+  let mainFetchMock;
+
+  // Mock localStorage
+  const localStorageMock = (() => {
+    let store = {};
+    return {
+      getItem: (key) => store[key] || null,
+      setItem: (key, value) => {
+        store[key] = value.toString();
+      },
+      clear: () => {
+        store = {};
+      },
+      removeItem: (key) => {
+        delete store[key];
+      },
+    };
+  })();
+
+  beforeEach(async () => {
+    const studentDashboardHtmlPath = 'public/html/studentdashboard.html';
+    const html = loadHTML(studentDashboardHtmlPath);
+
+    virtualConsole = new VirtualConsole();
+    virtualConsole.on("error", (error) => {
+      if (!String(error).includes("Could not parse CSS stylesheet")) {
+        console.error("JSDOM Error:", error);
+      }
+    });
+     virtualConsole.on("warn", (warning) => {
+      if (!String(warning).includes("Could not parse CSS stylesheet")) {
+        console.warn("JSDOM Warning:", warning);
+      }
+    });
+
+    dom = new JSDOM(html, {
+      runScripts: 'dangerously',
+      resources: 'usable',
+      url: `file://${path.resolve(__dirname, '..', studentDashboardHtmlPath)}`,
+      pretendToBeVisual: true,
+      virtualConsole: virtualConsole,
+    });
+
+    window = dom.window;
+    document = window.document;
+
+    // Assign mock localStorage to JSDOM window
+    Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
+    // Mock global fetch and store it
+    mainFetchMock = mock(async (url, options) => {
+      if (url.toString().endsWith('/api/users/student123')) {
+        return Promise.resolve(new window.Response(JSON.stringify({
+          id: 'student123',
+          name: 'Test Student',
+          email: 'student@example.com',
+          user_type: 'student',
+          major: 'Computer Science',
+          graduation_year: 2025,
+          interests: ['technology', 'programming']
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      }
+       if (url.toString().endsWith('/api/opportunities')) {
+        return Promise.resolve(new window.Response(JSON.stringify([
+          {
+            id: 1,
+            title: 'Software Engineer Intern',
+            description: 'Exciting internship opportunity.',
+            company_id: 1,
+            location: 'Remote',
+            required_skills: 'JavaScript,Node.js,technology'
+          },
+          {
+            id: 2,
+            title: 'Graphic Design Intern',
+            description: 'Design visuals for campaigns.',
+            company_id: 2,
+            location: 'Remote',
+            required_skills: 'Design,arts'
+          },
+           {
+            id: 3,
+            title: 'Chess Club',
+            description: 'Play chess.',
+            company_id: 3,
+            location: 'On Campus',
+            type: 'Club',
+            required_skills: 'Chess'
+          }
+        ]), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      }
+       if (url.toString().endsWith('/api/applications')) {
+           if (options.method === 'GET') {
+                return Promise.resolve(new window.Response(JSON.stringify([
+                    { id: 1, opportunity_id: 1, status: 'Submitted', application_date: '2023-10-26T10:00:00Z' }
+                ]), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+           } else if (options.method === 'POST') {
+               const body = JSON.parse(options.body);
+               if (body.opportunity_id === 100) { // Simulate a failed application
+                    return Promise.resolve(new window.Response(JSON.stringify({ error: 'Application failed' }), { status: 400 }));
+               }
+               return Promise.resolve(new window.Response(JSON.stringify({ id: 2, ...body, status: 'Submitted' }), { status: 201 }));
+           }
+       }
+        if (url.toString().endsWith('/api/notifications')) {
+            if (options.method === 'GET') {
+                return Promise.resolve(new window.Response(JSON.stringify([
+                    { id: 1, message: 'New opportunity posted', is_read: 0 },
+                    { id: 2, message: 'Application status updated', is_read: 1 }
+                ]), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+            } else if (options.method === 'PATCH') {
+                const notificationId = url.pathname.split('/').pop();
+                 return Promise.resolve(new window.Response(JSON.stringify({ id: notificationId, is_read: 1 }), { status: 200 }));
+            }
+        }
+
+      // Fallback for other fetch calls
+      console.warn(`Unhandled fetch call in test: ${url}`);
+      return Promise.resolve(new window.Response(JSON.stringify({}), { status: 404 }));
+    });
+    global.fetch = mainFetchMock;
+
+    // Wait for DOMContentLoaded and scripts to execute
+    await new Promise(resolve => {
+      if (document.readyState === 'complete') {
+        setTimeout(resolve, 200); 
+      } else {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(resolve, 200);
+        }, { once: true });
+        setTimeout(resolve, 400);
+      }
+    });
+    
+    // Explicitly call the initialization functions from dashboard.js
+    setupEventListeners();
+    loadProfileData(window.localStorage.getItem('userId'));
+    loadOpportunities();
+    loadApplications(window.localStorage.getItem('userId'));
+    loadNotifications();
+  });
+
+  afterEach(() => {
+    dom.window.close();
+    localStorageMock.clear();
+    if (mainFetchMock) {
+      mainFetchMock.mockClear();
+    }
+    global.fetch = mainFetchMock;
+  });
+
+  it('should successfully render profile data', async () => {
+    // Mock localStorage to simulate a logged-in student
+    window.localStorage.setItem('authToken', 'mock-student-token');
+    window.localStorage.setItem('userId', 'student123');
+    window.localStorage.setItem('userType', 'student');
+
+    // Wait for fetch and rendering
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Assert that fetch was called to get user data
+    expect(global.fetch).toHaveBeenCalledWith('/api/users/student123', expect.any(Object));
+
+    // Assert that profile data is rendered
+    expect(document.getElementById('profile-name').textContent).toBe('Test Student');
+    expect(document.getElementById('profile-email').textContent).toBe('student@example.com');
+    expect(document.getElementById('profile-interests').textContent).toBe('technology, programming');
+    expect(document.getElementById('profile-major').textContent).toBe('Computer Science');
+    expect(document.getElementById('profile-graduation-year').textContent).toBe('2025');
+  });
+
+  it('should ensure opportunities are filtered based on interests', async () => {
+    // Mock localStorage to simulate a logged-in student with specific interests
+    window.localStorage.setItem('authToken', 'mock-student-token');
+    window.localStorage.setItem('userId', 'student123');
+    window.localStorage.setItem('userType', 'student');
+    window.localStorage.setItem('userInterests', JSON.stringify(['technology']));
+
+    // Wait for fetch and rendering
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Assert that fetch was called to get opportunities
+    expect(global.fetch).toHaveBeenCalledWith('/api/opportunities', expect.any(Object));
+
+    // Assert that only opportunities matching interests are rendered in the internship grid
+    const internshipGrid = document.querySelector('.internship-grid');
+    expect(internshipGrid).not.toBeNull();
+    const internshipCards = internshipGrid.querySelectorAll('.internship-card');
+    expect(internshipCards.length).toBe(1); // Only 'Software Engineer Intern' should match 'technology'
+    expect(internshipCards[0].querySelector('h3').textContent).toBe('Software Engineer Intern');
+
+    // Assert that other grids are empty or contain only non-matching items
+    const clubGrid = document.querySelector('.club-grid');
+    expect(clubGrid).not.toBeNull();
+    expect(clubGrid.children.length).toBe(0); // Assuming no clubs match 'technology' interest
+  });
+
+  it('should check application status', async () => {
+    // Mock localStorage to simulate a logged-in student
+    window.localStorage.setItem('authToken', 'mock-student-token');
+    window.localStorage.setItem('userId', 'student123');
+    window.localStorage.setItem('userType', 'student');
+
+    // Wait for fetch and rendering
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Assert that fetch was called to get applications
+    expect(global.fetch).toHaveBeenCalledWith('/api/applications', expect.any(Object));
+
+    // Assert that applications are rendered
+    const applicationList = document.getElementById('application-list');
+    expect(applicationList).not.toBeNull();
+    const applicationItems = applicationList.querySelectorAll('li');
+    expect(applicationItems.length).toBe(1);
+    expect(applicationItems[0].textContent).toContain('Status: Submitted');
+  });
+
+  it('should test notification "Mark as Read"', async () => {
+    // Mock localStorage to simulate a logged-in student
+    window.localStorage.setItem('authToken', 'mock-student-token');
+    window.localStorage.setItem('userId', 'student123');
+    window.localStorage.setItem('userType', 'student');
+
+    // Wait for fetch and rendering
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Assert that fetch was called to get notifications
+    expect(global.fetch).toHaveBeenCalledWith('/api/notifications', expect.any(Object));
+
+    // Assert that notifications are rendered
+    const notificationList = document.getElementById('notification-list');
+    expect(notificationList).not.toBeNull();
+    const notificationItems = notificationList.querySelectorAll('.notification');
+    expect(notificationItems.length).toBe(2);
+
+    // Find the "Mark as Read" button for the unread notification
+    const unreadNotification = notificationItems[0]; // Assuming the first one is unread based on mock data
+    const markAsReadButton = unreadNotification.querySelector('button');
+    expect(markAsReadButton).not.toBeNull();
+
+    // Mock the PATCH request *before* the click
+    const specificMarkReadMock = mock(async (url, options) => {
+        if (url.toString().endsWith('/api/notifications/1') && options?.method === 'PATCH') {
+            return Promise.resolve(new window.Response(JSON.stringify({ id: 1, is_read: 1 }), { status: 200 }));
+        }
+        return mainFetchMock(url, options); // Fallback to the main mock
+    });
+    global.fetch = specificMarkReadMock; // Temporarily override
+
+    // Simulate click on the "Mark as Read" button
+    markAsReadButton.click();
+
+    // Wait for the fetch call to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Assert that the PATCH fetch was called using the specific mock
+    expect(specificMarkReadMock).toHaveBeenCalledWith('/api/notifications/1', {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer mock-student-token'
+        },
+        body: JSON.stringify({ is_read: 1 })
+    });
+
+    // Restore main fetch mock
+    global.fetch = mainFetchMock;
+  });
+});
+
+// ============================================================================
+// REGISTRATION INTEGRATION TESTS
+// ============================================================================
+// Consolidated from tests/register.test.js
+
+// --- Test Configuration ---
+const TEST_PORT = 3002; // Use a different port for testing
+const SERVER_URL = `http://localhost:${TEST_PORT}`;
+const INDEX_HTML_PATH = 'public/html/index.html';
+
+// Define DB Schema (copied/adapted from db/db.js for test setup)
+const USER_TABLE_SCHEMA = `
+  CREATE TABLE User (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    user_type TEXT NOT NULL CHECK(user_type IN ('student', 'company')),
+    major TEXT,
+    graduation_year INTEGER,
+    industry TEXT,
+    location TEXT,
+    description TEXT
+  );
+`;
+
+const USER_INTERESTS_TABLE_SCHEMA = `
+  CREATE TABLE UserInterests (
+    user_id INTEGER NOT NULL,
+    interest TEXT NOT NULL,
+    PRIMARY KEY (user_id, interest),
+    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
+  );
+`;
+
+describe('Registration Integration Tests', () => {
+  let server;
+  let db;
+  let dom;
+  let window;
+  let document;
+  let virtualConsole;
+  let originalFetch;
+
+  beforeAll(async () => {
+    // Start the server before all tests
+    server = await startServer(TEST_PORT);
+    originalFetch = global.fetch; // Store original fetch
+  });
+
+  afterAll(async () => {
+    // Stop the server after all tests
+    await stopServer();
+    global.fetch = originalFetch; // Restore original fetch
+  });
+
+  beforeEach(async () => {
+    // Clear server's actual database tables before each test
+    try {
+      const serverDb = new Database('opportunities.sqlite');
+      serverDb.run('DELETE FROM UserInterests');
+      serverDb.run('DELETE FROM User');
+      // Reset autoincrement sequence for User table if SQLite
+      serverDb.run("DELETE FROM sqlite_sequence WHERE name='User';");
+      serverDb.close();
+      console.log('[tests/user.test.js] Server database tables cleared.');
+    } catch (e) {
+      console.error('[tests/user.test.js] Error clearing server database:', e.message);
+    }
+
+    // Setup in-memory database for test's own verification
+    db = new Database(':memory:');
+    db.run(USER_TABLE_SCHEMA);
+    db.run(USER_INTERESTS_TABLE_SCHEMA);
+
+    // Setup JSDOM
+    const html = loadHTML(INDEX_HTML_PATH);
+
+    virtualConsole = new VirtualConsole();
+    virtualConsole.on("error", (error) => {
+      if (!String(error).includes("Could not parse CSS stylesheet")) console.error("JSDOM Error:", error);
+    });
+    virtualConsole.on("warn", (warning) => {
+      if (!String(warning).includes("Could not parse CSS stylesheet")) console.warn("JSDOM Warning:", warning);
+    });
+
+    dom = new JSDOM(html, {
+      runScripts: 'dangerously',
+      resources: 'usable',
+      url: `${SERVER_URL}/`,
+      pretendToBeVisual: true,
+      virtualConsole: virtualConsole,
+    });
+
+    window = dom.window;
+    document = window.document;
+
+    // Mock global fetch to interact with our test server
+    global.fetch = async (url, options) => {
+        const requestUrl = new URL(url, SERVER_URL).toString();
+        return originalFetch(requestUrl, options);
+    };
+
+    // --- Create Test Data ---
+    const companyUsers = [];
+    const studentUsers = [];
+    const opportunities = [];
+
+    // Create 2 Company Users
+    for (let i = 1; i <= 2; i++) {
+        const companyData = {
+            name: `Test Company ${i}`,
+            username: `testcompany${i}`,
+            email: `company${i}@test.com`,
+            password: 'password123',
+            user_type: 'company',
+            role: 'company',
+            industry: `Industry ${i}`,
+            location: `City ${i}`,
+            description: `Description for Company ${i}`
+        };
+        const response = await fetch(`${SERVER_URL}/api/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(companyData),
+        });
+        const company = await response.json();
+        companyUsers.push(company);
+    }
+
+    // Create 5 Student Users
+    for (let i = 1; i <= 5; i++) {
+        const studentData = {
+            name: `Test Student ${i}`,
+            username: `teststudent${i}`,
+            email: `student${i}@test.com`,
+            password: 'password123',
+            user_type: 'student',
+            role: 'student',
+            major: `Major ${i}`,
+            graduation_year: 2025 + i,
+            interests: [`interest${i}`, 'technology']
+        };
+         const response = await fetch(`${SERVER_URL}/api/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentData),
+        });
+        const student = await response.json();
+        studentUsers.push(student);
+    }
+
+    // Create Opportunities associated with Companies
+    if (companyUsers.length >= 2) {
+        const opp1Data = {
+            title: 'Software Engineer Intern',
+            description: 'Exciting internship opportunity.',
+            company_user_id: companyUsers[0].id,
+            location: 'Remote',
+            required_skills: 'JavaScript,Node.js,technology',
+            type: 'Internship'
+        };
+         const response1 = await fetch(`${SERVER_URL}/api/opportunities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(opp1Data),
+        });
+        const opp1 = await response1.json();
+        opportunities.push(opp1);
+
+        const opp2Data = {
+            title: 'Graphic Design Intern',
+            description: 'Design visuals for campaigns.',
+            company_user_id: companyUsers[1].id,
+            location: 'Remote',
+            required_skills: 'Design,arts',
+            type: 'Internship'
+        };
+         const response2 = await fetch(`${SERVER_URL}/api/opportunities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(opp2Data),
+        });
+        const opp2 = await response2.json();
+        opportunities.push(opp2);
+
+         const opp3Data = {
+            title: 'Marketing Assistant',
+            description: 'Assist in marketing campaigns.',
+            company_user_id: companyUsers[0].id,
+            location: 'On-site',
+            required_skills: 'Marketing,Communication',
+            type: 'Job'
+        };
+         const response3 = await fetch(`${SERVER_URL}/api/opportunities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(opp3Data),
+        });
+        const opp3 = await response3.json();
+        opportunities.push(opp3);
+    }
+
+    // Make created users and opportunities available to tests
+    window.testData = { companyUsers, studentUsers, opportunities };
+    console.log('[tests/user.test.js] Created test data.');
+
+    // Wait for DOM and scripts
+    await new Promise(resolve => {
+        if (document.readyState === 'complete') {
+            resolve();
+        } else {
+            document.addEventListener('DOMContentLoaded', resolve, { once: true });
+            setTimeout(resolve, 150);
+        }
+    });
+     await new Promise(resolve => setTimeout(resolve, 100));
+  });
+
+  afterEach(() => {
+    dom.window.close();
+    db.close();
+  });
+
+  test('Successful student registration', async () => {
+    // Get form elements
+    const form = document.querySelector('.register-form');
+    const userTypeSelect = document.getElementById('userType');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const locationInput = document.getElementById('location');
+    const messageInput = document.getElementById('message');
+    const interestCheckboxes = document.querySelectorAll('input[name="interests"]');
+    const messageArea = form.querySelector('.form-message');
+
+    expect(form).not.toBeNull();
+    expect(userTypeSelect).not.toBeNull();
+    expect(passwordInput).not.toBeNull();
+    expect(locationInput).not.toBeNull();
+
+    // Simulate filling the form
+    userTypeSelect.value = 'student';
+    userTypeSelect.dispatchEvent(new window.Event('change'));
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const uniqueEmailSuccess = `student-${Date.now()}@test.com`;
+    nameInput.value = 'Test Student';
+    emailInput.value = uniqueEmailSuccess;
+    passwordInput.value = 'password123';
+    locationInput.value = 'Test City';
+    messageInput.value = 'Test message about student';
+    
+    // Check specific interests
+    interestCheckboxes.forEach(cb => {
+        if (cb.value === 'technology' || cb.value === 'business') {
+            cb.checked = true;
+        }
+    });
+
+    // Simulate form submission
+    let fetchCalled = false;
+    let fetchResponse;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        fetchCalled = true;
+
+        const formData = {
+            userType: userTypeSelect.value,
+            name: nameInput.value,
+            email: emailInput.value,
+            password: passwordInput.value,
+            location: locationInput.value,
+            description: messageInput.value,
+            interests: Array.from(interestCheckboxes)
+                            .filter(cb => cb.checked)
+                            .map(cb => cb.value),
+            role: userTypeSelect.value,
+            username: nameInput.value
+        };
+
+        try {
+            const response = await fetch(`${SERVER_URL}/api/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+            fetchResponse = response;
+            const result = await response.json();
+
+            if (response.ok && messageArea) {
+                messageArea.textContent = "Registered! Please log in.";
+                messageArea.style.color = 'green';
+            } else if (messageArea) {
+                 messageArea.textContent = result.error || 'Registration failed.';
+                 messageArea.style.color = 'red';
+            }
+        } catch (error) {
+            console.error("Error during test fetch:", error);
+             if (messageArea) {
+                 messageArea.textContent = 'An error occurred during registration.';
+                 messageArea.style.color = 'red';
+            }
+        }
+    });
+
+    form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+
+    // Wait for fetch to complete
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Assertions
+    expect(fetchCalled).toBe(true);
+    expect(fetchResponse).toBeDefined();
+    expect(fetchResponse.status).toBe(201);
+
+    // Check form message
+    expect(messageArea?.textContent).toBe("Registered! Please log in.");
+  });
+
+  test('Failed registration (duplicate email)', async () => {
+    // Pre-register a user via API call to the test server
+    const uniqueEmailDuplicate = `duplicate-${Date.now()}@test.com`;
+    const initialUserData = {
+        userType: "student",
+        name: 'Existing Student',
+        username: 'Existing Student',
+        email: uniqueEmailDuplicate,
+        password: 'password123',
+        role: 'student',
+        location: 'Old City',
+        description: 'Initial user',
+        interests: []
+    };
+    const preRegisterResponse = await fetch(`${SERVER_URL}/api/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(initialUserData),
+    });
+    expect(preRegisterResponse.status).toBe(201);
+    await preRegisterResponse.json();
+
+    // Get form elements
+    const form = document.querySelector('.register-form');
+    const userTypeSelect = document.getElementById('userType');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const locationInput = document.getElementById('location');
+    const messageInput = document.getElementById('message');
+    const messageArea = form.querySelector('.form-message');
+
+    // Simulate filling the form with duplicate email
+    userTypeSelect.value = 'student';
+    nameInput.value = 'New Student Same Email';
+    emailInput.value = uniqueEmailDuplicate;
+    passwordInput.value = 'newpassword';
+    locationInput.value = 'New City';
+    messageInput.value = 'Trying to register again';
+
+    // Simulate form submission
+    let fetchCalled = false;
+    let fetchResponse;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        fetchCalled = true;
+        const formData = {
+            userType: userTypeSelect.value, name: nameInput.value, email: emailInput.value,
+            password: passwordInput.value, location: locationInput.value, description: messageInput.value,
+            interests: [], role: userTypeSelect.value, username: nameInput.value
+        };
+        try {
+            const response = await fetch(`${SERVER_URL}/api/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+            fetchResponse = response;
+            const result = await response.json();
+
+             if (messageArea) {
+                 messageArea.textContent = result.error || 'Registration failed.';
+                 messageArea.style.color = 'red';
+            }
+        } catch (error) {
+             console.error("Error during test fetch (duplicate):", error);
+             if (messageArea) {
+                 messageArea.textContent = 'An error occurred.';
+                 messageArea.style.color = 'red';
+            }
+        }
+    });
+
+    form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+
+    // Wait for fetch
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Assertions
+    expect(fetchCalled).toBe(true);
+    expect(fetchResponse).toBeDefined();
+    expect(fetchResponse.status).toBe(400);
+
+    // Check form message
+    expect(messageArea?.textContent).toBe("UNIQUE constraint failed: User.email");
   });
 });
