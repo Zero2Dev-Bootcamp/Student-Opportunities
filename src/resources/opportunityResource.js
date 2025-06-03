@@ -136,7 +136,7 @@ class OpportunityResource {
       const result = stmt.run(title, description, type, company_user_id, required_skills, location);
 
       // Return success response with the new opportunity ID
-      return new Response(JSON.stringify({ id: result.lastInsertRowId, message: 'Opportunity created successfully' }), {
+      return new Response(JSON.stringify({ id: result.lastInsertRowid, message: 'Opportunity created successfully' }), {
         headers: { 'Content-Type': 'application/json' },
         status: 201 // HTTP 201 = Created
       });
