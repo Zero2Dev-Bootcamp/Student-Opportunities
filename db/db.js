@@ -21,16 +21,6 @@ db.run(`
   );
 `);
 
-// Create the UserInterests table if it doesn't exist
-db.run(`
-  CREATE TABLE IF NOT EXISTS UserInterests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    interest TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE,
-    UNIQUE (user_id, interest) -- Prevent duplicate interests for the same user
-  );
-`);
 
 // Create the Opportunity table if it doesn't exist
 db.run(`

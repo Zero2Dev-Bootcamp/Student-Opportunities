@@ -27,7 +27,6 @@ This document lists the key resources for the Studexplore project, covering both
 
 **Database Tables:**
 - `User` - Main user information
-- `UserInterests` - Student interests (many-to-many relationship)
 
 **HTTP Methods:** GET, POST, PATCH, DELETE
 
@@ -125,7 +124,6 @@ The system uses a custom authentication mechanism with:
 ## Database Schema Summary
 
 - `User` - Core user accounts (students and companies)
-- `UserInterests` - Student interests (linked to User)
 - `Opportunity` - Job/internship postings (created by companies)
 - `Application` - Student applications (links students to opportunities)
 - `Notification` - System alerts and messages

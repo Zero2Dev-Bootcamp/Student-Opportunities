@@ -49,7 +49,7 @@ describe('User Resource', () => {
 
     const mockPrepare = mock((query) => {
       let mockAllInterests = mock(async () => []); // Default: no interests
-      if (query === "SELECT interest FROM UserInterests WHERE user_id = ?") {
+      if (query === "SELECT interest FROM UserInterest WHERE user_id = ?") {
         mockAllInterests = mock(async () => [{ interest: 'Mock Interest 1' }, { interest: 'Mock Interest 2' }]); // Return mock interests
       }
       return {
@@ -790,14 +790,6 @@ const USER_TABLE_SCHEMA = `
   );
 `;
 
-const USER_INTERESTS_TABLE_SCHEMA = `
-  CREATE TABLE UserInterests (
-    user_id INTEGER NOT NULL,
-    interest TEXT NOT NULL,
-    PRIMARY KEY (user_id, interest),
-    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
-  );
-`;
 
 describe('Registration Integration Tests', () => {
   let server;
@@ -824,7 +816,6 @@ describe('Registration Integration Tests', () => {
     // Clear server's actual database tables before each test
     try {
       const serverDb = new Database('opportunities.sqlite');
-      serverDb.run('DELETE FROM UserInterests');
       serverDb.run('DELETE FROM User');
       // Reset autoincrement sequence for User table if SQLite
       serverDb.run("DELETE FROM sqlite_sequence WHERE name='User';");
@@ -837,7 +828,6 @@ describe('Registration Integration Tests', () => {
     // Setup in-memory database for test's own verification
     db = new Database(':memory:');
     db.run(USER_TABLE_SCHEMA);
-    db.run(USER_INTERESTS_TABLE_SCHEMA);
 
     // Setup JSDOM
     const html = loadHTML(INDEX_HTML_PATH);

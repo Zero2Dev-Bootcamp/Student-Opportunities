@@ -36,14 +36,6 @@ const USER_TABLE_SCHEMA = `
   );
 `;
 
-const USER_INTERESTS_TABLE_SCHEMA = `
-  CREATE TABLE UserInterests (
-    user_id INTEGER NOT NULL,
-    interest TEXT NOT NULL,
-    PRIMARY KEY (user_id, interest),
-    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
-  );
-`;
 
 const OPPORTUNITY_TABLE_SCHEMA = `
   CREATE TABLE Opportunity (
@@ -115,7 +107,6 @@ describe('Application and Company Dashboard Tests', () => {
       const serverDb = new Database('opportunities.sqlite');
       serverDb.run('DELETE FROM Application');
       serverDb.run('DELETE FROM Opportunity');
-      serverDb.run('DELETE FROM UserInterests');
       serverDb.run('DELETE FROM User');
       // Reset autoincrement sequences
       serverDb.run("DELETE FROM sqlite_sequence WHERE name='User';");
@@ -130,7 +121,6 @@ describe('Application and Company Dashboard Tests', () => {
     // Setup in-memory database for test's own verification (optional for integration tests)
     db = new Database(':memory:');
     db.run(USER_TABLE_SCHEMA);
-    db.run(USER_INTERESTS_TABLE_SCHEMA);
     db.run(OPPORTUNITY_TABLE_SCHEMA);
     db.run(APPLICATION_TABLE_SCHEMA);
     // db.run(APPLICATION_FILE_TABLE_SCHEMA); // Not used in current implementation

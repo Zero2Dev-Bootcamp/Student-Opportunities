@@ -24,16 +24,21 @@ class StudentUser {
         console.log(`[StudentUser.createStudentSpecificData] No institution_name provided for userId: ${userId}`);
     }
 
-
-    if (interests.length > 0) {
-      const interestStmt = this.db.prepare("INSERT INTO UserInterests (user_id, interest) VALUES (?, ?)");
-      for (const interest of interests) {
-        interestStmt.run(userId, interest);
-      }
-      console.log(`[StudentUser.createStudentSpecificData] Inserted ${interests.length} interests for userId: ${userId}`);
+    // Save interests to UserInterest table
+    if (interests && interests.length > 0) {
+      const insertInterestStmt = this.db.prepare("INSERT INTO UserInterest (user_id, interest) VALUES (?, ?)");
+      
+      this.db.transaction(() => {
+        for (const interest of interests) {
+          insertInterestStmt.run(userId, interest);
+        }
+      })();
+      
+      console.log(`[StudentUser.createStudentSpecificData] Saved ${interests.length} interests for userId: ${userId}`);
     } else {
-      console.log(`[StudentUser.createStudentSpecificData] No interests to insert for userId: ${userId}`);
+      console.log(`[StudentUser.createStudentSpecificData] No interests provided for userId: ${userId}`);
     }
+
     return true; // Indicate success
   }
 
@@ -190,23 +195,14 @@ class User {
       console.log('[User.getUserById] Result from User table query:', user); // Added log
 
       if (user) {
-          // Fetch user interests from the UserInterests table
-          // Prepare and execute in one step
-          const rawInterestsResult = this.db.prepare("SELECT interest FROM UserInterests WHERE user_id = ?").all(id);
-          console.log('[User.getUserById] Raw result from UserInterests table query (single step):', rawInterestsResult); // Added log
-          const interests = Array.isArray(rawInterestsResult) ? rawInterestsResult.map(row => row.interest) : []; // Extract interests into an array
-          console.log('[User.getUserById] Mapped interests:', interests); // Added log
-
-          // Add interests to the user object
-          user.interests = interests;
+          // Fetch interests from UserInterest table
+          const interestsStmt = this.db.prepare("SELECT interest FROM UserInterest WHERE user_id = ?");
+          const interests = interestsStmt.all(id);
+          user.interests = interests.map(row => row.interest);
+          console.log(`[User.getUserById] Fetched ${user.interests.length} interests for user ID ${id}`);
       }
 
       console.log('[User.getUserById] Query result:', user);
-
-      // Add a log to check total interests count
-      const totalInterestsStmt = this.db.prepare("SELECT COUNT(*) as count FROM UserInterests");
-      const totalInterestsCount = totalInterestsStmt.get().count;
-      console.log('[User.getUserById] Total interests in UserInterests table:', totalInterestsCount); // Added log
 
 
       return user || null;
@@ -283,32 +279,22 @@ class User {
         }
 
 
-        // Handle interests separately
-        console.log('[User.updateUser] Checking for interests in updateData:', updateData.hasOwnProperty('interests'), Array.isArray(updateData.interests)); // Added log
+        // Handle interests separately - update UserInterest table
         if (updateData.hasOwnProperty('interests') && Array.isArray(updateData.interests)) {
-            console.log(`[User.updateUser] Updating interests for user ID ${id}. Interests received:`, updateData.interests); // Added log
-            // 1. Remove existing interests
-            const deleteStmt = this.db.prepare("DELETE FROM UserInterests WHERE user_id = ?");
-            const deleteResult = deleteStmt.run(id);
-            console.log(`[User.updateUser] Deleted ${deleteResult.changes} existing interests for user ID ${id}.`);
-
-            // 2. Insert new interests
+            // Delete existing interests
+            const deleteInterestsStmt = this.db.prepare("DELETE FROM UserInterest WHERE user_id = ?");
+            deleteInterestsStmt.run(id);
+            
+            // Insert new interests
             if (updateData.interests.length > 0) {
-                console.log(`[User.updateUser] Attempting to insert ${updateData.interests.length} new interests.`); // Added log
-                const interestStmt = this.db.prepare("INSERT INTO UserInterests (user_id, interest) VALUES (?, ?)");
-                let insertedCount = 0;
+                const insertInterestStmt = this.db.prepare("INSERT INTO UserInterest (user_id, interest) VALUES (?, ?)");
                 for (const interest of updateData.interests) {
-                    const insertResult = interestStmt.run(id, interest);
-                    if (insertResult.changes > 0) {
-                        insertedCount++;
-                    }
+                    insertInterestStmt.run(id, interest);
                 }
-                 console.log(`[User.updateUser] Attempted to insert ${updateData.interests.length} new interests for user ID ${id}. Successfully inserted ${insertedCount}.`);
+                console.log(`[User.updateUser] Updated ${updateData.interests.length} interests for user ID ${id}`);
             } else {
-                 console.log(`[User.updateUser] No new interests to insert for user ID ${id}.`);
+                console.log(`[User.updateUser] Cleared all interests for user ID ${id}`);
             }
-        } else if (updateData.hasOwnProperty('interests')) {
-             console.warn(`[User.updateUser] 'interests' field provided but is not an array for user ID ${id}. Ignoring interests update.`);
         }
 
 
