@@ -85,6 +85,41 @@ describe('Login Integration Test', () => {
     });
 
 
+    // Mock global fetch
+    global.fetch = mock(async (url, options) => {
+      if (url === '/api/login' && options?.method === 'POST') {
+        const body = JSON.parse(options.body);
+        
+        // Mock successful student login
+        if (body.email === 'student@example.com' && body.password === 'password123') {
+          return Promise.resolve(new window.Response(JSON.stringify({
+            userId: 'student123',
+            userType: 'student',
+            token: 'student123',
+            message: 'Login successful'
+          }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+        }
+        
+        // Mock successful company login
+        if (body.email === 'company@example.com' && body.password === 'password123') {
+          return Promise.resolve(new window.Response(JSON.stringify({
+            userId: 'company456',
+            userType: 'company',
+            token: 'company456',
+            message: 'Login successful'
+          }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+        }
+        
+        // Mock failed login
+        return Promise.resolve(new window.Response(JSON.stringify({
+          message: 'Login failed: Invalid credentials'
+        }), { status: 401, headers: { 'Content-Type': 'application/json' } }));
+      }
+      
+      // Fallback for other fetch calls
+      return Promise.resolve(new window.Response('Not Found', { status: 404 }));
+    });
+
     // Clear mocks before each test
     localStorageMock.clear();
     global.fetch.mockClear();
@@ -149,7 +184,7 @@ describe('Login Integration Test', () => {
     await new Promise(resolve => setTimeout(resolve, 1100)); // Wait slightly longer than the setTimeout in login.js
 
     // Check that localStorage.setItem was called with the correct values
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('authToken', 'mock-student-token');
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('authToken', 'student123');
     expect(localStorageMock.setItem).toHaveBeenCalledWith('userId', 'student123');
     expect(localStorageMock.setItem).toHaveBeenCalledWith('userType', 'student');
 
@@ -196,8 +231,8 @@ describe('Login Integration Test', () => {
     await new Promise(resolve => setTimeout(resolve, 1100)); // Wait slightly longer than the setTimeout in login.js
 
     // Check that localStorage.setItem was called with the correct values
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('authToken', 'mock-company-token'); // Corrected token
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('userId', 'company456'); // Corrected user ID
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('authToken', 'company456');
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('userId', 'company456');
     expect(localStorageMock.setItem).toHaveBeenCalledWith('userType', 'company');
 
     // Check that window.location.href was set for redirection
@@ -256,7 +291,7 @@ describe('Login Integration Test', () => {
     });
 
     // Check the message area content and style
-    expect(mockMessageArea.textContent).toBe('Invalid credentials');
+    expect(mockMessageArea.textContent).toBe('Login failed: Invalid credentials');
     expect(mockMessageArea.style.color).toBe('red');
 
     // Ensure no redirection occurred
