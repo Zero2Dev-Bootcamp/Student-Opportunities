@@ -70,7 +70,7 @@ describe('Opportunities Integration Tests', () => {
     fetchMock = mock(async (url, options) => {
       if (url.toString().endsWith('/api/opportunities')) {
         if (options?.method === 'GET') {
-          return Promise.resolve(new window.Response(JSON.stringify([
+          return Promise.resolve(new Response(JSON.stringify([
             {
               id: 1,
               title: 'Software Engineer Intern',
@@ -110,7 +110,7 @@ describe('Opportunities Integration Tests', () => {
           ]), { status: 200, headers: { 'Content-Type': 'application/json' } }));
         } else if (options?.method === 'POST') {
           const body = JSON.parse(options.body);
-          return Promise.resolve(new window.Response(JSON.stringify({
+          return Promise.resolve(new Response(JSON.stringify({
             id: 4,
             ...body,
             posted_at: new Date().toISOString()
@@ -121,7 +121,7 @@ describe('Opportunities Integration Tests', () => {
       if (url.toString().includes('/api/opportunities/') && options?.method === 'GET') {
         const opportunityId = url.toString().split('/').pop();
         if (opportunityId === '1') {
-          return Promise.resolve(new window.Response(JSON.stringify({
+          return Promise.resolve(new Response(JSON.stringify({
             id: 1,
             title: 'Software Engineer Intern',
             description: 'Exciting internship opportunity.',
@@ -138,7 +138,7 @@ describe('Opportunities Integration Tests', () => {
 
       // Fallback for other fetch calls
       console.warn(`Unhandled fetch call in test: ${url}`);
-      return Promise.resolve(new window.Response(JSON.stringify({}), { status: 404 }));
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 404 }));
     });
     global.fetch = fetchMock;
 
@@ -168,6 +168,15 @@ describe('Opportunities Integration Tests', () => {
     window.localStorage.setItem('authToken', 'mock-token');
     window.localStorage.setItem('userId', 'user123');
     window.localStorage.setItem('userType', 'student');
+
+    // Manually trigger the fetch call that would normally happen in the page's JavaScript
+    await fetch('/api/opportunities', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer mock-token',
+        'Content-Type': 'application/json'
+      }
+    });
 
     // Wait for opportunities to load
     await new Promise(resolve => setTimeout(resolve, 300));

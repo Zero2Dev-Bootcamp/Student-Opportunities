@@ -64,10 +64,17 @@ describe('Login Integration Test', () => {
     Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
     // Mock window.location methods
-    mockLocation = window.location; // Use the existing location object
-    mockLocation.assign = mock((url) => { mockLocation.href = url; });
-    mockLocation.replace = mock((url) => { mockLocation.href = url; });
-    mockLocation.reload = mock(() => {}); // Mock reload
+    mockLocation = {
+      href: window.location.href,
+      assign: mock((url) => { mockLocation.href = url; }),
+      replace: mock((url) => { mockLocation.href = url; }),
+      reload: mock(() => {})
+    };
+    Object.defineProperty(window, 'location', {
+      value: mockLocation,
+      writable: true,
+      configurable: true
+    });
 
 
     // Mock the message area element and its properties
