@@ -1,6 +1,6 @@
 /* Styles for opportunity pages */
 body {
-    font-family: sans-serif;
+    font-family: 'Poppins';
 }
 
 h1 {
@@ -14,7 +14,7 @@ h1 {
     box-sizing: border-box;
 }
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Poppins';
     color: #E6E6E6; /* Updated */
     background-color: #121212; /* Updated */
     line-height: 1.6;
@@ -39,7 +39,7 @@ body {
     color: #E6E6E6; /* Updated */
     text-decoration: none;
     margin: 0 1rem;
-    font-family: 'Source Code Pro', monospace;
+    font-family: 'Poppins';
     font-weight: 400;
     transition: color 0.3s, transform 0.3s; /* Updated */
 }
@@ -91,7 +91,7 @@ body {
     min-width: 200px;
 }
 .filter-search label {
-    font-family: 'Source Code Pro', monospace;
+    font-family: 'Poppins';
     font-size: 0.9rem;
     color: #121212; /* Updated */
     margin-bottom: 0.5rem;
@@ -117,7 +117,7 @@ body {
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 5px;
-    font-family: 'Source Code Pro', monospace;
+    font-family: 'Poppins';
     cursor: pointer;
     transition: box-shadow 0.3s, transform 0.3s; /* Updated */
     align-self: flex-end;
@@ -159,7 +159,7 @@ body {
     margin-bottom: 0.5rem;
 }
 .opportunity-card .company {
-    font-family: 'Source Code Pro', monospace;
+    font-family: 'Poppins';
     color: #FF2D55; /* Updated */
     margin-bottom: 0.75rem;
 }
@@ -179,7 +179,7 @@ body {
     padding: 0.5rem 1rem;
     border-radius: 5px;
     text-decoration: none;
-    font-family: 'Source Code Pro', monospace;
+    font-family: 'Poppins';
     display: inline-block;
     transition: box-shadow 0.3s, transform 0.3s; /* Updated */
 }
