@@ -257,11 +257,13 @@ main h1 {
 /* Newsfeed and Applications Container */
 .newsfeed-applications {
   grid-area: newsfeed; /* Assign to newsfeed grid area */
+  background-color: var(--white); /* Ensure white background */
 }
 
 /* Applications Section */
 #recent-applications {
   margin: 0; /* Remove margin as gap is on the container */
+  background-color: var(--white); /* Ensure white background */
 }
 
 .opportunities h2, #posted-opportunities h2, #recent-applications h2, .opportunity-section h2 {
@@ -360,6 +362,7 @@ main h1 {
 /* Applications Section */
 .applications-section, #applications {
   margin: 20px 0;
+  background-color: var(--white); /* Ensure white background */
 }
 
 #application-list, .application-item {
@@ -390,6 +393,7 @@ main h1 {
 /* Notifications Section */
 .notifications {
   margin: 20px 0;
+  background-color: var(--white); /* Ensure white background */
 }
 
 .notifications h2 {
@@ -400,12 +404,13 @@ main h1 {
   margin-bottom: 15px;
 }
 
-#notification-list {
+#notification-list, .notification-list {
   list-style: none;
+  background-color: var(--white); /* Ensure white background */
 }
 
-#notification-list li {
-  background-color: var(--white);
+#notification-list li, .notification-list p {
+  background-color: var(--light-gray); /* Light gray background for list items */
   border-radius: 8px;
   box-shadow: var(--shadow);
   padding: 15px;
@@ -415,12 +420,12 @@ main h1 {
   animation: fadeIn 0.5s ease forwards;
 }
 
-#notification-list li:hover {
+#notification-list li:hover, .notification-list:hover {
   transform: translateY(-5px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-#notification-list li p {
+#notification-list li p, .notification-list p {
   font-size: 14px;
   margin-bottom: 10px;
 }
