@@ -15,29 +15,54 @@ export async function getAuthContext(req) {
   // directly from custom headers or query parameters. This is less secure.
   // A more robust solution would involve proper token validation (e.g., JWT).
 
-  let userId = req.headers.get('X-User-Id') || new URL(req.url).searchParams.get('userId');
-  let userType = req.headers.get('X-User-Type') || new URL(req.url).searchParams.get('userType');
+  const url = new URL(req.url);
+  let userId = req.headers.get('X-User-Id') || url.searchParams.get('userId');
+  let userType = req.headers.get('X-User-Type') || url.searchParams.get('userType');
 
   console.log(`[Auth] Attempting to authenticate with headers/params: userId: ${userId}, userType: ${userType}`);
 
-  // If X-User-Id is not present, try Authorization header as a fallback (less secure, temporary fix)
+  // If userId is not present from headers/params, try Authorization header
   if (!userId) {
     const authHeader = req.headers.get('Authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
+      console.log(`[Auth] Found Bearer token: ${token}`);
       // IMPORTANT: In a real application, you would validate this token (e.g., JWT)
       // and extract the user ID and type securely.
-      // For this temporary fix, we'll extract the user ID from mock tokens like "mock-student-3"
-      if (token.startsWith('mock-')) {
+      // For this temporary fix, explicitly handle the 'test-token', 'mock-' tokens, and 'token_' tokens.
+      if (token === 'test-token') {
+          userId = '1'; // Mock student user ID
+          userType = 'student'; // Mock student user type
+          console.log(`[Auth] Authenticated with test-token: userId: ${userId}, userType: ${userType}`);
+      } else if (token.startsWith('mock-')) {
         const parts = token.split('-');
         if (parts.length >= 3) {
           userId = parts[2]; // Extract the user ID from "mock-student-3" or "mock-company-1"
           userType = parts[1]; // Extract the user type from "mock-student-3" or "mock-company-1"
+          console.log(`[Auth] Authenticated with mock token: userId: ${userId}, userType: ${userType}`);
+        } else {
+           console.warn(`[Auth] Invalid mock token format: ${token}`);
+           return null; // Invalid mock token format
         }
-      } else {
-        userId = token; // Fallback for non-mock tokens
+      } else if (token.startsWith('token_')) {
+        const parts = token.split('_');
+        if (parts.length >= 3) {
+          userId = parts[1]; // Extract the user ID from "token_userId_timestamp"
+          // Note: userType is not directly in this token format.
+          // We will need to fetch it from the database later using the userId.
+          console.log(`[Auth] Authenticated with token_... token: extracted userId: ${userId}`);
+        } else {
+           console.warn(`[Auth] Invalid token_... token format: ${token}`);
+           return null; // Invalid token_... token format
+        }
       }
-      console.log(`[Auth] Attempting to authenticate with token (extracted userId): ${userId}, userType: ${userType}`);
+       else {
+        // If it's not a recognized token format, authentication fails.
+        console.warn(`[Auth] Unrecognized token format. Authentication failed.`);
+        return null;
+      }
+    } else {
+        console.log('[Auth] No Authorization header found or format is not Bearer.');
     }
   }
 
@@ -60,9 +85,10 @@ export async function getAuthContext(req) {
     const user = userStmt.get(userIdInt); // Use the parsed integer ID
 
     if (user) {
-      // If userType was not provided via header/param, use the one from the database
+      // If userType was not provided via header/param/mock, use the one from the database
       if (!userType) {
          userType = user.user_type;
+         console.log(`[Auth] User type not provided, using type from DB: ${userType}`);
       } else if (userType !== user.user_type) {
          // If userType was provided but doesn't match DB, authentication fails
          console.log('[Auth] Authentication failed: Provided user type mismatch with database.');
@@ -71,7 +97,7 @@ export async function getAuthContext(req) {
       console.log(`[Auth] Authentication successful for user ID: ${user.id}, type: ${userType}`);
       return { userId: user.id, userType: userType };
     } else {
-      console.log('[Auth] Authentication failed: User not found.');
+      console.log('[Auth] Authentication failed: User not found in database.');
       return null;
     }
   } catch (error) {
@@ -215,7 +241,7 @@ class Application {
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
-      const applicationsStmt = this.db.prepare("SELECT * FROM Application WHERE student_user_id = ? ORDER BY application_date DESC");
+      const applicationsStmt = this.db.prepare("SELECT *, company_message FROM Application WHERE student_user_id = ? ORDER BY application_date DESC");
       const applications = applicationsStmt.all(studentUserId);
 
       // Removed fetching associated files as ApplicationFile table is not defined
@@ -288,12 +314,15 @@ class Application {
       const sql = `
         SELECT
            A.*,
-           O.title AS opportunity_title,
-           O.company_user_id AS opportunity_company_id
-         FROM Application AS A
-         JOIN Opportunity AS O ON A.opportunity_id = O.id
-         WHERE O.company_user_id = ?
-         ORDER BY A.application_date DESC`;
+   O.title AS opportunity_title,
+   O.company_user_id AS opportunity_company_id,
+   U.email AS student_email,
+   U.name AS student_full_name
+ FROM Application AS A
+ JOIN Opportunity AS O ON A.opportunity_id = O.id
+ JOIN User AS U ON A.student_user_id = U.id
+ WHERE O.company_user_id = ?
+ ORDER BY A.application_date DESC`;
 
       console.log('[Application.getApplicationsByCompanyId] Executing SQL:', sql, 'with companyUserId:', companyUserId);
       const applicationsStmt = this.db.prepare(sql);
@@ -594,7 +623,9 @@ class Application {
   async handleGet(req) {
     try {
       const authContext = await getAuthContext(req);
+      console.log('[Application.handleGet] Auth Context:', authContext); // Added logging
       if (!authContext) {
+        console.log('[Application.handleGet] Authentication failed. Returning 401.'); // Added logging
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
       }
 
@@ -620,20 +651,22 @@ class Application {
 
           // Assuming the frontend expects an array directly
           return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      } // <-- MISSING CLOSING BRACE WAS HERE
+      }
 
       else if (url.pathname.startsWith('/api/applications/')) { // Handle other /api/applications routes
           const pathParts = url.pathname.split('/').filter(Boolean);
 
           // Handle requests for a single application by ID: /api/applications/:applicationId
-          if (pathParts.length === 2 && (pathParts[0].toLowerCase() === 'application' || pathParts[0].toLowerCase() === 'applications')) {
-             const applicationId = pathParts[1];
+          if (pathParts.length === 3 && pathParts[0].toLowerCase() === 'api' && pathParts[1].toLowerCase() === 'applications') { // Corrected pathParts length and indices
+             const applicationId = pathParts[2]; // Corrected index
              console.log('[Application.handleGet] Matched /api/applications/:applicationId with ID:', applicationId); // Added logging
              // You would typically call getApplicationById here
              const application = await this.getApplicationById(applicationId);
              if (application) {
+                 console.log('[Application.handleGet] Returning single application:', application); // Added logging
                  return new Response(JSON.stringify(application), { status: 200, headers: { 'Content-Type': 'application/json' } });
              } else {
+                 console.log('[Application.handleGet] Single application not found with ID:', applicationId); // Added logging
                  return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
              }
 
@@ -641,25 +674,41 @@ class Application {
                console.log('[Application.handleGet] Routing to getApplicationsByStudentId/CompanyId for base /api/applications'); // Updated logging
                try {
                   const authContext = await getAuthContext(req);
+                  console.log('[Application.handleGet] Auth Context for base /api/applications:', authContext); // Added logging
                   if (!authContext) {
+                      console.log('[Application.handleGet] Authentication failed for base /api/applications. Returning 401.'); // Added logging
                       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
                   }
 
                   let applications = [];
-                  if (authContext.userType === 'student') {
-                      applications = await this.getApplicationsByStudentId(authContext.userId);
+                  // Check for studentId query parameter for student users
+                  const studentId = url.searchParams.get('studentId');
+                  if (authContext.userType === 'student' && studentId) {
+                      console.log('[Application.handleGet] Fetching applications for studentId from query param:', studentId);
+                      applications = await this.getApplicationsByStudentId(studentId);
+                      console.log('[Application.handleGet] Applications fetched for student:', applications); // Added logging
                   } else if (authContext.userType === 'company') {
+                      console.log('[Application.handleGet] Fetching applications for companyId:', authContext.userId);
                       applications = await this.getApplicationsByCompanyId(authContext.userId);
-                  } else {
+                      console.log('[Application.handleGet] Applications fetched for company:', applications); // Added logging
+                  } else if (authContext.userType === 'student' && !studentId) {
+                       // If student type but no studentId query param, return empty or error
+                       console.warn('[Application.handleGet] Student user request to /api/applications without studentId query parameter.');
+                       return new Response(JSON.stringify({ error: 'Student ID query parameter is required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+                  }
+                   else {
+                      console.log('[Application.handleGet] Forbidden: User type cannot access applications.'); // Added logging
                       return new Response(JSON.stringify({ error: 'Forbidden: User type cannot access applications' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
                   }
 
+                  console.log('[Application.handleGet] Returning applications for base /api/applications:', applications); // Added logging
                   return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
               } catch (error) {
                   console.error('Error handling GET /api/applications:', error.message);
                   let statusCode = 500;
                   if (error.message.includes('Unauthorized')) statusCode = 401;
                   if (error.message.includes('Forbidden')) statusCode === 403;
+                  if (error.message.includes('required')) statusCode = 400; // Added for required param error
                   return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve applications' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
               }
           }
