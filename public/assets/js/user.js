@@ -5,6 +5,8 @@
 // following ROA (Resource-Oriented Architecture) standards
 // ============================================================================
 
+import { fetchApplications, displayApplications } from './application.js'; // Import application functions
+
 // ============================================================================
 // SECTION 1: USER REGISTRATION FUNCTIONALITY
 // ============================================================================
@@ -134,103 +136,46 @@ export function initUserDetails() {
                     userDetailsDiv.innerHTML = '<p>User not found.</p>';
                 }
             } else {
-                userDetailsDiv.innerHTML = `<p>Failed to load user data: ${response.statusText}</p>`;
+                 userDetailsDiv.innerHTML = `<p>Failed to load user details: ${response.status} ${response.statusText}</p>`;
             }
         } catch (error) {
             console.error('Error fetching user details:', error);
-            userDetailsDiv.innerHTML = '<p>An error occurred while fetching user details.</p>';
+            userDetailsDiv.innerHTML = `<p>Error loading user details: ${error.message}</p>`;
         }
     });
-}
-
-// ============================================================================
-// SECTION 4: ADMIN DASHBOARD FUNCTIONALITY
-// ============================================================================
-// This section handles admin dashboard for managing users
-// Originally from: public/src/resources/admin-dashboard.js
-
-export function initAdminDashboard() {
-    document.addEventListener('DOMContentLoaded', async () => {
-        const userDataDiv = document.getElementById('user-data');
-
-        try {
-            const response = await fetch('/admin/users'); // Assuming a backend endpoint /admin/users
-            if (response.ok) {
-                const users = await response.json();
-                displayUsers(users);
-            } else {
-                userDataDiv.textContent = 'Failed to load user data.';
-            }
-        } catch (error) {
-            console.error('Error fetching users:', error);
-            userDataDiv.textContent = 'An error occurred while fetching user data.';
-        }
-    });
-}
-
-function displayUsers(users) {
-    const userTableBody = document.getElementById('user-table-body');
-    userTableBody.innerHTML = ''; // Clear existing rows
-    users.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${user.id}</td>
-            <td>${user.name}</td>
-            <td>${user.user_type}</td>
-            <td>${user.email}</td>
-            <td><button class="view-details-button" data-user-id="${user.id}">View Details</button></td>
-        `; // Added email column and View Details button
-
-        userTableBody.appendChild(row);
-    });
-
-    // Add event listeners to the buttons after they are added to the DOM
-    document.querySelectorAll('.view-details-button').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const userId = event.target.dataset.userId;
-            window.location.href = `/html/user-details.html?id=${userId}`;
-        });
-    });
-}
-
-// ============================================================================
-// SECTION 5: STUDENT DASHBOARD FUNCTIONALITY
-// ============================================================================
-// This section handles student dashboard functionality
-// Originally from: public/assets/js/dashboard.js
-
-// Export functions for testing
-export function setupEventListeners() {
-    console.log('[Dashboard] Setting up event listeners');
-    
-    // Set up notification mark as read functionality
-    const notificationList = document.getElementById('notification-list');
-    if (notificationList) {
-        notificationList.addEventListener('click', async (e) => {
-            if (e.target.tagName === 'BUTTON' && e.target.textContent.includes('Mark as Read')) {
-                const notificationItem = e.target.closest('.notification');
-                if (notificationItem) {
-                    const notificationId = notificationItem.dataset.notificationId;
-                    if (notificationId) {
-                        await markNotificationAsRead(notificationId);
-                    }
-                }
-            }
-        });
-    }
 }
 
 export async function loadProfileData(userId) {
-    console.log('[Dashboard] Loading profile data');
+    console.log('[Dashboard] loadProfileData called for user:', userId);
     const authToken = localStorage.getItem('authToken');
-    
-    if (!userId || !authToken) {
-        console.error('[Dashboard] No user ID or auth token found');
+    console.log('[Dashboard] Retrieved authToken:', authToken ? 'Exists' : 'Does not exist');
+
+    if (!userId) {
+        console.error('[Dashboard] User ID is required to load profile data.');
+        // Update UI to reflect missing user ID
+        document.getElementById('profile-name').textContent = 'User not identified';
+        document.getElementById('profile-email').textContent = 'User not identified';
+        document.getElementById('profile-interests').textContent = 'User not identified';
+        document.getElementById('profile-major').textContent = 'User not identified';
+        document.getElementById('profile-graduation-year').textContent = 'User not identified';
+        return;
+    }
+
+    if (!authToken) {
+        console.error('[Dashboard] Auth token not found. Cannot load profile data.');
+        // Update UI to reflect missing auth token
+        document.getElementById('profile-name').textContent = 'Not authenticated';
+        document.getElementById('profile-email').textContent = 'Not authenticated';
+        document.getElementById('profile-interests').textContent = 'Not authenticated';
+        document.getElementById('profile-major').textContent = 'Not authenticated';
+        document.getElementById('profile-graduation-year').textContent = 'Not authenticated';
         return;
     }
 
     try {
-        const response = await fetch(`/api/users/${userId}`, {
+        const fetchUrl = `/api/users/${userId}`;
+        console.log(`[Dashboard] Attempting to fetch profile data from ${fetchUrl}`); // Added log
+        const response = await fetch(fetchUrl, { // Use fetchUrl variable
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${authToken}`,
@@ -238,34 +183,87 @@ export async function loadProfileData(userId) {
             }
         });
 
+        console.log('[Dashboard] Received raw response:', response); // Added log
+        console.log('[Dashboard] Received response status:', response.status);
+
         if (response.ok) {
-            const userData = await response.json();
-            console.log('[Dashboard] Profile data loaded:', userData);
-            
-            // Update profile elements
-            const profileName = document.getElementById('profile-name');
-            const profileEmail = document.getElementById('profile-email');
-            const profileInterests = document.getElementById('profile-interests');
-            const profileMajor = document.getElementById('profile-major');
-            const profileGradYear = document.getElementById('profile-graduation-year');
-            
-            if (profileName) profileName.textContent = userData.name || '';
-            if (profileEmail) profileEmail.textContent = userData.email || '';
-            if (profileInterests && userData.interests) {
-                profileInterests.textContent = userData.interests.join(', ');
+            console.log('[Dashboard] Response is OK, attempting to parse JSON.'); // Added log
+            const user = await response.json();
+            console.log('[Dashboard] Profile data loaded successfully:', user);
+
+            const profileNameElement = document.getElementById('profile-name');
+            if (profileNameElement) {
+                console.log('[Dashboard] Updating profile-name');
+                profileNameElement.textContent = user.name || 'N/A';
+            } else {
+                console.error('[Dashboard] profile-name element not found');
             }
-            if (profileMajor) profileMajor.textContent = userData.major || '';
-            if (profileGradYear) profileGradYear.textContent = userData.graduation_year || '';
-            
-            // Store interests for filtering
-            if (userData.interests) {
-                localStorage.setItem('userInterests', JSON.stringify(userData.interests));
+
+            const profileEmailElement = document.getElementById('profile-email');
+            if (profileEmailElement) {
+                console.log('[Dashboard] Updating profile-email');
+                profileEmailElement.textContent = user.email || 'N/A';
+            } else {
+                console.error('[Dashboard] profile-email element not found');
             }
+
+            const profileInterestsElement = document.getElementById('profile-interests');
+            if (profileInterestsElement) {
+                console.log('[Dashboard] Updating profile-interests');
+                profileInterestsElement.textContent = Array.isArray(user.interests) ? user.interests.join(', ') : user.interests || 'N/A';
+            } else {
+                console.error('[Dashboard] profile-interests element not found');
+            }
+
+            const profileMajorElement = document.getElementById('profile-major');
+            if (profileMajorElement) {
+                console.log('[Dashboard] Updating profile-major');
+                profileMajorElement.textContent = user.major || 'N/A';
+            } else {
+                console.error('[Dashboard] profile-major element not found');
+            }
+
+            const profileGraduationYearElement = document.getElementById('profile-graduation-year');
+            if (profileGraduationYearElement) {
+                console.log('[Dashboard] Updating profile-graduation-year');
+                profileGraduationYearElement.textContent = user.graduation_year || 'N/A';
+            } else {
+                console.error('[Dashboard] profile-graduation-year element not found');
+            }
+
+            const profilePictureElement = document.getElementById('profile-picture');
+            if (profilePictureElement) {
+                console.log('[Dashboard] Updating profile-picture');
+                // Update profile picture if available
+                if (user.profile_picture_url) {
+                    profilePictureElement.src = user.profile_picture_url;
+                } else {
+                    // Optionally set a default image if none is provided
+                    profilePictureElement.src = '../assets/images/default-profile.png';
+                }
+            } else {
+                console.error('[Dashboard] profile-picture element not found');
+            }
+
         } else {
-            console.error('[Dashboard] Failed to load profile data:', response.status);
+            console.error('[Dashboard] Failed to load profile data. Status:', response.status);
+            // Attempt to read error message from response body
+            console.log('[Dashboard] Attempting to read error response body.'); // Added log
+            const errorText = await response.text();
+            console.error('[Dashboard] Error response body:', errorText);
+            document.getElementById('profile-name').textContent = `Error: ${response.status}`;
+            document.getElementById('profile-email').textContent = `Error: ${response.status}`;
+            document.getElementById('profile-interests').textContent = `Error: ${response.status}`;
+            document.getElementById('profile-major').textContent = `Error: ${response.status}`;
+            document.getElementById('profile-graduation-year').textContent = `Error: ${response.status}`;
         }
     } catch (error) {
-        console.error('[Dashboard] Error loading profile data:', error);
+        console.error('[Dashboard] Caught error loading profile data:', error); // Modified log
+        document.getElementById('profile-name').textContent = 'Error loading profile';
+        document.getElementById('profile-email').textContent = 'Error loading profile';
+        document.getElementById('profile-interests').textContent = 'Error loading profile';
+        document.getElementById('profile-major').textContent = 'Error loading profile';
+        document.getElementById('profile-graduation-year').textContent = 'Error loading profile';
     }
 }
 
@@ -300,103 +298,98 @@ export async function loadOpportunities() {
     }
 }
 
-function filterOpportunitiesByInterests(opportunities, userInterests) {
-    if (!userInterests || userInterests.length === 0) {
-        return opportunities;
+function createOpportunityCard(opportunity) {
+    const card = document.createElement('div');
+    card.className = `${opportunity.type === 'Internship' ? 'internship-card' : opportunity.type === 'Club' ? 'club-card' : opportunity.type === 'Program' ? 'program-card' : 'other-card'}`;
+    card.innerHTML = `
+        <h3>${opportunity.title || 'Untitled Opportunity'}</h3>
+        <div class="company">${opportunity.company_name || (opportunity.type === 'Club' ? opportunity.club_name || 'N/A' : 'N/A')}</div>
+        <p>${opportunity.description || 'No description available.'}</p>
+        <p class="target">Skills: ${opportunity.required_skills || 'General'}</p>
+        <div class="opportunity-actions">
+            <a href="opportunities.html#opportunity/${opportunity.id}" class="view-details-button">View Details</a>
+            <button class="apply-now-button" data-opportunity-id="${opportunity.id}">Apply Now</button>
+        </div>
+    `; // Corrected closing backtick
+    return card; // Return the created card element
+}
+
+function filterOpportunitiesByInterests(opportunities, interests) {
+    if (!interests || interests.length === 0) {
+        return opportunities; // Return all if no interests
     }
-    
-    return opportunities.filter(opportunity => {
-        const requiredSkills = (opportunity.required_skills || '').toLowerCase();
-        return userInterests.some(interest => 
-            requiredSkills.includes(interest.toLowerCase())
-        );
+    return opportunities.filter(opp => {
+        if (!opp.required_skills) return false;
+        const requiredSkills = opp.required_skills.split(',').map(skill => skill.trim().toLowerCase());
+        return interests.some(interest => requiredSkills.includes(interest.toLowerCase()));
     });
 }
 
 function renderDashboardOpportunities(opportunities) {
     const internshipGrid = document.querySelector('.internship-grid');
     const clubGrid = document.querySelector('.club-grid');
-    
-    if (internshipGrid) {
-        internshipGrid.innerHTML = '';
-        const internships = opportunities.filter(opp => 
-            opp.type === 'Internship' || opp.type === 'Job'
-        );
-        
-        internships.forEach(opportunity => {
-            const card = createOpportunityCard(opportunity);
-            internshipGrid.appendChild(card);
-        });
-    }
-    
-    if (clubGrid) {
-        clubGrid.innerHTML = '';
-        const clubs = opportunities.filter(opp => 
-            opp.type === 'Event' || opp.type === 'Program' || opp.type === 'Other'
-        );
-        
-        clubs.forEach(opportunity => {
-            const card = createOpportunityCard(opportunity);
-            clubGrid.appendChild(card);
-        });
-    }
-}
+    const eventGrid = document.querySelector('.event-grid'); // Get event grid
+    const programGrid = document.querySelector('.program-grid'); // Get program grid
+    const otherGrid = document.querySelector('.other-grid'); // Get other grid
 
-function createOpportunityCard(opportunity) {
-    const card = document.createElement('div');
-    card.className = 'internship-card';
-    card.innerHTML = `
-        <h3>${opportunity.title}</h3>
-        <p>${opportunity.description || ''}</p>
-        <p><strong>Location:</strong> ${opportunity.location || 'Not specified'}</p>
-        <p><strong>Skills:</strong> ${opportunity.required_skills || 'Not specified'}</p>
-    `;
-    return card;
-}
+    if (internshipGrid) internshipGrid.innerHTML = '';
+    if (clubGrid) clubGrid.innerHTML = '';
+    if (eventGrid) eventGrid.innerHTML = ''; // Clear event grid
+    if (programGrid) programGrid.innerHTML = ''; // Clear program grid
+    if (otherGrid) otherGrid.innerHTML = ''; // Clear other grid
 
-export async function loadApplications() {
-    console.log('[Dashboard] Loading applications');
-    const authToken = localStorage.getItem('authToken');
-    
-    try {
-        const response = await fetch('/api/applications', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
+    let hasInternships = false;
+    let hasClubs = false;
+    let hasEvents = false; // Flag for events
+    let hasPrograms = false; // Flag for programs
+    let hasOthers = false; // Flag for others
+
+    if (!opportunities || opportunities.length === 0) {
+        console.log('[renderDashboardOpportunities] No opportunities to render.');
+        if (internshipGrid) internshipGrid.innerHTML = '<p>No opportunities found.</p>';
+        if (clubGrid) clubGrid.innerHTML = '<p>No opportunities found.</p>';
+        if (eventGrid) eventGrid.innerHTML = '<p>No opportunities found.</p>'; // Message for events
+        if (programGrid) programGrid.innerHTML = '<p>No opportunities found.</p>'; // Message for programs
+        if (otherGrid) otherGrid.innerHTML = '<p>No opportunities found.</p>'; // Message for others
+        return;
+    }
+
+    opportunities.forEach(opportunity => {
+        console.log('[renderDashboardOpportunities] Rendering opportunity:', opportunity.title);
+        const card = createOpportunityCard(opportunity);
+
+        if (opportunity.type === 'Internship' || opportunity.type === 'Job') {
+            if (internshipGrid) {
+                internshipGrid.appendChild(card);
+                hasInternships = true;
             }
-        });
-
-        if (response.ok) {
-            const applications = await response.json();
-            console.log('[Dashboard] Applications loaded:', applications);
-            
-            // Render applications
-            renderDashboardApplications(applications);
-        } else {
-            console.error('[Dashboard] Failed to load applications:', response.status);
+        } else if (opportunity.type === 'Club') {
+            if (clubGrid) {
+                clubGrid.appendChild(card);
+                hasClubs = true;
+            }
+        } else if (opportunity.type === 'Event') { // Handle Event type
+            if (eventGrid) {
+                eventGrid.appendChild(card);
+                hasEvents = true;
+            }
+        } else if (opportunity.type === 'Program') { // Handle Program type
+            if (programGrid) {
+                programGrid.appendChild(card);
+                hasPrograms = true;
+            }
+        } else if (opportunity.type === 'Other') { // Handle Other type
+            if (otherGrid) {
+                otherGrid.appendChild(card);
+                hasOthers = true;
+            }
         }
-    } catch (error) {
-        console.error('[Dashboard] Error loading applications:', error);
-    }
-}
-
-function renderDashboardApplications(applications) {
-    const applicationList = document.getElementById('application-list');
-    if (!applicationList) return;
-    
-    applicationList.innerHTML = '';
-    
-    applications.forEach(application => {
-        const listItem = document.createElement('li');
-        listItem.innerHTML = `
-            Application ID: ${application.id}, 
-            Opportunity ID: ${application.opportunity_id}, 
-            Status: ${application.status}, 
-            Date: ${new Date(application.application_date).toLocaleDateString()}
-        `;
-        applicationList.appendChild(listItem);
     });
+
+    // Update messages based on whether opportunities were found for each category
+    if (internshipGrid && !hasInternships) {
+        internshipGrid.innerHTML = '<p>No recommended internships found based on your interests. Explore all <a href="opportunities.html">opportunities</a>.</p>';
+    }
 }
 
 export async function loadNotifications() {
@@ -481,85 +474,22 @@ export function initStudentDashboard() {
     const authToken = localStorage.getItem('authToken');
 
     if (!userId || !authToken) {
-        // If no userId or token, redirect to login, as dashboard is for logged-in users
-        window.location.href = 'login.html'; 
-        // For now, let's log an error and attempt to load, but ideally redirect.
-        // console.error('User ID or auth token not found. Dashboard functionality may be limited.');
-        // Optionally, disable sections or show a login prompt.
+        console.error('User not authenticated. Redirecting to login.');
+        // Optionally redirect to login page
+        // window.location.href = 'login.html';
+        return; // Stop execution if not authenticated
     }
 
     setupEventListeners();
     loadProfileData(userId);
     loadOpportunities();
-    loadApplications(userId);
+    // Use the imported fetchApplications and displayApplications
+    fetchApplications(null, userId).then(applications => {
+        if (applications) {
+            displayApplications(applications);
+        }
+    });
     loadNotifications();
-    // Load profile data initially
-    loadProfileData(userId);
-}
-
-function setupEventListeners() {
-    const logoutLink = document.getElementById('logout-link');
-    if (logoutLink) {
-        logoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            logout(); // Call the imported logout function
-        });
-    }
-
-    const editProfileBtn = document.getElementById('edit-profile-btn');
-    const saveProfileBtn = document.getElementById('save-profile-btn');
-    const cancelEditBtn = document.getElementById('cancel-button');
-
-    if (editProfileBtn) {
-        editProfileBtn.addEventListener('click', toggleEditMode);
-    }
-    if (saveProfileBtn) {
-        saveProfileBtn.addEventListener('click', saveProfile);
-    }
-    if (cancelEditBtn) {
-        cancelEditBtn.addEventListener('click', toggleEditMode); // Cancel also toggles mode
-    }
-
-    const burger = document.querySelector('.burger');
-    const navLinks = document.querySelector('.nav-links');
-    if (burger && navLinks) {
-        burger.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-            // Optional: Animate burger icon
-            burger.classList.toggle('toggle'); // Assumes a .toggle class for animation in dashboard.css
-        });
-    }
-
-    // Event delegation for "Mark as Read" buttons for notifications
-    const notificationList = document.getElementById('notification-list');
-    if (notificationList) {
-        notificationList.addEventListener('click', (event) => {
-            if (event.target.classList.contains('mark-as-read-btn')) {
-                const notificationDiv = event.target.closest('.notification');
-                const notificationId = notificationDiv.dataset.notificationId;
-                if (notificationId) {
-                    markNotificationAsRead(notificationId);
-                }
-            }
-        });
-    }
-
-    const applyNowButton = document.getElementById('apply-now');
-    // Event delegation for "Apply Now" buttons
-    const dashboardContainer = document.querySelector('.dashboard-container');
-    if (dashboardContainer) {
-        dashboardContainer.addEventListener('click', (event) => {
-            if (event.target.classList.contains('apply-now-button')) {
-                const opportunityId = event.target.dataset.opportunityId;
-                if (opportunityId) {
-                    handleApplyNowClick(opportunityId);
-                } else {
-                    console.error("Opportunity ID not found on the 'Apply Now' button.");
-                    alert("Error: Could not determine which opportunity to apply for.");
-                }
-            }
-        });
-    }
 }
 
 function handleApplyNowClick(opportunityId) {
@@ -568,6 +498,52 @@ function handleApplyNowClick(opportunityId) {
     } else {
         console.error("Opportunity ID is required to apply.");
         alert("Error: Could not determine which opportunity to apply for.");
+    }
+}
+
+export function setupEventListeners() {
+    console.log('[setupEventListeners] Setting up event listeners...');
+    // Add event listeners for the dashboard page
+    const editProfileBtn = document.getElementById('edit-profile-btn');
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const applyNowButtons = document.querySelectorAll('.apply-now-button'); // Select all apply now buttons
+    const notificationList = document.getElementById('notification-list'); // Get notification list
+
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', toggleEditMode);
+    }
+
+    if (saveProfileBtn) {
+        saveProfileBtn.addEventListener('click', saveProfile);
+    }
+
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', toggleEditMode);
+    }
+
+    // Add event listeners to dynamically created "Apply Now" buttons
+    // Using event delegation on a parent element
+    document.addEventListener('click', (e) => {
+        if (e.target && e.target.classList.contains('apply-now-button')) {
+            const opportunityId = e.target.dataset.opportunityId;
+            handleApplyNowClick(opportunityId);
+        }
+    });
+
+    // Add event listener for marking notifications as read
+    if (notificationList) {
+        notificationList.addEventListener('click', async (e) => {
+            if (e.target && e.target.tagName === 'BUTTON') {
+                const notificationDiv = e.target.closest('.notification');
+                if (notificationDiv) {
+                    const notificationId = notificationDiv.dataset.notificationId;
+                    if (notificationId) {
+                        await markNotificationAsRead(notificationId);
+                    }
+                }
+            }
+        });
     }
 }
 
@@ -675,253 +651,6 @@ async function fetchWithAuth(url, options = {}) {
     return fetch(url, { ...options, headers });
 }
 
-export async function loadProfileData(userId) {
-    if (!userId) {
-        document.getElementById('profile-summary').innerHTML = '<p>Could not load profile. User not identified.</p>';
-        return;
-    }
-    try {
-        // Add a cache-busting query parameter (timestamp)
-        const timestamp = new Date().getTime();
-        const response = await fetchWithAuth(`/api/users/${userId}?_=${timestamp}`); // Added /api prefix and cache buster
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({})); // Catch if response is not JSON
-            throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
-        }
-        const user = await response.json();
-
-        console.log('[loadProfileData] Fetched user data:', user); // Log the fetched user data
-
-        updateProfileDisplay(user); // Use the helper function to update display
-
-        // The localStorage 'userInterests' might be from initial registration;
-        // it might be better to rely solely on the fetched user.interests after updates.
-        // Keeping the localStorage logic for now but noting this potential discrepancy.
-        // const userInterests = localStorage.getItem('userInterests'); // From login/registration
-        // document.getElementById('profile-interests').textContent = userInterests ? JSON.parse(userInterests).join(', ') : (user.interests ? user.interests.join(', ') : 'N/A');
-
-
-    } catch (error) {
-        console.error('Error loading profile data:', error);
-        document.getElementById('profile-summary').innerHTML = `<p>Error loading profile: ${error.message}</p>`;
-    }
-}
-
-async function loadOpportunities() {
-    console.log('[loadOpportunities] Attempting to load opportunities...'); // Log start
-    const internshipGrid = document.getElementById('internship-grid');
-    const clubGrid = document.getElementById('club-grid');
-    const programGrid = document.getElementById('program-grid'); // Get the new program grid element
-    const otherGrid = document.getElementById('other-grid'); // Get the new other grid element
-
-    // Add logging before fetch
-    console.log('[loadOpportunities] Fetching from /api/opportunities');
-
-    try {
-        const response = await fetchWithAuth('/api/opportunities'); // Added /api prefix
-        console.log('[loadOpportunities] Fetch response status:', response.status); // Log response status
-        console.log('[loadOpportunities] Fetch response OK:', response.ok); // Log response ok status
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('[loadOpportunities] Fetch error data:', errorData); // Log error data
-            throw new Error(`Failed to fetch opportunities: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
-        }
-        const opportunities = await response.json();
-        console.log('[loadOpportunities] Fetched opportunities data:', opportunities); // Log fetched data
-
-        // Display all opportunities regardless of user interests
-        console.log('[loadOpportunities] Calling renderOpportunities with data:', opportunities); // Log before calling render
-        renderOpportunities(opportunities, internshipGrid, clubGrid, programGrid, otherGrid); // Pass the new grid
-        console.log('[loadOpportunities] renderOpportunities called.'); // Log after calling render
-
-    } catch (error) {
-        console.error('Error loading opportunities:', error);
-        if (internshipGrid) internshipGrid.innerHTML = `<p>Error loading internships: ${error.message}</p>`;
-        if (clubGrid) clubGrid.innerHTML = `<p>Error loading clubs: ${error.message}</p>`;
-        if (programGrid) programGrid.innerHTML = `<p>Error loading programs: ${error.message}</p>`; // Add error handling for programs
-        if (otherGrid) otherGrid.innerHTML = `<p>Error loading other opportunities: ${error.message}</p>`; // Add error handling for other
-    }
-}
-
-function renderOpportunities(opportunitiesToRender, internshipContainer, clubContainer, programContainer, otherContainer) { // Add programContainer and otherContainer parameters
-    console.log('[renderOpportunities] Called with data:', opportunitiesToRender); // Log start of render
-    if (internshipContainer) internshipContainer.innerHTML = '';
-    if (clubContainer) clubContainer.innerHTML = '';
-    if (programContainer) programContainer.innerHTML = ''; // Clear program container
-    if (otherContainer) otherContainer.innerHTML = ''; // Clear other container
-
-    let hasInternships = false;
-    let hasClubs = false;
-    let hasPrograms = false; // Add flag for programs
-    let hasOthers = false; // Add flag for others
-
-    if (!opportunitiesToRender || opportunitiesToRender.length === 0) {
-        console.log('[renderOpportunities] No opportunities to render.'); // Log if no data
-        if (internshipContainer) internshipContainer.innerHTML = '<p>No opportunities found.</p>';
-        if (clubContainer) clubContainer.innerHTML = '<p>No opportunities found.</p>';
-        if (programContainer) programContainer.innerHTML = '<p>No opportunities found.</p>';
-        if (otherContainer) otherContainer.innerHTML = '<p>No opportunities found.</p>';
-        return; // Exit if no data
-    }
-
-    opportunitiesToRender.forEach(op => {
-        console.log('[renderOpportunities] Rendering opportunity:', op.title); // Log each opportunity being rendered
-        const cardHTML = `
-            <div class="${op.type === 'Internship' ? 'internship-card' : op.type === 'Club' ? 'club-card' : op.type === 'Program' ? 'program-card' : 'other-card'}"> <!-- Add program-card and other-card class -->
-                <h3>${op.title || 'Untitled Opportunity'}</h3>
-        <div class="company">${op.company_name || (op.type === 'Club' ? op.club_name || 'N/A' : 'N/A')}</div>
-        <p>${op.description || 'No description available.'}</p>
-        <p class="target">Skills: ${op.required_skills || 'General'}</p>
-        <div class="opportunity-actions">
-            <a href="opportunities.html#opportunity/${op.id}" class="view-details-button">View Details</a>
-            <button class="apply-now-button" data-opportunity-id="${op.id}">Apply Now</button>
-        </div>
-    </div>
-`;
-        if (op.type === 'Internship' && internshipContainer) {
-            internshipContainer.innerHTML += cardHTML;
-            hasInternships = true;
-        } else if (op.type === 'Club' && clubContainer) {
-            clubContainer.innerHTML += cardHTML;
-            hasClubs = true;
-        } else if (op.type === 'Program' && programContainer) { // Add condition for Program type
-            programContainer.innerHTML += cardHTML;
-            hasPrograms = true;
-        } else if (op.type === 'Other' && otherContainer) { // Add condition for Other type
-            otherContainer.innerHTML += cardHTML;
-            hasOthers = true;
-        }
-    });
-
-    // Update messages based on whether opportunities were found for each category
-    if (internshipContainer && !hasInternships) {
-        internshipContainer.innerHTML = '<p>No recommended internships found based on your interests. Explore all <a href="opportunities.html">opportunities</a>.</p>';
-    }
-    if (clubContainer && !hasClubs) {
-        clubContainer.innerHTML = '<p>No recommended clubs or activities found. Explore all <a href="opportunities.html">opportunities</a>.</p>';
-    }
-    if (programContainer && !hasPrograms) { // Add message if no programs found
-        programContainer.innerHTML = '<p>No recommended programs found. Explore all <a href="opportunities.html">opportunities</a>.</p>';
-    }
-    if (otherContainer && !hasOthers) { // Add message if no other opportunities found
-        otherContainer.innerHTML = '<p>No other opportunities found. Explore all <a href="opportunities.html">opportunities</a>.</p>';
-    }
-    console.log('[renderOpportunities] Rendering complete.'); // Log end of render
-}
-
-async function loadApplications(studentId) {
-    const applicationList = document.getElementById('application-list');
-    if (!applicationList) return;
-    if (!studentId) {
-        applicationList.innerHTML = '<li>Could not load applications. User not identified.</li>';
-        return;
-    }
-
-    try {
-        const response = await fetchWithAuth(`/api/applications?studentId=${studentId}&_=${new Date().getTime()}`); // Added /api prefix and cache buster
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(`Failed to fetch applications: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
-        }
-        const applications = await response.json();
-        
-        if (applications.length === 0) {
-            applicationList.innerHTML = '<li>No recent applications found.</li>';
-            return;
-        }
-
-        // Fetch all opportunities to get their titles for display in applications
-        const oppsResponse = await fetchWithAuth('/api/opportunities'); // Added /api prefix
-        if (!oppsResponse.ok) throw new Error('Could not fetch opportunity details for applications.');
-        const allOpportunities = await oppsResponse.json();
-        const opportunityMap = new Map(allOpportunities.map(op => [op.id, op.title]));
-
-
-        applicationList.innerHTML = applications.map(app => {
-            const opportunityTitle = opportunityMap.get(app.opportunity_id) || `ID ${app.opportunity_id}`;
-            // Determine a class based on status for styling
-            let statusClass = '';
-            if (app.status === 'Approved') {
-                statusClass = 'status-approved';
-            } else if (app.status === 'For Review') {
-                statusClass = 'status-for-review';
-            } else if (app.status === 'Reviewed') {
-                statusClass = 'status-reviewed';
-            } else {
-                statusClass = 'status-pending'; // Assuming a default or initial status
-            }
-
-            return `
-                <li>
-                    Applied for: <strong>${opportunityTitle}</strong>
-                    <br>Status: <span class="${statusClass}">${app.status}</span>
-                    <br>Applied on: ${new Date(app.application_date).toLocaleDateString()}
-                    ${app.notes ? `<br><em>Notes: ${app.notes}</em>` : ''}
-                </li>
-            `;
-        }).join('');
-
-    } catch (error) {
-        console.error('Error loading applications:', error);
-        applicationList.innerHTML = `<li>Error loading applications: ${error.message}</li>`;
-    }
-}
-
-async function loadNotifications() {
-    const notificationList = document.getElementById('notification-list');
-    if (!notificationList) return;
-
-    try {
-        const response = await fetchWithAuth('/api/notifications'); // Added /api prefix
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
-        }
-        const notifications = await response.json();
-
-        if (notifications.length === 0) {
-            notificationList.innerHTML = '<p>No new notifications.</p>';
-            return;
-        }
-
-        notificationList.innerHTML = notifications.map(n => `
-            <div class="notification ${n.is_read ? 'read' : ''}" data-notification-id="${n.id}">
-                <p>${n.message}</p>
-                ${!n.is_read ? `<button class="mark-as-read-btn">Mark as Read</button>` : '<span class="status-read" style="font-family: \'Source Code Pro\', monospace; color: #6c757d;">Read</span>'}
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading notifications:', error);
-        notificationList.innerHTML = `<p>Error loading notifications: ${error.message}</p>`;
-    }
-}
-
-async function markNotificationAsRead(notificationId) {
-    try {
-        const response = await fetchWithAuth(`/api/notifications/${notificationId}`, { // Added /api prefix
-            method: 'PATCH',
-            body: JSON.stringify({ is_read: true }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Failed to mark notification as read: ${response.status} ${response.statusText}`);
-        }
-        
-        loadNotifications(); // Reload notifications to update UI
-
-    } catch (error) {
-        console.error('Error marking notification as read:', error);
-        alert(`Could not mark notification as read: ${error.message}`);
-    }
-}
-
-// ============================================================================
-// AUTO-INITIALIZATION FUNCTIONS
-// ============================================================================
-// These functions automatically initialize based on the current page
-
 // Auto-initialize registration if on registration page
 if (document.querySelector('.register-form')) {
     initRegistration();
@@ -1015,6 +744,7 @@ export function initCompanyDashboard() {
                     companyIndustrySpan.textContent = updatedUser.industry || 'N/A';
                     companyLocationSpan.textContent = updatedUser.location || 'N/A';
                     companyDescriptionSpan.textContent = updatedUser.description || 'N/A';
+                    companyLoginEmailSpan.textContent = updatedUser.email || 'N/A'; // Use email as login email
                     profileEditForm.style.display = 'none';
                     alert('Profile updated successfully!');
                 } else {
@@ -1211,6 +941,7 @@ export function initCompanyDashboard() {
 if (document.getElementById('company-name')) {
     document.addEventListener('DOMContentLoaded', initCompanyDashboard);
 }
+
 
 // ============================================================================
 // END OF CONSOLIDATED FRONTEND USER RESOURCE
