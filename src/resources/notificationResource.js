@@ -10,7 +10,9 @@ class NotificationResource {
     console.log('[NotificationResource.handleGet] Called');
     try {
       const authContext = await getAuthContext(req);
+      console.log('[NotificationResource.handleGet] Auth Context:', authContext); // Added logging
       if (!authContext) {
+        console.log('[NotificationResource.handleGet] Authentication failed. Returning 401.'); // Added logging
         return new Response(JSON.stringify({ message: 'User not authenticated' }), {
           headers: { 'Content-Type': 'application/json' },
           status: 401
@@ -21,6 +23,7 @@ class NotificationResource {
       const stmt = this.db.prepare("SELECT * FROM Notification WHERE user_id = ? ORDER BY created_at DESC");
       const notifications = stmt.all(userId);
 
+      console.log('[NotificationResource.handleGet] Returning notifications:', notifications); // Added logging
       return new Response(JSON.stringify(notifications), {
         headers: { 'Content-Type': 'application/json' },
         status: 200
