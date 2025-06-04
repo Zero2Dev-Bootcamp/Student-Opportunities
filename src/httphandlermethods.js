@@ -165,11 +165,20 @@ export async function handleHttpRequest(req, resources, publicDir) {
                 }
 
                 let applications = [];
-                if (authContext.userType === 'student') {
-                    applications = await applicationResource.getApplicationsByStudentId(authContext.userId);
+                const url = new URL(req.url); // Re-parse URL to get query params
+                const studentId = url.searchParams.get('studentId'); // Extract studentId from query params
+
+                if (authContext.userType === 'student' && studentId) {
+                    console.log('[handleHttpRequest] Fetching applications for studentId from query param:', studentId);
+                    applications = await applicationResource.getApplicationsByStudentId(studentId);
                 } else if (authContext.userType === 'company') {
                     applications = await applicationResource.getApplicationsByCompanyId(authContext.userId);
-                } else {
+                } else if (authContext.userType === 'student' && !studentId) {
+                     // If student type but no studentId query param, return empty or error
+                     console.warn('[handleHttpRequest] Student user request to /api/applications without studentId query parameter.');
+                     return new Response(JSON.stringify({ error: 'Student ID query parameter is required' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+                }
+                 else {
                     return new Response(JSON.stringify({ error: 'Forbidden: User type cannot access applications' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
                 }
 
@@ -179,6 +188,7 @@ export async function handleHttpRequest(req, resources, publicDir) {
                 let statusCode = 500;
                 if (error.message.includes('Unauthorized')) statusCode = 401;
                 if (error.message.includes('Forbidden')) statusCode = 403;
+                 if (error.message.includes('required')) statusCode = 400; // Added for required param error
                 return new Response(JSON.stringify({ error: error.message || 'Failed to retrieve applications' }), { status: statusCode, headers: { 'Content-Type': 'application/json' } });
             }
         }
