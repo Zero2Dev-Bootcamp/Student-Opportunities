@@ -48,6 +48,7 @@ class OpportunityResource {
 
         // Check if opportunity was found and return appropriate response
         if (opportunity) {
+          console.log('[OpportunityResource.handleGet] Returning single opportunity:', opportunity); // Added logging
           // Return success response with opportunity data
           return new Response(JSON.stringify(opportunity), {
             headers: { 'Content-Type': 'application/json' },
@@ -86,6 +87,7 @@ class OpportunityResource {
         const stmt = this.db.prepare(sql);
         const opportunities = stmt.all(...params);
 
+        console.log('[OpportunityResource.handleGet] Returning opportunities:', opportunities); // Added logging
         // Return success response with all opportunities
         return new Response(JSON.stringify(opportunities), {
           headers: { 'Content-Type': 'application/json' },
