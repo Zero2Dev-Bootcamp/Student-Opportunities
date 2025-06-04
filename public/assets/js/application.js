@@ -8,233 +8,8 @@
 import { logout } from './user.js';
 import { createNotification } from './notification.js';
 
-// ============================================================================
-// SECTION 1: APPLICATION LISTING FUNCTIONALITY
-// ============================================================================
-// This section handles displaying applications for opportunities
-// Originally from: public/assets/js/applications.js
-
-export function initApplicationListing() {
-    console.log('applications.js: initApplicationListing called'); // Added logging
-    const logoutLink = document.getElementById('logout-link');
-    if (logoutLink) {
-        logoutLink.addEventListener('click', (e) => {
-            logout();
-            window.location.href = 'index.html';
-        });
-    }
-    const urlParams = new URLSearchParams(window.location.search);
-    const opportunityId = urlParams.get('opportunityId');
-    console.log('applications.js: Extracted opportunityId from URL:', opportunityId);
-    const applicationsListDiv = document.getElementById('applications-list');
-    const opportunityTitleSpan = document.getElementById('opportunity-title');
-
-    // Fetch Opportunity Details (for title)
-    async function fetchOpportunityDetails(id) {
-        try {
-            const authToken = localStorage.getItem('authToken');
-            const response = await fetch(`/api/opportunities/${id}`, {
-                 headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
-            if (!response.ok) {
-                console.error('applications.js: Failed to fetch opportunity details:', response.status);
-                return null;
-            }
-            const opportunity = await response.json();
-            console.log('applications.js: Fetched opportunity details:', opportunity);
-            return opportunity;
-        } catch (error) {
-            console.error('applications.js: Error fetching opportunity details:', error);
-            return null;
-        }
-    }
-
-    // Fetch Applications
-    async function fetchApplications(opportunityId) {
-        try {
-            const authToken = localStorage.getItem('authToken');
-            const companyId = localStorage.getItem('userId'); // Assuming company user ID is stored
-            console.log('applications.js: fetchApplications - companyId from localStorage:', companyId); // Added logging
-
-            let url = '';
-            if (opportunityId) {
-                url = `/api/applications/opportunity/${opportunityId}`;
-            } else if (companyId) {
-                url = `/api/applications?companyId=${companyId}`;
-            } else {
-                throw new Error('Neither Opportunity ID nor Company ID available to fetch applications.');
-            }
-            console.log('applications.js: fetchApplications - Fetching from URL:', url); // Added logging
-
-            const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
-            console.log('applications.js: fetchApplications - Response status:', response.status); // Added logging
-            const responseData = await response.json(); // Read response body once
-            console.log('applications.js: fetchApplications - Response data:', responseData); // Added logging
-
-
-            if (!response.ok) {
-                throw new Error(responseData.error || 'Failed to fetch applications');
-            }
-
-            console.log('applications.js: Fetched applications data:', responseData);
-            return responseData; // Return the read data
-
-        } catch (error) {
-            console.error('applications.js: Error fetching applications:', error);
-            applicationsListDiv.innerHTML = `<p>Error loading applications: ${error.message}</p>`;
-            return null;
-        }
-    }
-
-    async function updateApplicationStatus(applicationId, status) {
-        console.log(`applications.js: Attempting to update application ${applicationId} status to: ${status}`);
-        try {
-            const authToken = localStorage.getItem('authToken');
-            const response = await fetch(`/api/applications/${applicationId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify({ status: status })
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                console.log(`applications.js: Status update successful for application ${applicationId}. New status: ${status}`);
-                // Re-fetch and display all applications to see the change.
-                const updatedApplications = await fetchApplications(opportunityId);
-                if (updatedApplications) {
-                    displayApplications(updatedApplications);
-                }
-
-            } else {
-                console.error(`applications.js: Status update failed for application ${applicationId}:`, result);
-                alert(`Failed to update status: ${result.error || 'Unknown error'}`); // Simple feedback to the user
-            }
-        } catch (error) {
-            console.error(`applications.js: Error updating application ${applicationId} status:`, error);
-            alert(`Error updating status: ${error.message}`); // Simple feedback to the user
-        }
-    }
-
-    // Display Applications
-    function displayApplications(applications) {
-        console.log('applications.js: displayApplications called with data:', applications); // Added logging
-        applicationsListDiv.innerHTML = ''; // Clear loading message
-        const applicationCountElement = document.getElementById('application-count');
-
-        console.log('applications.js: Raw data received for display:', applications); // Added logging
-
-        let applicationsArray = applications;
-
-        // Check if applications is an object and contains a 'data' array
-        if (typeof applications === 'object' && applications !== null && Array.isArray(applications.data)) {
-            applicationsArray = applications.data;
-        } else if (typeof applications === 'object' && applications !== null && !Array.isArray(applications)) {
-            // If it's a single object (and not an array), treat it as an array with one element
-            applicationsArray = [applications];
-        } else if (!Array.isArray(applications)) {
-             // If it's not an array, not an object with a 'data' array, and not a single object, log an error
-            console.error('applications.js: Expected applications data to be an array, a single object, or an object with a "data" array, but received:', applications);
-            applicationsListDiv.innerHTML = '<p>Error: Unexpected data format received from the server.</p>';
-            if (applicationCountElement) {
-                applicationCountElement.textContent = 'Application Count: Error';
-            }
-            return;
-        }
-
-        console.log('applications.js: Processed applications array for display:', applicationsArray); // Added logging
-        console.log('applications.js: Number of applications to display:', applicationsArray.length); // Added logging
-
-
-        if (applicationCountElement) {
-            applicationCountElement.textContent = `Application Count: ${applicationsArray.length}`;
-        }
-
-        if (!applicationsArray || applicationsArray.length === 0) {
-            applicationsListDiv.innerHTML = '<p>No applications found for this opportunity.</p>';
-            return;
-        }
-
-        const list = document.createElement('ul');
-        applicationsArray.forEach((app, index) => { // Added index for logging
-            console.log(`applications.js: Processing application ${index + 1}:`, app); // Added logging
-            const listItem = document.createElement('li');
-            listItem.innerHTML = `
-                <strong>Applicant:</strong> ${app.student_full_name || 'N/A'} (${app.student_email || 'N/A'})<br>
-                <strong>Applied On:</strong> ${new Date(app.application_date).toLocaleDateString()}<br>
-                <strong>Why Choose Me:</strong> ${app.why_choose_me || 'N/A'}<br>
-                <strong>Skills:</strong> ${app.skills || 'N/A'}<br>
-                <strong>Experiences:</strong> ${app.experiences || 'N/A'}<br>
-                <p><strong>Current Status:</strong> ${app.status || 'Pending'}</p>
-                <p><strong>Company Message:</strong> ${app.company_message || 'No message yet'}</p>
-                <a href="application.html?id=${app.id}" class="change-status-btn">View Details</a>
-                <hr>
-            `;
-            console.log('Generated listItem HTML:', listItem.innerHTML); // Log generated HTML
-            list.appendChild(listItem);
-        });
-        applicationsListDiv.appendChild(list);
-
-        // Add event listeners to the status buttons
-        list.querySelectorAll('.status-button').forEach(button => {
-            button.addEventListener('click', (event) => {
-                const applicationId = event.target.dataset.applicationId;
-                const status = event.target.dataset.status;
-                updateApplicationStatus(applicationId, status);
-            });
-        });
-    }
-
-    // Main execution for application listing
-    (async () => {
-        console.log('applications.js: Main execution async block started'); // Added logging
-        // Only fetch opportunity details if opportunityId is present (for opportunity-specific listing)
-        if (opportunityId) {
-            const opportunity = await fetchOpportunityDetails(opportunityId);
-            if (opportunity) {
-                // Assuming there's an element with ID 'opportunity-title' on the page
-                const opportunityTitleElement = document.getElementById('opportunity-title');
-                if (opportunityTitleElement) {
-                    opportunityTitleElement.textContent = opportunity.title;
-                }
-            } else {
-                 const opportunityTitleElement = document.getElementById('opportunity-title');
-                 if (opportunityTitleElement) {
-                    opportunityTitleElement.textContent = 'Unknown Opportunity';
-                 }
-            }
-        } else {
-             // If no opportunityId, clear the opportunity title element if it exists
-             const opportunityTitleElement = document.getElementById('opportunity-title');
-             if (opportunityTitleElement) {
-                opportunityTitleElement.textContent = ''; // Clear title for company dashboard view
-             }
-        }
-
-
-        const applications = await fetchApplications(opportunityId);
-        console.log('applications.js: Result of fetchApplications:', applications);
-        if (!applications) {
-             console.log('applications.js: fetchApplications returned no data or null.'); // Added logging
-             applicationsListDiv.innerHTML = '<p>Failed to load applications or no applications found.</p>'; // Provide feedback if fetch fails or returns empty
-        }
-        // Removed the call to displayApplications from here.
-        // The calling function (in user.js) is responsible for displaying the data.
-        return applications; // Return the fetched data
-    })();
-}
-
 // Fetch Applications
-async function fetchApplications(opportunityId) {
+export async function fetchApplications(opportunityId) {
     try {
         const authToken = localStorage.getItem('authToken');
         const studentId = localStorage.getItem('userId'); // Assuming student user ID is stored
@@ -282,6 +57,196 @@ async function fetchApplications(opportunityId) {
         }
         return null;
     }
+}
+
+
+// ============================================================================
+// SECTION 1: APPLICATION LISTING FUNCTIONALITY
+// ============================================================================
+// This section handles displaying applications for opportunities
+// Originally from: public/assets/js/applications.js
+
+export function initApplicationListing() {
+    console.log('applications.js: initApplicationListing called'); // Added logging
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            logout();
+            window.location.href = 'index.html';
+        });
+    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const opportunityId = urlParams.get('opportunityId');
+    console.log('applications.js: Extracted opportunityId from URL:', opportunityId);
+    const applicationsListDiv = document.getElementById('applications-list');
+    const opportunityTitleSpan = document.getElementById('opportunity-title');
+
+    // Fetch Opportunity Details (for title)
+    async function fetchOpportunityDetails(id) {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            const response = await fetch(`/api/opportunities/${id}`, {
+                 headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            if (!response.ok) {
+                console.error('applications.js: Failed to fetch opportunity details:', response.status);
+                return null;
+            }
+            const opportunity = await response.json();
+            console.log('applications.js: Fetched opportunity details:', opportunity);
+            return opportunity;
+        } catch (error) {
+            console.error('applications.js: Error fetching opportunity details:', error);
+            return null;
+        }
+    }
+
+    async function updateApplicationStatus(applicationId, status) {
+        console.log(`applications.js: Attempting to update application ${applicationId} status to: ${status}`);
+        try {
+            const authToken = localStorage.getItem('authToken');
+            const response = await fetch(`/api/applications/${applicationId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({ status: status })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                console.log(`applications.js: Status update successful for application ${applicationId}. New status: ${status}`);
+                // Re-fetch and display all applications to see the change.
+                const updatedApplications = await fetchApplications(opportunityId);
+                if (updatedApplications) {
+                    displayApplications(updatedApplications);
+                }
+
+            } else {
+                console.error(`applications.js: Status update failed for application ${applicationId}:`, result);
+                alert(`Failed to update status: ${result.error || 'Unknown error'}`); // Simple feedback to the user
+            }
+        } catch (error) {
+            console.error(`applications.js: Error updating application ${applicationId} status:`, error);
+            alert(`Error updating status: ${error.message}`); // Simple feedback to the user
+        }
+    }
+
+    // Main execution for application listing
+    (async () => {
+        console.log('applications.js: Main execution async block started'); // Added logging
+        // Only fetch opportunity details if opportunityId is present (for opportunity-specific listing)
+        if (opportunityId) {
+            const opportunity = await fetchOpportunityDetails(opportunityId);
+            if (opportunity) {
+                // Assuming there's an element with ID 'opportunity-title' on the page
+                const opportunityTitleElement = document.getElementById('opportunity-title');
+                if (opportunityTitleElement) {
+                    opportunityTitleElement.textContent = opportunity.title;
+                }
+            } else {
+                 const opportunityTitleElement = document.getElementById('opportunity-title');
+                 if (opportunityTitleElement) {
+                    opportunityTitleElement.textContent = 'Unknown Opportunity';
+                 }
+            }
+        } else {
+             // If no opportunityId, clear the opportunity title element if it exists
+             const opportunityTitleElement = document.getElementById('opportunity-title');
+             if (opportunityTitleElement) {
+                opportunityTitleElement.textContent = ''; // Clear title for company dashboard view
+             }
+        }
+
+
+        const applications = await fetchApplications(opportunityId);
+        console.log('applications.js: Result of fetchApplications:', applications);
+        if (!applications) {
+             console.log('applications.js: fetchApplications returned no data or null.'); // Added logging
+             applicationsListDiv.innerHTML = '<p>Failed to load applications or no applications found.</p>'; // Provide feedback if fetch fails or returns empty
+        }
+        // Removed the call to displayApplications from here.
+        // The calling function (in user.js) is responsible for displaying the data.
+        return applications; // Return the fetched data
+    })();
+}
+
+// Display Applications
+export function displayApplications(applications) {
+    console.log('applications.js: displayApplications called with data:', applications); // Added logging
+    const applicationsListDiv = document.getElementById('application-list'); // Corrected ID
+    if (!applicationsListDiv) {
+        console.error('applications.js: Element with ID "application-list" not found.');
+        return;
+    }
+    applicationsListDiv.innerHTML = ''; // Clear loading message
+    const applicationCountElement = document.getElementById('application-count');
+
+    console.log('applications.js: Raw data received for display:', applications); // Added logging
+
+    let applicationsArray = applications;
+
+    // Check if applications is an object and contains a 'data' array
+    if (typeof applications === 'object' && applications !== null && Array.isArray(applications.data)) {
+        applicationsArray = applications.data;
+    } else if (typeof applications === 'object' && applications !== null && !Array.isArray(applications)) {
+        // If it's a single object (and not an array), treat it as an array with one element
+        applicationsArray = [applications];
+    } else if (!Array.isArray(applications)) {
+         // If it's not an array, not an object with a 'data' array, and not a single object, log an error
+        console.error('applications.js: Expected applications data to be an array, a single object, or an object with a "data" array, but received:', applications);
+        applicationsListDiv.innerHTML = '<p>Error: Unexpected data format received from the server.</p>';
+        if (applicationCountElement) {
+            applicationCountElement.textContent = 'Application Count: Error';
+        }
+        return;
+    }
+
+    console.log('applications.js: Processed applications array for display:', applicationsArray); // Added logging
+    console.log('applications.js: Number of applications to display:', applicationsArray.length); // Added logging
+
+
+    if (applicationCountElement) {
+        applicationCountElement.textContent = `Application Count: ${applicationsArray.length}`;
+    }
+
+    if (!applicationsArray || applicationsArray.length === 0) {
+        applicationsListDiv.innerHTML = '<p>No applications found for this opportunity.</p>';
+        return;
+    }
+
+    const list = document.createElement('ul');
+    applicationsArray.forEach((app, index) => { // Added index for logging
+        console.log(`applications.js: Processing application ${index + 1}:`, app); // Added logging
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+            <strong>Applicant:</strong> ${app.student_full_name || 'N/A'} (${app.student_email || 'N/A'})<br>
+            <strong>Applied On:</strong> ${new Date(app.application_date).toLocaleDateString()}<br>
+            <strong>Why Choose Me:</strong> ${app.why_choose_me || 'N/A'}<br>
+            <strong>Skills:</strong> ${app.skills || 'N/A'}<br>
+            <strong>Experiences:</strong> ${app.experiences || 'N/A'}<br>
+            <p><strong>Current Status:</strong> ${app.status || 'Pending'}</p>
+            <p><strong>Company Message:</strong> ${app.company_message || 'No message yet'}</p>
+            <a href="application.html?id=${app.id}" class="change-status-btn">View Details</a>
+            <hr>
+        `;
+        console.log('Generated listItem HTML:', listItem.innerHTML); // Log generated HTML
+        list.appendChild(listItem);
+    });
+    applicationsListDiv.appendChild(list);
+
+    // Add event listeners to the status buttons
+    list.querySelectorAll('.status-button').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const applicationId = event.target.dataset.applicationId;
+            const status = event.target.dataset.status;
+            updateApplicationStatus(applicationId, status);
+        });
+    });
 }
 
 
