@@ -39,4 +39,36 @@ async function markAsRead(id) {
     }
 }
 
+// Create Notification
+export async function createNotification(studentUserId, applicationId, status) {
+    console.log(`Creating notification for student user ${studentUserId} for application ${applicationId} with status ${status}`);
+    try {
+        const authToken = localStorage.getItem('authToken');
+        const response = await fetch('/api/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                user_id: studentUserId,
+                message: `Your application (ID: ${applicationId}) status has been updated to: ${status}`,
+                type: 'application_status_update',
+                related_resource_id: applicationId,
+                is_read: false
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            console.error('Failed to create notification:', error);
+        } else {
+            console.log('Notification created successfully.');
+        }
+    } catch (error) {
+        console.error('Error creating notification:', error);
+    }
+}
+
+
 document.addEventListener('DOMContentLoaded', loadNotifications);
