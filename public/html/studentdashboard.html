@@ -7,15 +7,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/studentdashboard.css">
-    <script src="../assets/js/user.js" type="module"></script> <!-- For logout() -->
     <style>
         .logo-img {
             height: 40px;
         }
     </style>
-    <script src="../assets/js/user.js" type="module" defer></script>
     <script type="module">
-        import { initStudentDashboard, setupEventListeners, loadProfileData, loadOpportunities, loadApplications, loadNotifications } from '../assets/js/user.js';
+        import { initStudentDashboard, setupEventListeners, loadProfileData, loadOpportunities, loadApplications, loadNotifications, logout } from '../assets/js/user.js';
         
         // Make functions available globally for testing
         window.setupEventListeners = setupEventListeners;
@@ -23,9 +21,17 @@
         window.loadOpportunities = loadOpportunities;
         window.loadApplications = loadApplications;
         window.loadNotifications = loadNotifications;
+        window.logout = logout; // Add logout to global window for testing
         
         document.addEventListener('DOMContentLoaded', () => {
             initStudentDashboard();
+            const logoutLink = document.getElementById('logout-link');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', (e) => {
+                    logout();
+                    window.location.href = 'index.html';
+                });
+            }
         });
     </script>
 </head>
@@ -47,7 +53,7 @@
             <section id="profile" class="profile-section">
                 <h2>My Profile</h2>
                 <div id="profile-summary">
-                    <img id="profile-picture" src="placeholder.jpg" alt="Profile Picture">
+                    <img id="profile-picture" src="../assets/images/default-profile.png" alt="Profile Picture">
                     <p><strong>Name:</strong> <span id="profile-name">Loading...</span></p>
                     <p><strong>Email:</strong> <span id="profile-email">Loading...</span></p>
                     <p><strong>Interests:</strong> <span id="profile-interests">Loading...</span></p>
@@ -93,31 +99,26 @@
                 <details class="opportunity-category">
                     <summary>Internships</summary>
                     <div class="internship-grid" id="internship-grid">
-                        <p>Loading internships...</p>
                     </div>
                 </details>
                 <details class="opportunity-category">
                     <summary>Clubs & Activities</summary>
                     <div class="club-grid" id="club-grid">
-                        <p>Loading clubs...</p>
                     </div>
                 </details>
                 <details class="opportunity-category">
                     <summary>Events</summary>
                     <div class="event-grid" id="event-grid">
-                        <p>Loading events...</p>
                     </div>
                 </details>
                 <details class="opportunity-category">
                     <summary>Programs</summary>
                     <div class="program-grid" id="program-grid">
-                        <p>Loading programs...</p>
                     </div>
                 </details>
                 <details class="opportunity-category">
                     <summary>Other Opportunities</summary>
                     <div class="other-grid" id="other-grid">
-                        <p>Loading other opportunities...</p>
                     </div>
                 </details>
             </section>
@@ -136,14 +137,12 @@
             <section id="recent-applications" class="applications-section">
                 <h2>My Recent Applications</h2>
                 <ul id="application-list">
-                    <li>Loading applications...</li>
                 </ul>
             </section>
 
             <section id="notifications" class="notifications">
                 <h2>Notifications</h2>
                 <div class="notification-list" id="notification-list">
-                    <p>Loading notifications...</p>
                 </div>
             </section>
         </div>
@@ -152,31 +151,10 @@
     <footer>
         <p>© 2025 Studexplore. All rights reserved.</p>
         <div class="social-media-links">
-            <a href="#" aria-label="X">X</a>
-            <a href="#" aria-label="Instagram">Instagram</a>
-            <a href="#" aria-label="TikTok">TikTok</a>
+            <a href="https://twitter.com" aria-label="X">X</a>
+            <a href="https://instagram.com" aria-label="Instagram">Instagram</a>
+            <a href="https://tiktok.com" aria-label="TikTok">TikTok</a>
         </div>
     </footer>
-
-    <script type="module">
-        import { logout } from '../assets/js/user.js';
-        document.addEventListener('DOMContentLoaded', () => {
-            const logoutLink = document.getElementById('logout-link');
-            if (logoutLink) {
-                logoutLink.addEventListener('click', (e) => {
-                    logout();
-                    window.location.href = 'index.html';
-                });
-            }
-        });
-    </script>
-</body>
-                logoutLink.addEventListener('click', (e) => {
-                    logout();
-                    window.location.href = 'index.html';
-                });
-            }
-        });
-    </script>
 </body>
 </html>

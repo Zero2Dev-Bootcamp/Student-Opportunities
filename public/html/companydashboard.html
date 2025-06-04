@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Source+Code+Pro&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/companydashboard.css">
     <script src="../assets/js/user.js" type="module" defer></script>
+    <script src="../assets/js/application.js" type="module" defer></script>
 </head>
 <body>
     <nav class="navbar">
@@ -27,7 +28,7 @@
         <aside class="left-sidebar">
             <section id="applications" class="applications-section">
                 <h2>Received Applications</h2>
-                <div id="application-list">
+                <div id="applications-list">
                     <p>Loading applications...</p>
                 </div>
             </section>
@@ -223,7 +224,8 @@
                         opportunityListDiv.innerHTML = '<p>No opportunities posted yet.</p>';
                     } else {
                         opportunityListDiv.innerHTML = opportunities.map(function(opp) {
-                            return '<div class="opportunity-item"><h3>' + opp.title + '</h3><p>Applications: ' + (opp.applications_count || 0) + '</p></div>';
+                            // Add a link to view applications for this opportunity
+                            return '<div class="opportunity-item"><h3>' + opp.title + '</h3><p>Applications: ' + (opp.applications_count || 0) + '</p><p><button class="opportunity-button close-button">Close</button><a href="/html/applications.html?opportunityId=' + opp.id + '" class="opportunity-button view-applications-button">View Applications</a><button class="opportunity-button edit-button">Edit</button></p></div>';
                         }).join('');
                     }
                 } else {
@@ -234,42 +236,6 @@
             } catch (error) {
                 console.error('Error loading opportunities:', error);
                 document.getElementById('opportunity-list').innerHTML = '<p>Error: ' + error.message + '</p>';
-            }
-            
-            // Try to load applications
-            try {
-                console.log('Attempting to fetch applications...');
-                const response = await fetch('/api/applications', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-User-Id': userId,
-                        'X-User-Type': localStorage.getItem('userType')
-                    }
-                });
-                
-                console.log('Applications response status:', response.status);
-                
-                if (response.ok) {
-                    const applications = await response.json();
-                    console.log('Applications data:', applications);
-                    
-                    const applicationListDiv = document.getElementById('application-list');
-                    if (applications.length === 0) {
-                        applicationListDiv.innerHTML = '<p>No applications received yet.</p>';
-                    } else {
-                        applicationListDiv.innerHTML = applications.map(function(app) {
-                            return '<div class="application-item"><p><strong>Application ID:</strong> ' + app.id + '</p><p><strong>Student ID:</strong> ' + app.student_user_id + '</p><p><strong>Opportunity ID:</strong> ' + app.opportunity_id + '</p></div>';
-                        }).join('');
-                    }
-                } else {
-                    const errorText = await response.text();
-                    console.error('Failed to load applications:', errorText);
-                    document.getElementById('application-list').innerHTML = '<p>Error: ' + response.status + '</p>';
-                }
-            } catch (error) {
-                console.error('Error loading applications:', error);
-                document.getElementById('application-list').innerHTML = '<p>Error: ' + error.message + '</p>';
             }
         }
         
@@ -283,6 +249,9 @@
             // Run debug function
             debugAndLoadData();
             
+            // Initialize application listing for the company dashboard
+            initApplicationListing();
+
             const logoutLink = document.getElementById('logout-link');
             if (logoutLink) {
                 logoutLink.addEventListener('click', function(e) {
