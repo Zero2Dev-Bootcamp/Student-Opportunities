@@ -144,8 +144,11 @@
         </div>
     </footer>
 
-    <script>
-        // Simple debug function without modules to avoid import errors
+    <script type="module">
+        import { fetchApplications, displayApplications } from '../assets/js/application.js';
+        import { logout } from '../assets/js/user.js'; // Assuming logout is needed here as well
+
+        // Debug function
         async function debugAndLoadData() {
             console.log('=== COMPANY DASHBOARD DEBUG ===');
             console.log('User ID:', localStorage.getItem('userId'));
@@ -162,7 +165,7 @@
                 document.getElementById('application-list').innerHTML = '<p>Error: Not logged in</p>';
                 return;
             }
-            
+
             // Try to load company profile directly
             try {
                 console.log('Attempting to fetch user profile...');
@@ -231,26 +234,35 @@
                 } else {
                     const errorText = await response.text();
                     console.error('Failed to load opportunities:', errorText);
-                    document.getElementById('opportunity-list').innerHTML = '<p>Error: ' + response.status + '</p>';
+                document.getElementById('opportunity-list').innerHTML = '<p>Error: ' + response.status + '</p>';
+            }
+        } catch (error) {
+            console.error('Error loading opportunities:', error);
+            document.getElementById('opportunity-list').innerHTML = '<p>Error: ' + error.message + '</p>';
+            }
+
+            // Try to load applications for the company
+            try {
+                console.log('Attempting to fetch applications for company...');
+                // Assuming fetchApplications and displayApplications are available from application.js
+                const applications = await fetchApplications(); // fetchApplications handles companyId internally
+                console.log('Applications data:', applications);
+
+                const applicationsListDiv = document.getElementById('applications-list');
+                if (applications) {
+                    displayApplications(applications);
+                } else {
+                    applicationsListDiv.innerHTML = '<p>No applications received yet.</p>';
                 }
             } catch (error) {
-                console.error('Error loading opportunities:', error);
-                document.getElementById('opportunity-list').innerHTML = '<p>Error: ' + error.message + '</p>';
+                console.error('Error loading applications:', error);
+                document.getElementById('applications-list').innerHTML = '<p>Error: ' + error.message + '</p>';
             }
         }
-        
-        // Simple logout function
-        function logout() {
-            localStorage.clear();
-            window.location.reload();
-        }
-        
+
         document.addEventListener('DOMContentLoaded', function() {
             // Run debug function
             debugAndLoadData();
-            
-            // Initialize application listing for the company dashboard
-            initApplicationListing();
 
             const logoutLink = document.getElementById('logout-link');
             if (logoutLink) {

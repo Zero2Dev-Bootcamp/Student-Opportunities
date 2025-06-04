@@ -852,7 +852,7 @@ export function initCompanyDashboard() {
     }
 
     async function loadReceivedApplications() {
-        const applicationListDiv = document.getElementById('application-list');
+        const applicationListDiv = document.getElementById('applications-list');
         const companyUserId = localStorage.getItem('userId');
 
         if (!companyUserId) {
@@ -890,7 +890,7 @@ export function initCompanyDashboard() {
     }
 
     async function renderCompanyApplications(applicationsToRender) {
-        const applicationListDiv = document.getElementById('application-list');
+        const applicationListDiv = document.getElementById('applications-list');
         applicationListDiv.innerHTML = '';
 
         if (applicationsToRender.length === 0) {
