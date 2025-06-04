@@ -180,7 +180,7 @@ main p {
   background-color: var(--primary-blue);
   color: var(--white);
   border: none;
-  padding: 12px 25px; /* Slightly larger padding */
+  padding: 10px 20px; /* Adjusted padding for a slightly more compact look */
   border-radius: 5px;
   font-family: 'Poppins', sans-serif;
   font-weight: 700; /* Make font bolder */
@@ -203,7 +203,8 @@ main p {
 
 .cancel-button:hover {
   background-color: #555555;
-  transform: scale(1.05);
+  transform: translateY(-3px); /* Consistent hover effect */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Consistent hover shadow */
 }
 
 .mark-as-read-btn {
@@ -387,7 +388,7 @@ main p {
   color: var(--text-muted);
 }
 
-.opportunity-item button {
+.opportunity-item button, .opportunity-item .view-applications-button { /* Added .opportunity-item .view-applications-button */
   background-color: var(--primary-blue);
   color: var(--white);
   border: none;
@@ -402,13 +403,14 @@ main p {
   display: inline-block;
   box-shadow: var(--shadow);
   font-size: 12px;
+  text-decoration: none; /* Remove underline for the link */
 }
 
 .opportunity-item button:last-child {
   margin-right: 0; /* Remove right margin for the last button */
 }
 
-.opportunity-item button:hover {
+.opportunity-item button:hover, .opportunity-item .view-applications-button:hover { /* Added .opportunity-item .view-applications-button:hover */
   background-color: var(--teal-accent);
   transform: translateY(-3px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
