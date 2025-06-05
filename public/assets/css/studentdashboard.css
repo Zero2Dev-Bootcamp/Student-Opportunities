@@ -257,7 +257,9 @@ main h1 {
 /* Newsfeed and Applications Container */
 .newsfeed-applications {
   grid-area: newsfeed; /* Assign to newsfeed grid area */
-  background-color: var(--white); /* Ensure white background */
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Add space between the sections */
 }
 
 /* Applications Section */
@@ -361,8 +363,11 @@ main h1 {
 
 /* Applications Section */
 .applications-section, #applications {
-  margin: 20px 0;
   background-color: var(--white); /* Ensure white background */
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 20px; /* Add padding for inner spacing */
+  transition: var(--transition);
 }
 
 #application-list, .application-item {
@@ -392,8 +397,11 @@ main h1 {
 
 /* Notifications Section */
 .notifications {
-  margin: 20px 0;
   background-color: var(--white); /* Ensure white background */
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 20px; /* Add padding for inner spacing */
+  transition: var(--transition);
 }
 
 .notifications h2 {
