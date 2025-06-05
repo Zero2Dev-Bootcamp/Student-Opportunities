@@ -10,7 +10,7 @@ export async function loadNotifications() {
                 list.innerHTML = notifications.map(n => `
                     <div class="notification ${n.is_read ? 'read' : ''}">
                         <p>${n.message}</p>
-                        <button onclick="markAsRead(${n.id})">${n.is_read ? 'Read' : 'Mark as Read'}</button>
+                        <button class="mark-as-read-btn" onclick="markAsRead(${n.id})">${n.is_read ? 'Read' : 'Mark as Read'}</button>
                     </div>
                 `).join('');
                 document.getElementById('notifications').style.display = 'block';
