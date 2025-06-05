@@ -69,12 +69,57 @@ const migrateUsersTable = () => {
   }
 };
 
+const createApplicationsTable = () => {
+  try {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS Application (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_user_id INTEGER NOT NULL,
+        opportunity_id INTEGER NOT NULL,
+        why_choose_me TEXT,
+        skills TEXT,
+        experiences TEXT,
+        notes TEXT,
+        company_message TEXT,
+        application_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'Submitted',
+        FOREIGN KEY (student_user_id) REFERENCES User(id) ON DELETE CASCADE,
+        FOREIGN KEY (opportunity_id) REFERENCES Opportunity(id) ON DELETE CASCADE
+      );
+    `);
+    console.log("Migration: Created Application table.");
+  } catch (error) {
+    console.error("Error migrating Application table:", error);
+  }
+};
+
+const addCompanyMessageToApplications = () => {
+  try {
+    // SQL statement to add the company_message column to the Application table
+    // This assumes the 'Application' table already exists.
+    db.run(`
+      ALTER TABLE Application
+      ADD COLUMN company_message TEXT;
+    `);
+    console.log("Migration: Added company_message to Application table.");
+  } catch (error) {
+    // Ignore "duplicate column name" errors if the column already exists
+    if (!error.message.includes("duplicate column name")) {
+      console.error("Error migrating Application table (add company_message):", error);
+    } else {
+      console.log("Migration: company_message column already exists in Application table.");
+    }
+  }
+};
+
 
 // Function to run all migrations
 const runMigrations = () => {
   migrateUserTable(); // Add call to create the User table
   migrateStudentTable();
   migrateUsersTable(); // Add call to the new migration function
+  createApplicationsTable(); // Ensure the applications table is created
+  addCompanyMessageToApplications(); // Add the company_message column
   // Add calls to other migration functions here if needed
 };
 
