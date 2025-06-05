@@ -81,7 +81,7 @@ class OpportunityResource {
           params.push(companyId);
         }
 
-        sql += ` GROUP BY O.id`;
+        sql += ` GROUP BY O.id ORDER BY O.id`; // Add ORDER BY for consistent sorting
 
         // Execute the database query
         const stmt = this.db.prepare(sql);
