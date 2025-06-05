@@ -241,8 +241,29 @@ class Application {
       if (!this.db) {
         throw new Error('Database connection not available.');
       }
-      const applicationsStmt = this.db.prepare("SELECT *, company_message FROM Application WHERE student_user_id = ? ORDER BY application_date DESC");
+      // Modify the SQL query to join with the User table and select student details
+      const sql = `
+        SELECT
+          A.*,
+          U.email AS student_email,
+          U.name AS student_full_name
+        FROM Application AS A
+        LEFT JOIN User AS U ON CAST(A.student_user_id AS INTEGER) = U.id
+        WHERE A.student_user_id = ?
+        ORDER BY A.application_date DESC
+      `;
+      const applicationsStmt = this.db.prepare(sql);
       const applications = applicationsStmt.all(studentUserId);
+
+      // Add check for missing student names and log the fetched name
+      if (Array.isArray(applications)) {
+        applications.forEach(app => {
+          console.log(`[Application.getApplicationsByStudentId] Fetched application ID ${app.id}, student_user_id ${app.student_user_id}. student_full_name: "${app.student_full_name}"`); // Log the fetched name
+          if (!app.student_full_name) {
+            console.warn(`[Application.getApplicationsByStudentId] Student name missing or empty for application ID ${app.id}, student_user_id ${app.student_user_id}.`);
+          }
+        });
+      }
 
       // Removed fetching associated files as ApplicationFile table is not defined
       // for (const app of applications) {
@@ -252,7 +273,7 @@ class Application {
       // Ensure the result is always an array
       return Array.isArray(applications) ? applications : (applications ? [applications] : []);
     } catch (error) {
-      console.error('Error in Application.getApplicationsByOpportunityId:', error.message);
+      console.error('Error in Application.getApplicationsByStudentId:', error.message);
       throw error;
     }
   }
@@ -686,7 +707,7 @@ class Application {
                   if (authContext.userType === 'student' && studentId) {
                       console.log('[Application.handleGet] Fetching applications for studentId from query param:', studentId);
                       applications = await this.getApplicationsByStudentId(studentId);
-                      console.log('[Application.handleGet] Applications fetched for student:', applications); // Added logging
+                      console.log('[Application.handleGet] Result from getApplicationsByStudentId:', applications); // Added detailed logging
                   } else if (authContext.userType === 'company') {
                       console.log('[Application.handleGet] Fetching applications for companyId:', authContext.userId);
                       applications = await this.getApplicationsByCompanyId(authContext.userId);
@@ -701,7 +722,7 @@ class Application {
                       return new Response(JSON.stringify({ error: 'Forbidden: User type cannot access applications' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
                   }
 
-                  console.log('[Application.handleGet] Returning applications for base /api/applications:', applications); // Added logging
+                  console.log('[Application.handleGet] Data being sent in response for base /api/applications:', applications); // Added detailed logging before sending
                   return new Response(JSON.stringify(applications), { status: 200, headers: { 'Content-Type': 'application/json' } });
               } catch (error) {
                   console.error('Error handling GET /api/applications:', error.message);

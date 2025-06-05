@@ -527,7 +527,8 @@ export function initApplicationDetails() {
 // These functions automatically initialize based on the current page
 
 // Auto-initialize application listing if on applications page
-if (document.getElementById('applications-list')) {
+// Note: The element ID in studentdashboard.html is 'application-list' (singular)
+if (document.getElementById('application-list')) {
     document.addEventListener('DOMContentLoaded', initApplicationListing);
 }
 
