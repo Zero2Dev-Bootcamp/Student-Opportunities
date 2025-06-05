@@ -227,7 +227,7 @@
                     } else {
                         opportunityListDiv.innerHTML = opportunities.map(function(opp) {
                             // Add a link to view applications for this opportunity
-                            return '<div class="opportunity-item"><h3>' + opp.title + '</h3><p>Applications: ' + (opp.applications_count || 0) + '</p><p><button class="opportunity-button close-button">Close</button><a href="/html/applications.html?opportunityId=' + opp.id + '" class="opportunity-button view-applications-button">View Applications</a><button class="opportunity-button edit-button">Edit</button></p></div>';
+                            return '<div class="opportunity-item"><h3>' + opp.title + '</h3><p>Applications: ' + (opp.applications_count || 0) + '</p><p><button class="opportunity-button close-button">Close</button><a href="/html/applications.html?opportunityId=' + opp.id + '" class="opportunity-button view-applications-button">View All Applications</a><button class="opportunity-button edit-button">Edit</button></p></div>';
                         }).join('');
                     }
                 } else {
