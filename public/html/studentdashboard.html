@@ -14,14 +14,24 @@
     </style>
     <script type="module">
         import { initStudentDashboard, setupEventListeners, loadProfileData, loadOpportunities, loadNotifications, logout } from '../assets/js/user.js';
+        import { fetchApplications, displayApplications } from '../assets/js/application.js';
         
         // Make functions available globally for testing
         window.setupEventListeners = setupEventListeners;
         window.loadProfileData = loadProfileData;
         window.loadOpportunities = loadOpportunities;
-        window.loadApplications = loadApplications;
         window.loadNotifications = loadNotifications;
-        window.logout = logout; // Add logout to global window for testing
+        window.logout = logout;
+        
+        // Define loadApplications function
+        window.loadApplications = async () => {
+            const userId = localStorage.getItem('userId');
+            const applications = await fetchApplications(null, userId);
+            if (applications) {
+                const container = document.getElementById('applications-list');
+                displayApplications(applications, container);
+            }
+        };
         
         document.addEventListener('DOMContentLoaded', () => {
             initStudentDashboard();
@@ -136,8 +146,9 @@
         <div class="newsfeed-applications">
             <section id="recent-applications" class="applications-section">
                 <h2>My Recent Applications</h2>
-                <ul id="application-list">
-                </ul>
+                <div id="applications-list" class="applications-container">
+                    <!-- Applications will be loaded here -->
+                </div>
             </section>
 
             <section id="notifications" class="notifications">
