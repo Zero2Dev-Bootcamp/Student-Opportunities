@@ -9,26 +9,23 @@ import { logout } from './user.js';
 import { createNotification } from './notification.js';
 
 // Fetch Applications
-export async function fetchApplications(opportunityId) {
+export async function fetchApplications(opportunityId, userId) {
     try {
         const authToken = localStorage.getItem('authToken');
-        const studentId = localStorage.getItem('userId'); // Assuming student user ID is stored
-        const companyId = localStorage.getItem('userId'); // Assuming company user ID is stored - This might be incorrect if userId is used for both student and company. Need to clarify user type.
-        const userType = localStorage.getItem('userType'); // Assuming user type is stored
+        const userType = localStorage.getItem('userType');
 
-        console.log('applications.js: fetchApplications - userId from localStorage:', studentId); // Added logging
-        console.log('applications.js: fetchApplications - userType from localStorage:', userType); // Added logging
-
+        console.log('applications.js: fetchApplications - userId parameter:', userId);
+        console.log('applications.js: fetchApplications - userType from localStorage:', userType);
 
         let url = '';
         if (opportunityId) {
             url = `/api/applications/opportunity/${opportunityId}`;
-        } else if (userType === 'student' && studentId) {
-             url = `/api/applications?studentId=${studentId}`;
-        } else if (userType === 'company' && companyId) {
-            url = `/api/applications?companyId=${companyId}`;
+        } else if (userType === 'student' && userId) {
+            url = `/api/applications?studentId=${userId}`;
+        } else if (userType === 'company' && userId) {
+            url = `/api/applications?companyId=${userId}`;
         } else {
-            throw new Error('Neither Opportunity ID, Student ID, nor Company ID available to fetch applications.');
+            throw new Error('Neither Opportunity ID nor User ID available to fetch applications.');
         }
         console.log('applications.js: fetchApplications - Fetching from URL:', url); // Added logging
 
@@ -240,7 +237,7 @@ export function initApplicationListing() {
 }
 
 // Display Applications
-export function displayApplications(applications, container) {
+export async function displayApplications(applications, container) {
     console.log('applications.js: displayApplications called with data:', applications);
     if (!container) {
         console.error('applications.js: Container element not provided');
@@ -248,30 +245,23 @@ export function displayApplications(applications, container) {
     }
 
     const applicationCountElement = document.getElementById('application-count');
-
-    console.log('applications.js: Raw data received for display:', applications); // Added logging
+    const userType = localStorage.getItem('userType');
+    const authToken = localStorage.getItem('authToken');
 
     let applicationsArray = applications;
 
-    // Check if applications is an object and contains a 'data' array
     if (typeof applications === 'object' && applications !== null && Array.isArray(applications.data)) {
         applicationsArray = applications.data;
     } else if (typeof applications === 'object' && applications !== null && !Array.isArray(applications)) {
-        // If it's a single object (and not an array), treat it as an array with one element
         applicationsArray = [applications];
     } else if (!Array.isArray(applications)) {
-         // If it's not an array, not an object with a 'data' array, and not a single object, log an error
         console.error('applications.js: Expected applications data to be an array, a single object, or an object with a "data" array, but received:', applications);
-        applicationsListDiv.innerHTML = '<p>Error: Unexpected data format received from the server.</p>';
+        container.innerHTML = '<p>Error: Unexpected data format received from the server.</p>';
         if (applicationCountElement) {
             applicationCountElement.textContent = 'Application Count: Error';
         }
         return;
     }
-
-    console.log('applications.js: Processed applications array for display:', applicationsArray); // Added logging
-    console.log('applications.js: Number of applications to display:', applicationsArray.length); // Added logging
-
 
     if (applicationCountElement) {
         applicationCountElement.textContent = `Application Count: ${applicationsArray.length}`;
@@ -279,26 +269,61 @@ export function displayApplications(applications, container) {
 
     const list = document.createElement('ul');
     list.className = 'applications-list';
-    applicationsArray.forEach((app, index) => { // Added index for logging
-        console.log(`applications.js: Processing application ${index + 1}:`, app); // Added logging
+
+    // Process each application
+    for (const app of applicationsArray) {
+        console.log('applications.js: Processing application:', app);
         const listItem = document.createElement('li');
-        listItem.innerHTML = `
-            <strong>Applicant:</strong> ${app.student_full_name || 'N/A'} (${app.student_email || 'N/A'})<br>
-            <strong>Applied On:</strong> ${new Date(app.application_date).toLocaleDateString()}<br>
-            <strong>Why Choose Me:</strong> ${app.why_choose_me || 'N/A'}<br>
-            <strong>Skills:</strong> ${app.skills || 'N/A'}<br>
-            <strong>Experiences:</strong> ${app.experiences || 'N/A'}<br>
-            <p><strong>Current Status:</strong> ${app.status || 'Pending'}</p>
-            <p><strong>Company Message:</strong> ${app.company_message || 'No message yet'}</p>
-            <a href="application.html?id=${app.id}" class="cta-button">View Details and Change Status</a>
-            <hr>
+        listItem.className = 'application-item';
+
+        // Fetch opportunity details for the title
+        let opportunityTitle = 'Unknown Opportunity';
+        try {
+            const response = await fetch(`/api/opportunities/${app.opportunity_id}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            if (response.ok) {
+                const opportunity = await response.json();
+                opportunityTitle = opportunity.title || 'Unknown Opportunity';
+            }
+        } catch (error) {
+            console.error('Error fetching opportunity details:', error);
+        }
+
+        // Common information for both student and company views
+        let html = `
+            <div class="application-header">
+                <h3 class="opportunity-title">${opportunityTitle}</h3>
+                <strong>Applied On:</strong> ${new Date(app.application_date).toLocaleDateString()}<br>
+                <strong>Status:</strong> ${app.status || 'Pending'}<br>
+            </div>
+            <div class="company-message">
+                <strong>Company Message:</strong> ${app.company_message || 'No message yet'}
+            </div>
         `;
-        console.log('Generated listItem HTML:', listItem.innerHTML); // Log generated HTML
+
+        // Additional information for company view
+        if (userType === 'company') {
+            html += `
+                <div class="applicant-details">
+                    <strong>Applicant:</strong> ${app.student_full_name || 'N/A'} (${app.student_email || 'N/A'})<br>
+                    <strong>Why Choose Me:</strong> ${app.why_choose_me || 'N/A'}<br>
+                    <strong>Skills:</strong> ${app.skills || 'N/A'}<br>
+                    <strong>Experiences:</strong> ${app.experiences || 'N/A'}<br>
+                    <a href="application.html?id=${app.id}" class="cta-button">View Details and Change Status</a>
+                </div>
+            `;
+        }
+
+        html += '<hr>';
+        listItem.innerHTML = html;
         list.appendChild(listItem);
-    });
+    }
     container.appendChild(list);
 
-    // Add event listeners to the status buttons
+    // Add event listeners to the status buttons if they exist
     list.querySelectorAll('.status-button').forEach(button => {
         button.addEventListener('click', (event) => {
             const applicationId = event.target.dataset.applicationId;

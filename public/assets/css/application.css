@@ -104,7 +104,7 @@ h2 { /* Style for Applicant Details, Application Content headings */
 
 /* Styles for the application actions section */
 .application-actions {
-    margin-top: 2rem;
+    margin-top: 3rem; /* Increased from 2rem to 3rem for more spacing */
     display: flex;
     flex-direction: column;
     gap: 1rem;

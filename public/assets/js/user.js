@@ -483,12 +483,7 @@ export function initStudentDashboard() {
     setupEventListeners();
     loadProfileData(userId);
     loadOpportunities();
-    // Use the imported fetchApplications and displayApplications
-    fetchApplications(null, userId).then(applications => {
-        if (applications) {
-            displayApplications(applications);
-        }
-    });
+    window.loadApplications(); // Use the globally defined loadApplications function
     loadNotifications();
 }
 
