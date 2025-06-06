@@ -89,23 +89,54 @@
 
             // Parse URL search parameters
             const urlParams = new URLSearchParams(window.location.search);
-            const keyword = urlParams.get('keyword')?.toLowerCase() || '';
-            const location = urlParams.get('location')?.toLowerCase() || '';
-            const type = urlParams.get('type') || '';
+            const keyword = urlParams.get('keyword')?.toLowerCase().trim() || '';
+            const location = urlParams.get('location')?.toLowerCase().trim() || '';
+            const type = urlParams.get('type')?.trim() || '';
+
+            // Update header to show search criteria
+            const headerElement = document.querySelector('.search-results-header p');
+            if (keyword || location || type) {
+                let searchCriteria = [];
+                if (keyword) searchCriteria.push(`Keyword: "${keyword}"`);
+                if (location) searchCriteria.push(`Location: "${location}"`);
+                if (type) searchCriteria.push(`Type: "${type}"`);
+                headerElement.textContent = `Opportunities matching: ${searchCriteria.join(', ')}`;
+            }
 
             // Filter opportunity cards based on search parameters
             const opportunityCards = document.querySelectorAll('.opportunity-grid .opportunity-card');
+            let visibleCount = 0;
+            
             opportunityCards.forEach(card => {
-                const cardKeyword = card.textContent.toLowerCase();
-                const cardLocation = card.querySelector('.company')?.textContent.toLowerCase() || '';
+                const cardTitle = card.querySelector('h3')?.textContent.toLowerCase() || '';
+                const cardDescription = card.querySelector('p')?.textContent.toLowerCase() || '';
+                const cardCompany = card.querySelector('.company')?.textContent.toLowerCase() || '';
                 const cardType = card.querySelector('.type')?.textContent.toLowerCase() || '';
+                
+                // Combine all text content for keyword search
+                const cardContent = `${cardTitle} ${cardDescription} ${cardCompany}`;
 
-                const keywordMatch = !keyword || cardKeyword.includes(keyword);
-                const locationMatch = !location || cardLocation.includes(location);
-                const typeMatch = !type || cardType === type.toLowerCase();
+                // Check matches
+                const keywordMatch = !keyword || cardContent.includes(keyword);
+                const locationMatch = !location || cardCompany.includes(location) || cardContent.includes(location);
+                const typeMatch = !type || cardType.includes(type.toLowerCase()) || 
+                                 (type === 'red-cross-volunteer' && cardCompany.includes('philippine red cross'));
 
-                card.style.display = (keywordMatch && locationMatch && typeMatch) ? 'block' : 'none';
+                const shouldShow = keywordMatch && locationMatch && typeMatch;
+                card.style.display = shouldShow ? 'block' : 'none';
+                if (shouldShow) visibleCount++;
             });
+
+            // Show message if no results found
+            if (visibleCount === 0 && (keyword || location || type)) {
+                const noResultsMessage = document.createElement('div');
+                noResultsMessage.className = 'no-results';
+                noResultsMessage.innerHTML = `
+                    <h3>No opportunities found</h3>
+                    <p>Try adjusting your search criteria or <a href="opportunities.html">browse all opportunities</a>.</p>
+                `;
+                document.querySelector('.opportunity-grid').appendChild(noResultsMessage);
+            }
         });
     </script>
 </body>
