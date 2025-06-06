@@ -67,7 +67,7 @@ export async function fetchApplications(opportunityId) {
 // Originally from: public/assets/js/applications.js
 
 export function initApplicationListing() {
-    console.log('applications.js: initApplicationListing called'); // Added logging
+    console.log('applications.js: initApplicationListing called');
     const logoutLink = document.getElementById('logout-link');
     if (logoutLink) {
         logoutLink.addEventListener('click', (e) => {
@@ -75,11 +75,75 @@ export function initApplicationListing() {
             window.location.href = 'index.html';
         });
     }
-    const urlParams = new URLSearchParams(window.location.search);
-    const opportunityId = urlParams.get('opportunityId');
-    console.log('applications.js: Extracted opportunityId from URL:', opportunityId);
-    const applicationsListDiv = document.getElementById('applications-list');
-    const opportunityTitleSpan = document.getElementById('opportunity-title');
+
+    // Fetch all opportunities and their applications
+    async function fetchOpportunities() {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            const response = await fetch('/api/opportunities', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+            const opportunities = await response.json();
+            if (!response.ok) {
+                throw new Error(opportunities.error || 'Failed to fetch opportunities');
+            }
+            return opportunities;
+        } catch (error) {
+            console.error('Error fetching opportunities:', error);
+            return null;
+        }
+    }
+
+    // Main execution for application listing
+    (async () => {
+        const opportunitiesApplicationsDiv = document.getElementById('opportunities-applications');
+        if (!opportunitiesApplicationsDiv) return;
+
+        try {
+            // Fetch all opportunities first
+            const opportunities = await fetchOpportunities();
+            if (!opportunities || !Array.isArray(opportunities)) {
+                opportunitiesApplicationsDiv.innerHTML = '<p>Error loading opportunities</p>';
+                return;
+            }
+
+            // Clear the loading message
+            opportunitiesApplicationsDiv.innerHTML = '';
+
+            // Process each opportunity
+            for (const opportunity of opportunities) {
+                const opportunityContainer = document.createElement('div');
+                opportunityContainer.className = 'opportunity-container';
+                
+                // Add opportunity title
+                const titleElement = document.createElement('h2');
+                titleElement.textContent = opportunity.title;
+                opportunityContainer.appendChild(titleElement);
+
+                // Fetch applications for this opportunity
+                const applications = await fetchApplications(opportunity.id);
+                
+                if (!applications || applications.length === 0) {
+                    // No applications case
+                    const noAppsMessage = document.createElement('p');
+                    noAppsMessage.className = 'no-applications';
+                    noAppsMessage.textContent = 'No Applications Yet';
+                    opportunityContainer.appendChild(noAppsMessage);
+                } else {
+                    // Display applications for this opportunity
+                    displayApplications(applications, opportunityContainer);
+                }
+
+                opportunitiesApplicationsDiv.appendChild(opportunityContainer);
+            }
+
+        } catch (error) {
+            console.error('Error displaying applications:', error);
+            opportunitiesApplicationsDiv.innerHTML = '<p>Error loading applications</p>';
+        }
+    })();
 
     // Fetch Opportunity Details (for title)
     async function fetchOpportunityDetails(id) {
@@ -176,14 +240,13 @@ export function initApplicationListing() {
 }
 
 // Display Applications
-export function displayApplications(applications) {
-    console.log('applications.js: displayApplications called with data:', applications); // Added logging
-    const applicationsListDiv = document.getElementById('application-list'); // Corrected ID
-    if (!applicationsListDiv) {
-        console.error('applications.js: Element with ID "application-list" not found.');
+export function displayApplications(applications, container) {
+    console.log('applications.js: displayApplications called with data:', applications);
+    if (!container) {
+        console.error('applications.js: Container element not provided');
         return;
     }
-    applicationsListDiv.innerHTML = ''; // Clear loading message
+
     const applicationCountElement = document.getElementById('application-count');
 
     console.log('applications.js: Raw data received for display:', applications); // Added logging
@@ -214,12 +277,8 @@ export function displayApplications(applications) {
         applicationCountElement.textContent = `Application Count: ${applicationsArray.length}`;
     }
 
-    if (!applicationsArray || applicationsArray.length === 0) {
-        applicationsListDiv.innerHTML = '<p>No applications found for this opportunity.</p>';
-        return;
-    }
-
     const list = document.createElement('ul');
+    list.className = 'applications-list';
     applicationsArray.forEach((app, index) => { // Added index for logging
         console.log(`applications.js: Processing application ${index + 1}:`, app); // Added logging
         const listItem = document.createElement('li');
@@ -231,13 +290,13 @@ export function displayApplications(applications) {
             <strong>Experiences:</strong> ${app.experiences || 'N/A'}<br>
             <p><strong>Current Status:</strong> ${app.status || 'Pending'}</p>
             <p><strong>Company Message:</strong> ${app.company_message || 'No message yet'}</p>
-            <a href="application.html?id=${app.id}" class="change-status-btn">View Details and Change Status</a>
+            <a href="application.html?id=${app.id}" class="cta-button">View Details and Change Status</a>
             <hr>
         `;
         console.log('Generated listItem HTML:', listItem.innerHTML); // Log generated HTML
         list.appendChild(listItem);
     });
-    applicationsListDiv.appendChild(list);
+    container.appendChild(list);
 
     // Add event listeners to the status buttons
     list.querySelectorAll('.status-button').forEach(button => {
@@ -527,8 +586,7 @@ export function initApplicationDetails() {
 // These functions automatically initialize based on the current page
 
 // Auto-initialize application listing if on applications page
-// Note: The element ID in studentdashboard.html is 'application-list' (singular)
-if (document.getElementById('application-list')) {
+if (document.getElementById('opportunities-applications')) {
     document.addEventListener('DOMContentLoaded', initApplicationListing);
 }
 
