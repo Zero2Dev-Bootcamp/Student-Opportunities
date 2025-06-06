@@ -833,10 +833,12 @@ export function initCompanyDashboard() {
                         opportunityItem.classList.add('opportunity-item');
                         opportunityItem.innerHTML = `
                             <h3>${opportunity.title}</h3>
-                            <p>Status: Active | Applications: ${opportunity.applications_count || 0}</p>
-                            <button>View Details</button>
-                            <button>Edit</button>
-                            <button>Close</button>
+                            <p>Applications: ${opportunity.applications_count || 0}</p>
+                            <p>
+                                <a href="/html/applications.html?opportunityId=${opportunity.id}" class="opportunity-button view-applications-button">View All Applications</a>
+                                <button class="opportunity-button edit-button">Edit</button>
+                                <button class="opportunity-button close-button">Close</button>
+                            </p>
                         `;
                         opportunityListDiv.appendChild(opportunityItem);
                     });
@@ -921,8 +923,7 @@ export function initCompanyDashboard() {
                 <p><strong>For:</strong> ${opportunityTitle}</p>
                 <p><strong>Applied on:</strong> ${app.application_date ? new Date(app.application_date).toLocaleDateString() : 'N/A'}</p>
                 <div class="application-actions">
-                    <button class="view-application-btn" data-application-id="${app.id || ''}" data-opportunity-id="${app.opportunity_id || ''}">View all Applications</button>
-                    <a href="application.html?id=${app.id || ''}" class="change-status-btn">Change Status</a>
+                    <a href="application.html?id=${app.id || ''}" class="change-status-btn">View details and change status</a>
                 </div>
             `;
             applicationListDiv.appendChild(applicationItem);

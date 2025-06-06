@@ -202,43 +202,7 @@
                 document.getElementById('company-name').textContent = 'Error: ' + error.message;
             }
             
-            // Try to load opportunities
-            try {
-                console.log('Attempting to fetch opportunities...');
-                const response = await fetch('/api/opportunities?companyId=' + userId, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + authToken,
-                        'X-User-Id': userId,
-                        'X-User-Type': localStorage.getItem('userType')
-                    }
-                });
-                
-                console.log('Opportunities response status:', response.status);
-                
-                if (response.ok) {
-                    const opportunities = await response.json();
-                    console.log('Opportunities data:', opportunities);
-                    
-                    const opportunityListDiv = document.getElementById('opportunity-list');
-                    if (opportunities.length === 0) {
-                        opportunityListDiv.innerHTML = '<p>No opportunities posted yet.</p>';
-                    } else {
-                        opportunityListDiv.innerHTML = opportunities.map(function(opp) {
-                            // Add a link to view applications for this opportunity
-                            return '<div class="opportunity-item"><h3>' + opp.title + '</h3><p>Applications: ' + (opp.applications_count || 0) + '</p><p><button class="opportunity-button close-button">Close</button><a href="/html/applications.html?opportunityId=' + opp.id + '" class="opportunity-button view-applications-button">View All Applications</a><button class="opportunity-button edit-button">Edit</button></p></div>';
-                        }).join('');
-                    }
-                } else {
-                    const errorText = await response.text();
-                    console.error('Failed to load opportunities:', errorText);
-                document.getElementById('opportunity-list').innerHTML = '<p>Error: ' + response.status + '</p>';
-            }
-        } catch (error) {
-            console.error('Error loading opportunities:', error);
-            document.getElementById('opportunity-list').innerHTML = '<p>Error: ' + error.message + '</p>';
-            }
+            // Opportunities will be loaded by the initCompanyDashboard function in user.js
 
             // Try to load applications for the company
             try {

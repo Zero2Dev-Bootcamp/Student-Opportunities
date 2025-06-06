@@ -231,7 +231,7 @@ export function displayApplications(applications) {
             <strong>Experiences:</strong> ${app.experiences || 'N/A'}<br>
             <p><strong>Current Status:</strong> ${app.status || 'Pending'}</p>
             <p><strong>Company Message:</strong> ${app.company_message || 'No message yet'}</p>
-            <a href="application.html?id=${app.id}" class="change-status-btn">View Details</a>
+            <a href="application.html?id=${app.id}" class="change-status-btn">View Details and Change Status</a>
             <hr>
         `;
         console.log('Generated listItem HTML:', listItem.innerHTML); // Log generated HTML
