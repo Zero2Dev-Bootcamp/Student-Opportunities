@@ -92,18 +92,24 @@
             }
 
             document.getElementById('search-button').addEventListener('click', function() {
-                // Directly navigate to searchopportunities.html
-                const keyword = document.getElementById('keyword').value;
-                const location = document.getElementById('location').value;
+                // Get search criteria values
+                const keyword = document.getElementById('keyword').value.trim();
+                const location = document.getElementById('location').value.trim();
                 const type = document.getElementById('type').value;
                 
                 // Construct URL with search parameters
-                const searchUrl = new URL('searchopportunities.html', window.location.origin);
-                searchUrl.searchParams.set('keyword', keyword);
-                searchUrl.searchParams.set('location', location);
-                searchUrl.searchParams.set('type', type);
+                let searchUrl = 'searchopportunities.html';
+                const params = new URLSearchParams();
                 
-                window.location.href = searchUrl.toString();
+                if (keyword) params.set('keyword', keyword);
+                if (location) params.set('location', location);
+                if (type) params.set('type', type);
+                
+                if (params.toString()) {
+                    searchUrl += '?' + params.toString();
+                }
+                
+                window.location.href = searchUrl;
             });
 
             // Add event listener to dynamically created Apply Now buttons
