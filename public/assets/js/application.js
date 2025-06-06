@@ -540,20 +540,22 @@ export function initApplicationDetails() {
             if (response.ok) {
                 console.log(`applications.js: Status update successful for application ${applicationId}. New status: ${status}`);
 
-                // Fetch updated application details to get student_user_id
-                const updatedApplicationDetails = await fetchApplicationDetails(); // Use the existing fetchApplicationDetails function
+                // Show success message
+                alert(`Status successfully updated to ${status}`);
 
-                if (updatedApplicationDetails && updatedApplicationDetails.student_user_id) {
-                    // Create a notification for the student user
-                    await createNotification(updatedApplicationDetails.student_user_id, applicationId, status);
-                } else {
-                    console.warn(`applications.js: Could not fetch updated application details or student_user_id for notification.`);
-                }
+                // Fetch updated application details
+                await fetchApplicationDetails();
 
-                // Re-fetch and display all applications to see the change.
-                const updatedApplications = await fetchApplications(opportunityId);
-                if (updatedApplications) {
-                    displayApplications(updatedApplications);
+                // Create notification for the student
+                const updatedResponse = await fetch(`/api/applications/${applicationId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const updatedDetails = await updatedResponse.json();
+                
+                if (updatedDetails && updatedDetails.student_user_id) {
+                    await createNotification(updatedDetails.student_user_id, applicationId, status);
                 }
 
             } else {
